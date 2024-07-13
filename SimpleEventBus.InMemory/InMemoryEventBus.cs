@@ -2,11 +2,18 @@
 
 public class InMemoryEventBus : IEventBus
 {
-     
-    
-    
-    public Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
+
+    private readonly IEventHandlerInvoker _eventHandlerInvoker;
+
+    public InMemoryEventBus(IEventHandlerInvoker eventHandlerInvoker)
     {
-        throw new NotImplementedException();
+        _eventHandlerInvoker = eventHandlerInvoker;
+    }
+    
+    public async Task PublishAsync<TEvent>(TEvent @event, Headers headers, CancellationToken cancellationToken = default) where TEvent : class
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        
+        await _eventHandlerInvoker.InvokeAsync(@event);
     }
 }

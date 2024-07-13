@@ -4,8 +4,7 @@ public abstract class SubscriptionProfile
 {
     private List<Type> EventTypes { get; set; } = new List<Type>();
 
-    private Dictionary<Type, List<SubscriptionDescriptor>> Handlers { get; set; } =
-        new Dictionary<Type, List<SubscriptionDescriptor>>();
+    private Dictionary<Type, List<SubscriptionDescriptor>> Handlers { get; set; } = new();
 
     public void CreateSubscription<TEvent,TEventHandler>() where TEvent : class where TEventHandler : IEventHandler<TEvent>
     {
