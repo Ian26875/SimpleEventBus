@@ -5,7 +5,7 @@ namespace SimpleEventBus.InMemory;
 /// <summary>
 /// The background queue class
 /// </summary>
-public class BackgroundQueue
+internal class BackgroundQueue
 {
     /// <summary>
     /// The channels

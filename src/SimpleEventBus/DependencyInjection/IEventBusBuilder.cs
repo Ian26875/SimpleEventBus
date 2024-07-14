@@ -9,7 +9,7 @@ public interface IEventBusBuilder
     void AddProfile<TProfile>(TProfile profile) where TProfile : SubscriptionProfile;
 }
 
-public class EventBusBuilder:IEventBusBuilder
+public class EventBusBuilder : IEventBusBuilder
 {
     public EventBusBuilder(IServiceCollection services)
     {
@@ -17,10 +17,10 @@ public class EventBusBuilder:IEventBusBuilder
     }
 
     public IServiceCollection Services { get; }
-    
-    
+
+
     public void AddProfile<TProfile>(TProfile profile) where TProfile : SubscriptionProfile
     {
-        this.Services.AddSingleton<SubscriptionProfile>(profile);
+        Services.AddSingleton<SubscriptionProfile>(profile);
     }
 }

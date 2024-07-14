@@ -4,7 +4,7 @@ namespace SimpleEventBus.InMemory;
 ///     The in memory event bus class
 /// </summary>
 /// <seealso cref="IEventBus" />
-public class InMemoryEventBus : IEventBus
+internal class InMemoryEventBus : IEventBus
 {
     /// <summary>
     ///     The background queue
@@ -21,7 +21,7 @@ public class InMemoryEventBus : IEventBus
     /// </summary>
     /// <param name="eventHandlerInvoker">The event handler invoker</param>
     /// <param name="backgroundQueue">The background queue</param>
-    public InMemoryEventBus(IEventHandlerInvoker eventHandlerInvoker, BackgroundQueue backgroundQueue)
+    internal InMemoryEventBus(IEventHandlerInvoker eventHandlerInvoker, BackgroundQueue backgroundQueue)
     {
         _eventHandlerInvoker = eventHandlerInvoker;
         _backgroundQueue = backgroundQueue;

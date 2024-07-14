@@ -1,21 +1,27 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace SimpleEventBus.DependencyInjection;
 
+/// <summary>
+/// The service collection extension class
+/// </summary>
 public static class ServiceCollectionExtension
 {
-    public static IServiceCollection AddEventBus(this IServiceCollection services, Action<IEventBusBuilder> setUp)
+
+    public static IServiceCollection AddEventBus(this IServiceCollection services, Action<IEventBusBuilder> configureBuilder, Action<EventBusOption> configureOptions = null)
     {
+        services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
+        services.TryAddSingleton<ISubscriptionManager, SubscriptionManager>();
         
-        services.TryAddSingleton<IEventHandlerInvoker,DefaultEventHandlerInvoker>();
+        var options = new EventBusOption();
+        configureOptions?.Invoke(options);
         
+        services.AddSingleton(options);
         
         var eventBusBuilder = new EventBusBuilder(services);
-        setUp(eventBusBuilder);
-        
-        
-        
+        configureBuilder(eventBusBuilder);
+
         return services;
     }
 }

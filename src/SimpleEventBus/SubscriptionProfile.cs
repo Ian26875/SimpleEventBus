@@ -1,55 +1,37 @@
 namespace SimpleEventBus;
 
 /// <summary>
-/// The subscription profile class
+/// The base class for subscription profiles.
 /// </summary>
 public abstract class SubscriptionProfile
 {
     /// <summary>
-    /// Gets or sets the value of the event types
+    /// Maps event types to their list of handler types.
     /// </summary>
-    private List<Type> EventTypes { get; set; } = new List<Type>();
+    internal Dictionary<Type, List<Type>> Handlers { get; } = new();
 
     /// <summary>
-    /// Gets or sets the value of the handlers
+    /// Registers a subscription for a specific event and handler type.
     /// </summary>
-    private Dictionary<Type, List<SubscriptionDescriptor>> Handlers { get; set; } = new();
-    
-    /// <summary>
-    /// Creates the subscription using the specified event type
-    /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <param name="handlerType">The handler type</param>
-    /// <exception cref="ArgumentException">Event Handler Type '{handlerType.Namespace}' already registered for '{eventType}'</exception>
-    public void CreateSubscription(Type eventType,Type handlerType) 
+    /// <typeparam name="TEvent">The event type.</typeparam>
+    /// <typeparam name="THandler">The handler type.</typeparam>
+    /// <exception cref="ArgumentException">Thrown if the handler is already registered for the event.</exception>
+    public void CreateSubscription<TEvent, THandler>() where TEvent : class where THandler : IEventHandler<TEvent>
     {
-        if (HasSubscriptionForEvent(eventType).Equals(false))
+        var eventType = typeof(TEvent);
+        var handlerType = typeof(THandler);
+
+        if (Handlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {
-            this.Handlers.Add(eventType,new List<SubscriptionDescriptor>());
+            handlersList = new List<Type>();
+            Handlers[eventType] = handlersList;
         }
 
-        if (this.Handlers[eventType].Any(s => s.EventHandlerType == handlerType))
+        if (handlersList.Contains(handlerType))
         {
-            throw new ArgumentException(
-                $"Event Handler Type '{handlerType.Namespace}' already registered for '{eventType}'");
+            throw new ArgumentException($"Handler type '{handlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
         }
-        
-        this.Handlers[eventType].Add(new SubscriptionDescriptor(eventType,handlerType));
-    }
 
-    /// <summary>
-    /// Has the subscription for event using the specified event type
-    /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <returns>The bool</returns>
-    private bool HasSubscriptionForEvent(Type eventType)
-    {
-        return this.Handlers.ContainsKey(eventType);
-    }
-
-    public void CreateSubscription<TEvent, TEvenHandler>() where TEvent : class
-        where TEvenHandler : IEventHandler<TEvent>
-    {
-        this.CreateSubscription(typeof(TEvent),typeof(TEvenHandler));
+        handlersList.Add(handlerType);
     }
 }

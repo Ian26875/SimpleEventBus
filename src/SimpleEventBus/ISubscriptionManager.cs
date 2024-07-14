@@ -1,6 +1,6 @@
 ﻿namespace SimpleEventBus;
 
-public interface ISubscriptionManager
+internal interface ISubscriptionManager
 {
     
     void LoadFromProfile<TProfile>(TProfile profile) where TProfile : SubscriptionProfile;

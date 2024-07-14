@@ -4,7 +4,7 @@ namespace SimpleEventBus;
 ///     The default event handler invoker class
 /// </summary>
 /// <seealso cref="IEventHandlerInvoker" />
-public class DefaultEventHandlerInvoker : IEventHandlerInvoker
+internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 {
     /// <summary>
     ///     The event bus option
@@ -22,7 +22,7 @@ public class DefaultEventHandlerInvoker : IEventHandlerInvoker
     /// </summary>
     /// <param name="eventBusOption">The event bus option</param>
     /// <param name="subscriptionManager">The subscription manager</param>
-    public DefaultEventHandlerInvoker(EventBusOption eventBusOption, ISubscriptionManager subscriptionManager)
+    internal DefaultEventHandlerInvoker(EventBusOption eventBusOption, ISubscriptionManager subscriptionManager)
     {
         _eventBusOption = eventBusOption;
         _subscriptionManager = subscriptionManager;
