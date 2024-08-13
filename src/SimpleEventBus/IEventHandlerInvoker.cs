@@ -6,11 +6,10 @@ namespace SimpleEventBus;
 public interface IEventHandlerInvoker
 {
     /// <summary>
-    /// Invokes the event
+    /// Invokes the event context
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="@event">The event</param>
-    /// <param name="headers">The headers</param>
+    /// <param name="eventContext">The event context</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    Task InvokeAsync<TEvent>(TEvent @event, Headers headers, CancellationToken cancellationToken = default) where TEvent : class;
+    Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default) where TEvent : class;
 }

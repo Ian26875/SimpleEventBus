@@ -35,17 +35,19 @@ internal class InMemoryEventBus : IEventBus
     /// <param name="event">The event</param>
     /// <param name="headers">The headers</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    public async Task PublishAsync<TEvent>(TEvent @event, 
-                                           Headers? headers,
-                                           CancellationToken cancellationToken = default) where TEvent : class
+    public async Task PublishAsync<TEvent>(TEvent @event,
+        Headers? headers,
+        CancellationToken cancellationToken = default) where TEvent : class
     {
         ArgumentNullException.ThrowIfNull(@event);
 
         headers ??= new Headers();
 
+        var eventContext = EventContext<TEvent>.Create(@event, headers);
+
         await _backgroundQueue.EnqueueAsync
         (
-            async token => await _eventHandlerInvoker.InvokeAsync(@event, headers, token),
+            async token => await _eventHandlerInvoker.InvokeAsync(eventContext, token),
             cancellationToken
         );
     }

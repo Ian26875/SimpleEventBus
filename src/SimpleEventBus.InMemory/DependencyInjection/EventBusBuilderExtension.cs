@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using SimpleEventBus.DependencyInjection;
+using SimpleEventBus.InMemory;
 
-namespace SimpleEventBus.InMemory.DependencyInjection;
+namespace SimpleEventBus.DependencyInjection;
 
 /// <summary>
 /// The event bus builder extension class
