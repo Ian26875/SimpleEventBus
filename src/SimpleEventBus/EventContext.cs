@@ -8,22 +8,30 @@ public class EventContext<TEvent> where TEvent : class
     /// <summary>
     /// Sets or gets the value of the event
     /// </summary>
-    public TEvent Event { private set; get; }
+    public TEvent Event { protected set; get; }
 
     /// <summary>
     /// Sets or gets the value of the event type
     /// </summary>
-    public Type EventType { private set; get; }
+    public Type EventType { protected set; get; }
 
     /// <summary>
     /// Sets or gets the value of the event version
     /// </summary>
-    public string EventVersion { private set; get; }
+    public string EventVersion { protected set; get; }
 
     /// <summary>
     /// Sets or gets the value of the headers
     /// </summary>
-    public Headers Headers { private set; get; }
+    public Headers Headers { protected set; get; }
+
+    protected EventContext(TEvent @event, Type eventType, string eventVersion, Headers headers)
+    {
+        Event = @event;
+        EventType = eventType;
+        EventVersion = eventVersion;
+        Headers = headers;
+    }
 
     /// <summary>
     /// Creates the event
@@ -39,12 +47,6 @@ public class EventContext<TEvent> where TEvent : class
 
         var eventVersion = string.IsNullOrWhiteSpace(version) ? "1.0" : version;
 
-        return new EventContext<TEvent>
-        {
-            Event = @event,
-            EventType = eventType,
-            EventVersion = eventVersion,
-            Headers = headers
-        };
+        return new EventContext<TEvent>(@event,eventType,eventVersion,headers);
     }
 }
