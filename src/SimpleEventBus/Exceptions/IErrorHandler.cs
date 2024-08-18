@@ -8,6 +8,6 @@ public interface IErrorHandler
     /// <summary>
     /// Ons the exception using the specified exception context
     /// </summary>
-    /// <param name="exceptionContext">The exception context</param>
-    void OnException(ExceptionContext exceptionContext);
+    /// <param name="errorContext">The exception context</param>
+    void OnException(ErrorContext errorContext);
 }

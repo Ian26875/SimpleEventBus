@@ -8,30 +8,63 @@ public abstract class SubscriptionProfile
     /// <summary>
     /// Maps event types to their list of handler types.
     /// </summary>
-    internal Dictionary<Type, List<Type>> Handlers { get; } = new();
+    internal Dictionary<Type, List<Type>> EventHandlers { get; }
 
     /// <summary>
-    /// Registers a subscription for a specific event and handler type.
+    /// Gets the value of the error handlers
     /// </summary>
-    /// <typeparam name="TEvent">The event type.</typeparam>
-    /// <typeparam name="THandler">The handler type.</typeparam>
-    /// <exception cref="ArgumentException">Thrown if the handler is already registered for the event.</exception>
-    public void CreateSubscription<TEvent, THandler>() where TEvent : class where THandler : IEventHandler<TEvent>
+    internal Dictionary<Type, List<Type>> ErrorHandlers { get; }
+    
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubscriptionProfile"/> class
+    /// </summary>
+    protected SubscriptionProfile()
     {
-        var eventType = typeof(TEvent);
-        var handlerType = typeof(THandler);
+        this.EventHandlers = new Dictionary<Type, List<Type>>();
+        this.ErrorHandlers = new Dictionary<Type, List<Type>>();
+    }
 
-        if (Handlers.TryGetValue(eventType, out var handlersList).Equals(false))
+    /// <summary>
+    /// Creates the subscription using the specified event type
+    /// </summary>
+    /// <param name="eventType">The event type</param>
+    /// <param name="eventHandlerType">The event handler type</param>
+    /// <exception cref="ArgumentException">Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
+    internal void CreateSubscription(Type eventType,Type eventHandlerType)
+    {
+        if (EventHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {
             handlersList = new List<Type>();
-            Handlers[eventType] = handlersList;
+            EventHandlers[eventType] = handlersList;
         }
 
-        if (handlersList.Contains(handlerType))
+        if (handlersList.Contains(eventHandlerType))
         {
-            throw new ArgumentException($"Handler type '{handlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
+            throw new ArgumentException($"Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
         }
 
-        handlersList.Add(handlerType);
+        handlersList.Add(eventHandlerType);
+    }
+
+    /// <summary>
+    /// Creates the error handler using the specified event type
+    /// </summary>
+    /// <param name="eventType">The event type</param>
+    /// <param name="errorHandlerType">The error handler type</param>
+    /// <exception cref="ArgumentException">Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
+    internal void CreateErrorHandler(Type eventType, Type errorHandlerType)
+    {
+        if (ErrorHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
+        {
+            handlersList = new List<Type>();
+            ErrorHandlers[eventType] = handlersList;
+        }
+
+        if (handlersList.Contains(errorHandlerType))
+        {
+            throw new ArgumentException($"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
+        }
+
+        handlersList.Add(errorHandlerType);
     }
 }

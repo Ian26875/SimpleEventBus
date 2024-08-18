@@ -42,12 +42,10 @@ internal class InMemoryEventBus : IEventBus
         ArgumentNullException.ThrowIfNull(@event);
 
         headers ??= new Headers();
-
-        var eventContext = EventContext<TEvent>.Create(@event, headers);
-
+        
         await _backgroundQueue.EnqueueAsync
         (
-            async token => await _eventHandlerInvoker.InvokeAsync(eventContext, token),
+            async token => await _eventHandlerInvoker.InvokeAsync(@event, headers, token),
             cancellationToken
         );
     }

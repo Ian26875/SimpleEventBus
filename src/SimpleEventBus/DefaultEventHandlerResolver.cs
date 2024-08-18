@@ -13,7 +13,10 @@ public class DefaultEventHandlerResolver : IEventHandlerResolver
 
     public IEnumerable<IEventHandler<TEvent>> GetHandlersForEvent<TEvent>(TEvent @event) where TEvent : class
     {
-        var handlers = _serviceProvider.GetServices<IEventHandler<TEvent>>();
+        using var serviceScope = _serviceProvider.CreateScope();
+        
+        var handlers = serviceScope.ServiceProvider.GetServices<IEventHandler<TEvent>>();
+        
         return handlers;
     }
 }
