@@ -26,7 +26,7 @@ public class DefaultEventHandlerResolver : IEventHandlerResolver
     /// Gets the handlers for event using the specified event
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="@event">The event</param>
+    /// <param name="event">The event</param>
     /// <returns>The handlers</returns>
     public IEnumerable<IEventHandler<TEvent>> GetHandlersForEvent<TEvent>(TEvent @event) where TEvent : class
     {

@@ -1,4 +1,6 @@
-﻿namespace SimpleEventBus;
+﻿using SimpleEventBus.Exceptions;
+
+namespace SimpleEventBus.Profile;
 
 /// <summary>
 /// The fluent subscription load spec class

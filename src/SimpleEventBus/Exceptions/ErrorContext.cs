@@ -1,6 +1,6 @@
 using System.Runtime.ExceptionServices;
 
-namespace SimpleEventBus;
+namespace SimpleEventBus.Exceptions;
 
 /// <summary>
 /// The exception context class
@@ -19,36 +19,14 @@ public class ErrorContext : EventContext<object>
     public ExceptionDispatchInfo ExceptionDispatch { get; private set;}
     
     /// <summary>
-    /// Creates the exception
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="exception">The exception</param>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <returns>The exception context</returns>
-    public static ErrorContext Create<TEvent>(Exception exception,TEvent @event, Headers headers) where TEvent : class
-    {
-        var eventType = typeof(TEvent);
-        var version = eventType.GetEventVersion();
-
-        var eventVersion = string.IsNullOrWhiteSpace(version) ? "1.0" : version;
-
-        return new ErrorContext(@event,headers)
-        {
-            Exception = exception,
-            ExceptionDispatch = ExceptionDispatchInfo.Capture(exception)
-        };
-    }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="ErrorContext"/> class
     /// </summary>
-    /// <param name="@event">The event</param>
-    /// <param name="eventType">The event type</param>
-    /// <param name="eventVersion">The event version</param>
+    /// <param name="event">The event</param>
     /// <param name="headers">The headers</param>
-    protected ErrorContext(object @event, Headers headers) 
-        : base(@event, headers)
+    /// <param name="exception">The exception</param>
+    internal ErrorContext(object @event, Headers headers,Exception exception) : base(@event, headers)
     {
+        Exception = exception;
+        ExceptionDispatch = ExceptionDispatchInfo.Capture(exception);
     }
 }

@@ -1,4 +1,4 @@
-namespace SimpleEventBus;
+namespace SimpleEventBus.Profile;
 
 /// <summary>
 /// The base class for subscription profiles.

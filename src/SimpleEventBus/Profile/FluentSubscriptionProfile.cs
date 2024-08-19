@@ -1,4 +1,4 @@
-namespace SimpleEventBus;
+namespace SimpleEventBus.Profile;
 
 /// <summary>
 /// The fluent subscription profile class

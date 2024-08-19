@@ -9,8 +9,8 @@ public interface IEventBus
     /// Publishes the event
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="@event">The event</param>
+    /// <param name="event">The event</param>
     /// <param name="headers">The headers</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null, CancellationToken cancellationToken = default) where TEvent : class;
+    Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null, CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class;
 }

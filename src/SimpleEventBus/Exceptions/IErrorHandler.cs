@@ -1,4 +1,4 @@
-namespace SimpleEventBus;
+namespace SimpleEventBus.Exceptions;
 
 /// <summary>
 /// The error handler interface

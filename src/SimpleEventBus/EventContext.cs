@@ -19,7 +19,6 @@ public class EventContext<TEvent> where TEvent : class
     /// Sets or gets the value of the headers
     /// </summary>
     public Headers Headers { protected set; get; }
-
     
     /// <summary>
     /// Initializes a new instance of the <see cref="EventContext{TEvent}"/> class
