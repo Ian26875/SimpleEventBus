@@ -11,15 +11,11 @@ public class DefaultEventHandlerResolver : IEventHandlerResolver
     /// <summary>
     /// The service provider
     /// </summary>
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DefaultEventHandlerResolver"/> class
-    /// </summary>
-    /// <param name="serviceProvider">The service provider</param>
-    public DefaultEventHandlerResolver(IServiceProvider serviceProvider)
+    public DefaultEventHandlerResolver(IServiceScopeFactory serviceScopeFactory)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     /// <summary>
@@ -30,7 +26,7 @@ public class DefaultEventHandlerResolver : IEventHandlerResolver
     /// <returns>The handlers</returns>
     public IEnumerable<IEventHandler<TEvent>> GetHandlersForEvent<TEvent>(TEvent @event) where TEvent : class
     {
-        using var serviceScope = _serviceProvider.CreateScope();
+        using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
         
         var handlers = serviceScope.ServiceProvider.GetServices<IEventHandler<TEvent>>();
         

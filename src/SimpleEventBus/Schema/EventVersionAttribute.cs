@@ -1,4 +1,4 @@
-namespace SimpleEventBus.Attributes;
+namespace SimpleEventBus.Schema;
 
 /// <summary>
 /// The event version attribute class

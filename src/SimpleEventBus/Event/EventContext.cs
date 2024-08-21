@@ -1,4 +1,4 @@
-namespace SimpleEventBus;
+namespace SimpleEventBus.Event;
 
 /// <summary>
 /// The event context class

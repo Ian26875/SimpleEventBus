@@ -1,9 +1,11 @@
+using SimpleEventBus.Event;
+
 namespace SimpleEventBus;
 
 /// <summary>
 /// The event bus interface
 /// </summary>
-public interface IEventBus
+public interface IEventPublisher
 {
     /// <summary>
     /// Publishes the event

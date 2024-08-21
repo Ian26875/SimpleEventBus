@@ -1,10 +1,12 @@
+using SimpleEventBus.Event;
+
 namespace SimpleEventBus.InMemory;
 
 /// <summary>
 ///     The in memory event bus class
 /// </summary>
-/// <seealso cref="IEventBus" />
-internal class InMemoryEventBus : IEventBus
+/// <seealso cref="IEventPublisher" />
+internal class InMemoryEventPublisher : AbstractEventPublisher
 {
     /// <summary>
     ///     The background queue
@@ -17,35 +19,29 @@ internal class InMemoryEventBus : IEventBus
     private readonly IEventHandlerInvoker _eventHandlerInvoker;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="InMemoryEventBus" /> class
+    ///     Initializes a new instance of the <see cref="InMemoryEventPublisher" /> class
     /// </summary>
     /// <param name="eventHandlerInvoker">The event handler invoker</param>
     /// <param name="backgroundQueue">The background queue</param>
-    internal InMemoryEventBus(IEventHandlerInvoker eventHandlerInvoker, BackgroundQueue backgroundQueue)
+    internal InMemoryEventPublisher(IEventHandlerInvoker eventHandlerInvoker, BackgroundQueue backgroundQueue)
     {
         _eventHandlerInvoker = eventHandlerInvoker;
         _backgroundQueue = backgroundQueue;
     }
 
-
     /// <summary>
-    ///     Publishes the event
+    ///     Publishes the event using the specified event context
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
+    /// <param name="eventContext">The event context</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    public async Task PublishAsync<TEvent>(TEvent @event,
-        Headers? headers,
-        CancellationToken cancellationToken = default) where TEvent : class
+    protected override async Task PublishEventAsync<TEvent>(EventContext<TEvent> eventContext,
+                                                            CancellationToken cancellationToken =
+                                                                default(CancellationToken))
     {
-        ArgumentNullException.ThrowIfNull(@event);
-
-        headers ??= new Headers();
-        
         await _backgroundQueue.EnqueueAsync
         (
-            async token => await _eventHandlerInvoker.InvokeAsync(@event, headers, token),
+            async token => await _eventHandlerInvoker.InvokeAsync(eventContext, cancellationToken),
             cancellationToken
         );
     }

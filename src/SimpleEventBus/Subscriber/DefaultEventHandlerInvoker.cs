@@ -1,3 +1,5 @@
+using SimpleEventBus.Event;
+
 namespace SimpleEventBus;
 
 /// <summary>
@@ -26,15 +28,52 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         _eventBusOption = eventBusOption;
         _eventHandlerResolver = eventHandlerResolver;
     }
-
-    public async Task InvokeAsync<TEvent>(TEvent @event, Headers headers,
-                                          CancellationToken cancellationToken = default(CancellationToken))
-        where TEvent : class
+    
+    /// <summary>
+    /// Fors the each invoke event handler using the specified event context
+    /// </summary>
+    /// <typeparam name="TEvent">The event</typeparam>
+    /// <param name="eventContext">The event context</param>
+    /// <param name="eventHandlers">The event handlers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    private async Task ForEachInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
+                                                         IEnumerable<IEventHandler<TEvent>> eventHandlers,
+                                                         CancellationToken cancellationToken) where TEvent : class
     {
-        var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(@event);
+        foreach (var eventHandler in eventHandlers)
+        {
+            await eventHandler.HandleAsync(eventContext, cancellationToken);
+        }
+    }
 
-        var eventContext = new EventContext<TEvent>(@event, headers);
+    /// <summary>
+    /// Tasks the when all invoke event handler using the specified event context
+    /// </summary>
+    /// <typeparam name="TEvent">The event</typeparam>
+    /// <param name="eventContext">The event context</param>
+    /// <param name="eventHandlers">The event handlers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    private async Task TaskWhenAllInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
+                                                             IEnumerable<IEventHandler<TEvent>> eventHandlers,
+                                                             CancellationToken cancellationToken) where TEvent : class
+    {
+        await Task.WhenAll
+        (
+            eventHandlers.Select(e => e.HandleAsync(eventContext, cancellationToken))
+        );
+    }
 
+    /// <summary>
+    /// Invokes the event context
+    /// </summary>
+    /// <typeparam name="TEvent">The event</typeparam>
+    /// <param name="eventContext">The event context</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public async Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default) where TEvent : class
+    {
+        var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(eventContext.Event);
+        
         switch (_eventBusOption.HandlerStrategy)
         {
             case HandlerStrategy.ForEach:
@@ -47,30 +86,5 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
             default:
                 throw new ArgumentOutOfRangeException();
         }
-    }
-
-    private async Task ForEachInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
-                                                         IEnumerable<IEventHandler<TEvent>> eventHandlers,
-                                                         CancellationToken cancellationToken) where TEvent : class
-    {
-        foreach (var eventHandler in eventHandlers)
-        {
-            await eventHandler.HandleAsync(eventContext, cancellationToken);
-        }
-    }
-
-    private async Task TaskWhenAllInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
-                                                             IEnumerable<IEventHandler<TEvent>> eventHandlers,
-                                                             CancellationToken cancellationToken) where TEvent : class
-    {
-        await Task.WhenAll
-        (
-            eventHandlers.Select(e => e.HandleAsync(eventContext, cancellationToken))
-        );
-    }
-
-    public Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default) where TEvent : class
-    {
-        throw new NotImplementedException();
     }
 }

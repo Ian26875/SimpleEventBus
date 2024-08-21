@@ -1,4 +1,5 @@
 using System.Runtime.ExceptionServices;
+using SimpleEventBus.Event;
 
 namespace SimpleEventBus.Exceptions;
 
