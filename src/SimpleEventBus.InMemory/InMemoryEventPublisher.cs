@@ -1,4 +1,5 @@
 using SimpleEventBus.Event;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.InMemory;
 

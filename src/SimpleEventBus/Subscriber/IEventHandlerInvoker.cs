@@ -1,6 +1,6 @@
 using SimpleEventBus.Event;
 
-namespace SimpleEventBus;
+namespace SimpleEventBus.Subscriber;
 
 /// <summary>
 ///     The event handler invoker interface
