@@ -18,12 +18,12 @@ public interface IFluentSubscriptionBuilder<TEvent> where TEvent : class
     /// </summary>
     /// <typeparam name="TEventHandler">The event handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    IFluentSubscriptionBuilder<TEvent> Do<TEventHandler>() where TEventHandler : IEventHandler<TEvent>;
+    IFluentSubscriptionBuilder<TEvent> ToDo<TEventHandler>() where TEventHandler : IEventHandler<TEvent>;
 
     /// <summary>
     /// Ifs the exception do
     /// </summary>
     /// <typeparam name="TErrorHandler">The error handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    IFluentSubscriptionBuilder<TEvent> IfExceptionDo<TErrorHandler>() where TErrorHandler : IErrorHandler;
+    IFluentSubscriptionBuilder<TEvent> OnError<TErrorHandler>() where TErrorHandler : IErrorHandler;
 }

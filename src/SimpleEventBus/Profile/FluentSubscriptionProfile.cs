@@ -11,7 +11,7 @@ public static class FluentSubscriptionProfile
     /// <typeparam name="TEvent">The event</typeparam>
     /// <param name="subscriptionProfile">The subscription profile</param>
     /// <returns>A fluent subscription load spec of t event</returns>
-    public static IFluentSubscriptionBuilder<TEvent> When<TEvent>(this SubscriptionProfile subscriptionProfile) where TEvent : class
+    public static IFluentSubscriptionBuilder<TEvent> WhenOccurs<TEvent>(this SubscriptionProfile subscriptionProfile) where TEvent : class
     {
         return new FluentSubscriptionBuilder<TEvent>(subscriptionProfile);
     }

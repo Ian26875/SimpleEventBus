@@ -30,7 +30,7 @@ public abstract class SubscriptionProfile
     /// <param name="eventType">The event type</param>
     /// <param name="eventHandlerType">The event handler type</param>
     /// <exception cref="ArgumentException">Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
-    internal void CreateSubscription(Type eventType,Type eventHandlerType)
+    internal void AddSubscription(Type eventType,Type eventHandlerType)
     {
         if (EventHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {
@@ -52,7 +52,7 @@ public abstract class SubscriptionProfile
     /// <param name="eventType">The event type</param>
     /// <param name="errorHandlerType">The error handler type</param>
     /// <exception cref="ArgumentException">Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
-    internal void CreateErrorHandler(Type eventType, Type errorHandlerType)
+    internal void AddErrorFilter(Type eventType, Type errorHandlerType)
     {
         if (ErrorHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {

@@ -28,9 +28,9 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     /// <typeparam name="TEventHandler">The event handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    public IFluentSubscriptionBuilder<TEvent> Do<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
+    public IFluentSubscriptionBuilder<TEvent> ToDo<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
     {
-        Profile.CreateSubscription(typeof(TEvent),typeof(TEventHandler));
+        Profile.AddSubscription(typeof(TEvent),typeof(TEventHandler));
         return this;
     }
 
@@ -39,9 +39,9 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     /// <typeparam name="TErrorHandler">The error handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    public IFluentSubscriptionBuilder<TEvent> IfExceptionDo<TErrorHandler>() where TErrorHandler : IErrorHandler
+    public IFluentSubscriptionBuilder<TEvent> OnError<TErrorHandler>() where TErrorHandler : IErrorHandler
     {
-        Profile.CreateErrorHandler(typeof(TEvent),typeof(TErrorHandler));
+        Profile.AddErrorFilter(typeof(TEvent),typeof(TErrorHandler));
         return this;
     }
 }
