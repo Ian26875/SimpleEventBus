@@ -5,19 +5,19 @@ using SimpleEventBus.InMemory;
 namespace SimpleEventBus.DependencyInjection;
 
 /// <summary>
-/// The event bus builder extension class
+///     The event bus builder extension class
 /// </summary>
 public static class EventBusBuilderExtension
 {
     /// <summary>
-    /// Uses the in memory using the specified event bus builder
+    ///     Uses the in memory using the specified event bus builder
     /// </summary>
     /// <param name="eventBusBuilder">The event bus builder</param>
     /// <returns>The event bus builder</returns>
     public static IEventBusBuilder UseInMemory(this IEventBusBuilder eventBusBuilder)
     {
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>();
-        eventBusBuilder.Services.TryAddSingleton<IEventPublisher,InMemoryEventPublisher>();
+        eventBusBuilder.Services.TryAddSingleton<IEventPublisher, InMemoryEventPublisher>();
         eventBusBuilder.Services.AddHostedService<QueuedHostedService>();
         return eventBusBuilder;
     }

@@ -71,7 +71,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     /// <param name="eventContext">The event context</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public async Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default) where TEvent : class
+    public async Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
     {
         var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(eventContext.Event);
         

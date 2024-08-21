@@ -10,9 +10,16 @@ namespace SimpleEventBus.DependencyInjection;
 public static class ServiceCollectionExtension
 {
 
+    /// <summary>
+    /// Adds the event bus using the specified services
+    /// </summary>
+    /// <param name="services">The services</param>
+    /// <param name="configureBuilder">The configure builder</param>
+    /// <param name="configureOptions">The configure options</param>
+    /// <returns>The services</returns>
     public static IServiceCollection AddEventBus(this IServiceCollection services, 
                                                  Action<IEventBusBuilder> configureBuilder, 
-                                                 Action<EventBusOption> configureOptions = null)
+                                                 Action<EventBusOption>? configureOptions = default(Action<EventBusOption>?))
     {
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
         services.TryAddSingleton<IEventHandlerResolver, DefaultEventHandlerResolver>();
@@ -25,6 +32,9 @@ public static class ServiceCollectionExtension
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);
 
+        
+        
+        
         return services;
     }
     
