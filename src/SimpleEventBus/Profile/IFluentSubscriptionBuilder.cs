@@ -1,4 +1,5 @@
 using SimpleEventBus.Exceptions;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.Profile;
 

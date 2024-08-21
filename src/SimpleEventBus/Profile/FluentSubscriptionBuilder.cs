@@ -1,4 +1,5 @@
-﻿using SimpleEventBus.Exceptions;
+using SimpleEventBus.Exceptions;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.Profile;
 
@@ -7,6 +8,10 @@ namespace SimpleEventBus.Profile;
 /// </summary>
 public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEvent> where TEvent : class
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FluentSubscriptionBuilder{TEvent}"/> class
+    /// </summary>
+    /// <param name="subscriptionProfile">The subscription profile</param>
     internal FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
     {
         this.Profile = subscriptionProfile;
@@ -18,12 +23,22 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     public SubscriptionProfile Profile { get; }
     
     
+    /// <summary>
+    /// Does this instance
+    /// </summary>
+    /// <typeparam name="TEventHandler">The event handler</typeparam>
+    /// <returns>A fluent subscription builder of t event</returns>
     public IFluentSubscriptionBuilder<TEvent> Do<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
     {
         Profile.CreateSubscription(typeof(TEvent),typeof(TEventHandler));
         return this;
     }
 
+    /// <summary>
+    /// Ifs the exception do
+    /// </summary>
+    /// <typeparam name="TErrorHandler">The error handler</typeparam>
+    /// <returns>A fluent subscription builder of t event</returns>
     public IFluentSubscriptionBuilder<TEvent> IfExceptionDo<TErrorHandler>() where TErrorHandler : IErrorHandler
     {
         Profile.CreateErrorHandler(typeof(TEvent),typeof(TErrorHandler));

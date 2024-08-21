@@ -1,3 +1,5 @@
+using SimpleEventBus.Subscriber;
+
 namespace SimpleEventBus;
 
 /// <summary>

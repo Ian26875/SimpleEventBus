@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus;
 
