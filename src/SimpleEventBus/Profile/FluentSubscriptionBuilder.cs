@@ -39,7 +39,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     /// <typeparam name="TErrorHandler">The error handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    public IFluentSubscriptionBuilder<TEvent> OnError<TErrorHandler>() where TErrorHandler : IErrorHandler
+    public IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IErrorHandler
     {
         Profile.AddErrorFilter(typeof(TEvent),typeof(TErrorHandler));
         return this;
