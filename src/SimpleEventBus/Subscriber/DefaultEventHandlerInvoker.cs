@@ -43,7 +43,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     {
         foreach (var eventHandler in eventHandlers)
         {
-            await eventHandler.HandleAsync(eventContext, cancellationToken);
+            await eventHandler.HandleAsync(eventContext.Event,eventContext.Headers, cancellationToken);
         }
     }
 
@@ -60,7 +60,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     {
         await Task.WhenAll
         (
-            eventHandlers.Select(e => e.HandleAsync(eventContext, cancellationToken))
+            eventHandlers.Select(e => e.HandleAsync(eventContext.Event,eventContext.Headers, cancellationToken))
         );
     }
 

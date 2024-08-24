@@ -1,5 +1,6 @@
 ﻿namespace SimpleEventBus.RabbitMq;
 
-public class Class1
+public class RabbitMqOption
 {
+    
 }
