@@ -6,7 +6,7 @@ public static class EventBusBuilderExtensions
 {
     public static IEventBusBuilder UseRabbitMq(this IEventBusBuilder eventBusBuilder,
         Action<RabbitMqOption> setUpOption, 
-        Action<RabbitMqBindOption> setUpBindOption)
+        Action<RabbitMqBindingOption> setUpBindOption)
     {
         
         
