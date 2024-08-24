@@ -4,7 +4,7 @@ namespace SimpleEventBus.Event;
 /// The headers class
 /// </summary>
 /// <seealso cref="Dictionary{string,string}"/>
-public class Headers : Dictionary<string,string>
+public class Headers : Dictionary<string,object>
 {
     /// <summary>
     /// Gets or sets the Correlation ID associated with the headers.
@@ -13,7 +13,7 @@ public class Headers : Dictionary<string,string>
     {
         get
         {
-            return this.GetValueOrDefault("CorrelationId");
+            return this.GetValueOrDefault("CorrelationId")?.ToString();
         }
         set
         {
