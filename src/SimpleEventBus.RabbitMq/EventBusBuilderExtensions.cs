@@ -1,4 +1,5 @@
-﻿using SimpleEventBus.RabbitMq;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SimpleEventBus.RabbitMq;
 
 namespace SimpleEventBus.DependencyInjection;
 
@@ -9,10 +10,11 @@ public static class EventBusBuilderExtensions
         Action<RabbitMqBindingOption> setUpBindOption)
     {
         
+        eventBusBuilder.Services.AddSingleton<IEventPublisher,RabbitMqEventPublisher>();
         
+        eventBusBuilder.Services.Configure<RabbitMqOption>(setUpOption);
         
-        
-        
+        eventBusBuilder.Services.Configure<RabbitMqBindingOption>(setUpBindOption);
         
         return eventBusBuilder;
     }
