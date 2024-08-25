@@ -21,7 +21,7 @@ public async Task<IActionResult> Index()
         
     };
     
-    _eventPublisher.PublisherAsync(orderPlacedEvent);
+    await _eventPublisher.PublisherAsync(orderPlacedEvent);
 }
 
 
