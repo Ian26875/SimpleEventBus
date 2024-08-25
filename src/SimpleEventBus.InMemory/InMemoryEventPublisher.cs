@@ -46,4 +46,8 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
             cancellationToken
         );
     }
+
+    public override void Dispose()
+    {
+    }
 }

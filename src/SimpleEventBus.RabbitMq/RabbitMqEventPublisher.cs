@@ -96,7 +96,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <summary>
     /// Disposes this instance
     /// </summary>
-    public void Dispose()
+    public override void Dispose()
     {
         AdvancedBus.Dispose();
     }

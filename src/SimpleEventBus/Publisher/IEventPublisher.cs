@@ -5,7 +5,7 @@ namespace SimpleEventBus;
 /// <summary>
 /// The event bus interface
 /// </summary>
-public interface IEventPublisher
+public interface IEventPublisher : IDisposable
 {
     /// <summary>
     /// Publishes the event

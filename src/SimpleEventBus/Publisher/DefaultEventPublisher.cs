@@ -21,4 +21,6 @@ public abstract class AbstractEventPublisher : IEventPublisher
 
     protected abstract Task PublishEventAsync<TEvent>(EventContext<TEvent> eventContext,
                                              CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class;
+
+    public abstract void Dispose();
 }
