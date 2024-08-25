@@ -25,5 +25,5 @@ public interface IFluentSubscriptionBuilder<TEvent> where TEvent : class
     /// </summary>
     /// <typeparam name="TErrorHandler">The error handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IErrorHandler;
+    IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IHandlerExceptionHandler;
 }
