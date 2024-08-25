@@ -57,7 +57,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <exception cref="ArgumentNullException"></exception>
     protected override async Task PublishEventAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default)
     {
-        if (eventContext == null)
+        if (eventContext is null)
         {
             throw new ArgumentNullException(nameof(eventContext));
         }
@@ -85,7 +85,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             false,
             new MessageProperties
             {
-                DeliveryMode = 2,
+                DeliveryMode = DeliveryMode.Persistent,
                 Headers = eventContext.Headers,
             },
             messageBody,
