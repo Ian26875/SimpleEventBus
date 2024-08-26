@@ -5,12 +5,18 @@ namespace SimpleEventBus.Schema;
 /// <summary>
 /// The schema registry class
 /// </summary>
-public class SchemaRegistry
+public class SchemaRegistry : ISchemaRegistry
 {
     /// <summary>
     /// The type
     /// </summary>
     private readonly ConcurrentDictionary<string, Type> _schemas = new ConcurrentDictionary<string, Type>();
+
+    private static readonly Lazy<SchemaRegistry> _instance = new Lazy<SchemaRegistry>(() => new SchemaRegistry());
+    
+    private SchemaRegistry() { }
+
+    public static SchemaRegistry Instance => _instance.Value;
     
     /// <summary>
     /// Registers the event type

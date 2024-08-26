@@ -1,5 +1,6 @@
 using EasyNetQ;
 using EasyNetQ.Topology;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleEventBus.Event;
 
@@ -10,7 +11,7 @@ namespace SimpleEventBus.RabbitMq;
 /// </summary>
 /// <seealso cref="AbstractEventPublisher"/>
 /// <seealso cref="IDisposable"/>
-public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
+public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
 {
     /// <summary>
     /// The rabbit mq option
@@ -23,6 +24,11 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     private readonly RabbitMqBindingOption _rabbitMqBindingOption;
 
     /// <summary>
+    /// The logger
+    /// </summary>
+    private readonly ILogger<RabbitMqEventPublisher> _logger;
+    
+    /// <summary>
     /// Gets or sets the value of the advanced bus
     /// </summary>
     private IAdvancedBus AdvancedBus { get; set; }
@@ -32,8 +38,12 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// </summary>
     /// <param name="rabbitMqOption">The rabbit mq option</param>
     /// <param name="rabbitMqBindingOption">The rabbit mq binding option</param>
-    public RabbitMqEventPublisher(IOptions<RabbitMqOption> rabbitMqOption, IOptions<RabbitMqBindingOption> rabbitMqBindingOption)
+    /// <param name="logger">The logger</param>
+    public RabbitMqEventPublisher(IOptions<RabbitMqOption> rabbitMqOption,
+                                  IOptions<RabbitMqBindingOption> rabbitMqBindingOption, 
+                                  ILogger<RabbitMqEventPublisher> logger)
     {
+        _logger = logger;
         _rabbitMqOption = rabbitMqOption.Value;
         _rabbitMqBindingOption = rabbitMqBindingOption.Value;
         InitializeBus();
@@ -62,21 +72,13 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             throw new ArgumentNullException(nameof(eventContext));
         }
         
-        string exchangeName = string.IsNullOrWhiteSpace(_rabbitMqOption.ExchangeName).Equals(false) 
-            ? _rabbitMqBindingOption.ExchangeBindings[eventContext.EventType] 
-            : _rabbitMqOption.ExchangeName;
-        
-        var exchange = await AdvancedBus.ExchangeDeclareAsync
-        (
-            exchangeName, 
-            configure: configuration =>
-            {
-                configuration.WithType(ExchangeType.Direct);
-            }, 
-            cancellationToken
-        );
+        var exchange = await GetOrDeclareExchange(eventContext, cancellationToken);
 
         byte[] messageBody = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(eventContext.Event);
+        
+        _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
+
+        _logger.LogTrace("Publishing event to RabbitMQ...");
         
         await AdvancedBus.PublishAsync
         (
@@ -92,7 +94,26 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             cancellationToken
         );
     }
-    
+
+    private async Task<Exchange> GetOrDeclareExchange<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken) where TEvent : class
+    {
+        var exchangeName = string.IsNullOrWhiteSpace(_rabbitMqOption.ExchangeName).Equals(false) 
+                                  ? _rabbitMqBindingOption.ExchangeBindings[eventContext.EventType] 
+                                  : _rabbitMqOption.ExchangeName;
+
+        var exchange = await AdvancedBus.ExchangeDeclareAsync
+                       (
+                           exchangeName, 
+                           configure: configuration =>
+                           {
+                               configuration.WithType(ExchangeType.Direct);
+                           }, 
+                           cancellationToken
+                       );
+        return exchange;
+    }
+
+
     /// <summary>
     /// Disposes this instance
     /// </summary>

@@ -1,6 +1,8 @@
-﻿namespace SimpleEventBus;
+﻿using SimpleEventBus.Subscriber;
 
-public interface IEventBus : IEventPublisher,IDisposable
+namespace SimpleEventBus;
+
+public interface IEventBus : IEventPublisher,IEventSubscriber,IDisposable
 {
     
 }
