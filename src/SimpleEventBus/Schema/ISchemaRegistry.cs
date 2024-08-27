@@ -1,5 +1,8 @@
 namespace SimpleEventBus.Schema;
 
+/// <summary>
+/// The schema registry interface
+/// </summary>
 public interface ISchemaRegistry
 {
     /// <summary>
@@ -11,11 +14,9 @@ public interface ISchemaRegistry
     void Register(Type eventType);
 
     /// <summary>
-    /// Gets the name
+    /// Gets this instance
     /// </summary>
-    /// <param name="name">The name</param>
-    /// <param name="version">The version</param>
-    /// <exception cref="KeyNotFoundException">Schema with name {name} and version {version} not found.</exception>
-    /// <returns>The type</returns>
-    Type Get(string name, int version);
+    /// <typeparam name="TEvent">The event</typeparam>
+    /// <returns>The string</returns>
+    string Get<TEvent>() where TEvent : class;
 }

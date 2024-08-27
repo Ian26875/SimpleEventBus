@@ -14,6 +14,17 @@ namespace SimpleEventBus.RabbitMq
         /// Gets or sets the value of the queue bindings
         /// </summary>
         public Dictionary<Type, string> QueueBindings { get; set; } = new Dictionary<Type, string>();
+        
+        
+        /// <summary>
+        /// Gets or sets the global exchange name
+        /// </summary>
+        public string GlobalExchange { get; set; }
+
+        /// <summary>
+        /// Gets or sets the global queue name
+        /// </summary>
+        public string GlobalQueue { get; set; }
     }
 
     /// <summary>

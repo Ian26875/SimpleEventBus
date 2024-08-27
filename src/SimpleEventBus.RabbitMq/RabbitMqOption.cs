@@ -7,6 +7,4 @@ public class RabbitMqOption
     public string Password { get; set; }
 
     public string Host { get; set; }
-
-    public string ExchangeName { get; set; }
 }

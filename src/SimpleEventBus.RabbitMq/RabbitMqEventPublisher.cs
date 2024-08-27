@@ -3,6 +3,7 @@ using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleEventBus.Event;
+using SimpleEventBus.Schema;
 
 namespace SimpleEventBus.RabbitMq;
 
@@ -72,8 +73,10 @@ public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
             throw new ArgumentNullException(nameof(eventContext));
         }
         
-        var exchange = await GetOrDeclareExchange(eventContext, cancellationToken);
+        var exchange = await GetOrDeclareExchangeAsync(eventContext, cancellationToken);
 
+        var routeKey = SchemaRegistry.Instance.Get<TEvent>();
+        
         byte[] messageBody = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(eventContext.Event);
         
         _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
@@ -83,7 +86,7 @@ public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
         await AdvancedBus.PublishAsync
         (
             exchange,
-            eventContext.EventType.Name, 
+            routeKey, 
             false,
             new MessageProperties
             {
@@ -95,18 +98,25 @@ public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
         );
     }
 
-    private async Task<Exchange> GetOrDeclareExchange<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken) where TEvent : class
+    /// <summary>
+    /// Gets the or declare exchange using the specified event context
+    /// </summary>
+    /// <typeparam name="TEvent">The event</typeparam>
+    /// <param name="eventContext">The event context</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>The exchange</returns>
+    private async Task<Exchange> GetOrDeclareExchangeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken) where TEvent : class
     {
-        var exchangeName = string.IsNullOrWhiteSpace(_rabbitMqOption.ExchangeName).Equals(false) 
-                                  ? _rabbitMqBindingOption.ExchangeBindings[eventContext.EventType] 
-                                  : _rabbitMqOption.ExchangeName;
+        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventContext.EventType, out var bindingExchangeName)
+                               ? bindingExchangeName 
+                               : _rabbitMqBindingOption.GlobalExchange;
 
         var exchange = await AdvancedBus.ExchangeDeclareAsync
                        (
                            exchangeName, 
                            configure: configuration =>
                            {
-                               configuration.WithType(ExchangeType.Direct);
+                               configuration.WithType(ExchangeType.Topic);
                            }, 
                            cancellationToken
                        );
