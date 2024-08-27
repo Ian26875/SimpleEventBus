@@ -84,5 +84,29 @@ namespace SimpleEventBus.RabbitMq
         {
             return new EventBinder<TEvent>(options);
         }
+
+        /// <summary>
+        /// Declares the global exchange using the specified options
+        /// </summary>
+        /// <param name="options">The options</param>
+        /// <param name="exchangeName">The exchange name</param>
+        /// <returns>The options</returns>
+        public static RabbitMqBindingOption DeclareGlobalExchange(this RabbitMqBindingOption options, string exchangeName)
+        {
+            options.GlobalExchange = exchangeName;
+            return options;
+        }
+        
+        /// <summary>
+        /// Declares the global queue using the specified options
+        /// </summary>
+        /// <param name="options">The options</param>
+        /// <param name="queueName">The queue name</param>
+        /// <returns>The options</returns>
+        public static RabbitMqBindingOption DeclareGlobalQueue(this RabbitMqBindingOption options, string queueName)
+        {
+            options.GlobalQueue = queueName;
+            return options;
+        }
     }
 }
