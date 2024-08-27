@@ -103,8 +103,6 @@ public class CustomProfile : SubscriptionProfile
 void Main()
 {
 	IServiceCollection services = new ServiceCollection();
-
-
 	services.AddEventBus
 	(
 		e => e.UseRabbitMq(o => 
@@ -121,11 +119,11 @@ public static class RabbitMqBindingConfiguration
 	public static void ConfigureBindings(RabbitMqBindingOption option) 
 	{
 		option.DeclareGlobalExchange("sample.exchange")
-			  .DeclareGlobalQueue("sample.queue");
+              .DeclareGlobalQueue("sample.queue");
 		
 		option.ForEvent<OrderPlacedEvent>()
-			  .DeclareExchange("sample.exchange")
-			  .DeclareQueue(nameof(OrderPlacedEvent));
+              .DeclareExchange("sample.exchange.order")
+              .DeclareQueue(nameof(OrderPlacedEvent));
 	}
 }
 
