@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SimpleEventBus.Profile;
 using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.DependencyInjection;
@@ -31,11 +32,9 @@ public static class ServiceCollectionExtension
         
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);
-
         
-        
+        services.AddSingleton(sp=>new SubscriptionProfileAggregator(sp.GetServices<SubscriptionProfile>()));
         
         return services;
     }
-    
 }
