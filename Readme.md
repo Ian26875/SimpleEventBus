@@ -92,3 +92,45 @@ public class CustomProfile : SubscriptionProfile
 
 
 ```
+
+
+--- 
+
+## SimpleEventBus.RabbitMq
+
+
+```csharp
+void Main()
+{
+	IServiceCollection services = new ServiceCollection();
+
+
+	services.AddEventBus
+	(
+		e => e.UseRabbitMq(o => 
+		{
+			o.UserName = "guest";
+		},
+		RabbitMqBindingConfiguration.ConfigureBindings  
+	));
+	
+}
+
+public static class RabbitMqBindingConfiguration
+{
+	public static void ConfigureBindings(RabbitMqBindingOption option) 
+	{
+		option.DeclareGlobalExchange("sample.exchange")
+			  .DeclareGlobalQueue("sample.queue");
+		
+		option.ForEvent<OrderPlacedEvent>()
+			  .DeclareExchange("sample.exchange")
+			  .DeclareQueue(nameof(OrderPlacedEvent));
+	}
+}
+
+public class OrderPlacedEvent 
+{
+	
+}
+```
