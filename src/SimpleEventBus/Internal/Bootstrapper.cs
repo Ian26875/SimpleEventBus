@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace SimpleEventBus.Subscriber;
+namespace SimpleEventBus.Internal;
 
 internal class Bootstrapper : BackgroundService
 {
