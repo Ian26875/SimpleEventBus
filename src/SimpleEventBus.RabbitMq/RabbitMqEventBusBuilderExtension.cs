@@ -2,10 +2,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SimpleEventBus.RabbitMq;
 
+/// <summary>
+/// The rabbit mq event bus builder extension class
+/// </summary>
 public static class RabbitMqEventBusBuilderExtension
 {
-    public static IRabbitMqEventBusBuilder BindOption(this IRabbitMqEventBusBuilder rabbitMqEventBusBuilder,
-                                                      Action<RabbitMqBindingOption> setupRabbitmqBinding)
+    /// <summary>
+    /// Configures the binding using the specified rabbit mq event bus builder
+    /// </summary>
+    /// <param name="rabbitMqEventBusBuilder">The rabbit mq event bus builder</param>
+    /// <param name="setupRabbitmqBinding">The setup rabbitmq binding</param>
+    /// <returns>The rabbit mq event bus builder</returns>
+    public static IRabbitMqEventBusBuilder ConfigureBinding(this IRabbitMqEventBusBuilder rabbitMqEventBusBuilder,
+                                                            Action<RabbitMqBindingOption> setupRabbitmqBinding)
     {
         rabbitMqEventBusBuilder.Services.Configure<RabbitMqBindingOption>(setupRabbitmqBinding);
         
