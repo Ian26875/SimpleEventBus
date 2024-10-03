@@ -5,7 +5,9 @@ using Microsoft.Extensions.Logging;
 using SimpleEventBus.Event;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Schema;
+using SimpleEventBus.Serialization;
 using SimpleEventBus.Subscriber;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace SimpleEventBus.Internal;
 
@@ -35,6 +37,7 @@ public class EventSubscribeInitializer : IInitializer
     /// The service provider
     /// </summary>
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    
     
     /// <summary>
     /// Initializes a new instance of the <see cref="EventSubscribeInitializer"/> class
@@ -66,20 +69,18 @@ public class EventSubscribeInitializer : IInitializer
         
         await this._eventSubscriber.SubscribeAsync(eventNames);
 
-        _eventSubscriber.ConsumerReceived = ConsumerReceived;
+        _eventSubscriber.ConsumerReceived += ConsumerReceived;
     }
-
+    
     /// <summary>
-    /// Consumers the received using the specified body
+    /// Consumers the received using the specified event data
     /// </summary>
-    /// <param name="body">The body</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="eventName">The event name</param>
-    private async Task ConsumerReceived(ReadOnlyMemory<byte> body, Headers headers,string eventName)
+    /// <param name="eventData">The event data</param>
+    private async Task ConsumerReceived(EventData eventData)
     {
-        string messageContent = Encoding.UTF8.GetString(body.Span);
+        string messageContent = Encoding.UTF8.GetString(eventData.Data.Span);
         
-        await ProcessEventAsync(eventName, messageContent, headers);
+        await ProcessEventAsync(eventData.EventName, messageContent, eventData.Headers);
     }
     
     /// <summary>
@@ -100,10 +101,12 @@ public class EventSubscribeInitializer : IInitializer
             return;
         }
         
-        var @event = JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        
         await using (var serviceScope = _serviceScopeFactory.CreateAsyncScope())
         {
+            var serializer = serviceScope.ServiceProvider.GetRequiredService<ISerializer>();
+            
+            var @event = serializer.Deserialize(message, eventType);
+
             var eventHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IEventHandlerInvoker>();
             
             await eventHandlerInvoker.InvokeAsync(@event, headers);

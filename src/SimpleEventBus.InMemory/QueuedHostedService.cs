@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.InMemory;
 
@@ -18,15 +19,23 @@ internal class QueuedHostedService : BackgroundService
     /// The logger
     /// </summary>
     private readonly ILogger _logger;
-
+    
+    /// <summary>
+    /// The event subscriber
+    /// </summary>
+    private readonly IEventSubscriber _eventSubscriber;
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="QueuedHostedService"/> class
     /// </summary>
     /// <param name="backgroundQueue">The background queue</param>
     /// <param name="loggerFactory">The logger factory</param>
-    internal QueuedHostedService(BackgroundQueue backgroundQueue, ILoggerFactory loggerFactory)
+    /// <param name="eventSubscriber">The event subscriber</param>
+    internal QueuedHostedService(BackgroundQueue backgroundQueue, 
+                                 ILoggerFactory loggerFactory, IEventSubscriber eventSubscriber)
     {
         _backgroundQueue = backgroundQueue;
+        _eventSubscriber = eventSubscriber;
         _logger = loggerFactory.CreateLogger<QueuedHostedService>();
     }
 
@@ -42,11 +51,11 @@ internal class QueuedHostedService : BackgroundService
         {
             try
             {
-                var taskFunc = await _backgroundQueue.DequeueAsync(stoppingToken);
+                var eventData = await _backgroundQueue.DequeueAsync(stoppingToken);
                 
                 _logger.LogInformation("Executing a task from the queue.");
-                
-                await taskFunc(stoppingToken);
+
+                await _eventSubscriber.ConsumerReceived(eventData);
                 
                 _logger.LogInformation("Task executed successfully.");
                 

@@ -16,6 +16,6 @@ public interface IEventSubscriber
     /// <summary>
     /// Sets the value of the consumer received
     /// </summary>
-    Func<ReadOnlyMemory<byte>, Headers, string, Task> ConsumerReceived { set; }
+    Func<EventData, Task> ConsumerReceived { set; get; }
 
 }

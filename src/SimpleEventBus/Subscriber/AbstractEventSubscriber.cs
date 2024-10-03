@@ -16,5 +16,5 @@ public abstract class AbstractEventSubscriber : IEventSubscriber
         return SubscribeEventsAsync(eventNames);
     }
 
-    public Func<ReadOnlyMemory<byte>, Headers, string ,Task> ConsumerReceived { get; set; }
+    public Func<EventData, Task> ConsumerReceived { get; set; }
 }

@@ -12,7 +12,7 @@ namespace SimpleEventBus.RabbitMq;
 /// </summary>
 /// <seealso cref="AbstractEventPublisher"/>
 /// <seealso cref="IDisposable"/>
-public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
+public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
 {
     /// <summary>
     /// The rabbit mq option

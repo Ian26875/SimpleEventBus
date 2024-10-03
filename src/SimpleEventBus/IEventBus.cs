@@ -2,6 +2,6 @@
 
 namespace SimpleEventBus;
 
-public interface IEventBus : IEventPublisher, IDisposable
+public interface IEventBus : IEventPublisher
 {
 }
