@@ -1,4 +1,4 @@
-using SimpleEventBus.Exceptions;
+using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.Profile;
@@ -39,7 +39,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     /// <typeparam name="TErrorHandler">The error handler</typeparam>
     /// <returns>A fluent subscription builder of t event</returns>
-    public IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IHandlerExceptionHandler
+    public IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IEventExceptionHandler
     {
         Profile.AddErrorFilter(typeof(TEvent),typeof(TErrorHandler));
         return this;

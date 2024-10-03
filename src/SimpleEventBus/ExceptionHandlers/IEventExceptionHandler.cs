@@ -1,9 +1,9 @@
-namespace SimpleEventBus.Exceptions;
+namespace SimpleEventBus.ExceptionHandlers;
 
 /// <summary>
 /// The error handler interface
 /// </summary>
-public interface IHandlerExceptionHandler
+public interface IEventExceptionHandler
 {
     /// <summary>
     /// Ons the exception using the specified exception context

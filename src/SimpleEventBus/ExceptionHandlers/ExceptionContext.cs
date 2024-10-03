@@ -1,7 +1,7 @@
 using System.Runtime.ExceptionServices;
 using SimpleEventBus.Event;
 
-namespace SimpleEventBus.Exceptions;
+namespace SimpleEventBus.ExceptionHandlers;
 
 /// <summary>
 /// The exception context class
