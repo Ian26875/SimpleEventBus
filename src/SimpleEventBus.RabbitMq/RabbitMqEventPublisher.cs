@@ -74,8 +74,8 @@ public class RabbitMqEventPublisher : AbstractEventBus, IDisposable
         }
         
         var exchange = await GetOrDeclareExchangeAsync(eventContext, cancellationToken);
-
-        var routeKey = SchemaRegistry.Instance.Get<TEvent>();
+        
+        var routeKey = SchemaRegistry.Instance.GetEventName(eventContext.EventType);
         
         byte[] messageBody = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(eventContext.Event);
         

@@ -12,11 +12,19 @@ public interface ISchemaRegistry
     /// <exception cref="ArgumentException">Schema with name {eventType} and version {eventAttribute.Version} is already registered.</exception>
     /// <exception cref="ArgumentException">The event type {eventType.Name} does not have an EventAttribute.</exception>
     void Register(Type eventType);
+    
+    /// <summary>
+    /// Gets the type
+    /// </summary>
+    /// <param name="type">The type</param>
+    /// <returns>The string</returns>
+    string GetEventName(Type type);
 
     /// <summary>
-    /// Gets this instance
+    /// Gets the type using the specified type
     /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <returns>The string</returns>
-    string Get<TEvent>() where TEvent : class;
+    /// <param name="type">The type</param>
+    /// <returns>The type</returns>
+    Type GetEventType(string type);
+
 }

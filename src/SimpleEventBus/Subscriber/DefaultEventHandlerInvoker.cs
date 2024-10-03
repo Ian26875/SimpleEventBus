@@ -88,4 +88,33 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
                 throw new ArgumentOutOfRangeException();
         }
     }
+    
+
+    /// <summary>
+    /// Invokes the event
+    /// </summary>
+    /// <typeparam name="T">The </typeparam>
+    /// <param name="@event">The event</param>
+    /// <param name="headers">The headers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public async Task InvokeAsync<T>(T @event, Headers headers, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+    {
+        var eventContext = new EventContext<T>(@event, headers);
+        
+        var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(@event);
+        
+        switch (_eventBusOption.HandlerStrategy)
+        {
+            case HandlerStrategy.ForEach:
+                await ForEachInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
+                break;
+
+            case HandlerStrategy.TaskWhenAll:
+                await TaskWhenAllInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
 }

@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SimpleEventBus.ExceptionHandlers;
+using SimpleEventBus.Internal;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Subscriber;
 
@@ -22,8 +24,18 @@ public static class ServiceCollectionExtension
                                                  Action<IEventBusBuilder> configureBuilder, 
                                                  Action<EventBusOption>? configureOptions = default(Action<EventBusOption>?))
     {
+        // Subscriber
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
         services.TryAddSingleton<IEventHandlerResolver, DefaultEventHandlerResolver>();
+        
+        // Profile
+        services.TryAddSingleton<ISubscriptionProfileManager,SubscriptionProfileManager>();
+        
+        // Internal
+        services.AddSingleton<IInitializer, EventSubscribeInitializer>();
+        
+        // Exception
+        services.AddSingleton<IEventExceptionHandlerResolver, DefaultEventExceptionHandlerResolver>();
         
         var options = new EventBusOption();
         configureOptions?.Invoke(options);
@@ -33,7 +45,7 @@ public static class ServiceCollectionExtension
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);
         
-        services.AddSingleton(sp=>new SubscriptionProfileAggregator(sp.GetServices<SubscriptionProfile>()));
+       
         
         return services;
     }

@@ -8,10 +8,14 @@ namespace SimpleEventBus.Subscriber;
 public interface IEventSubscriber
 {
     /// <summary>
-    /// Registers the cancellation token
+    /// Subscribes the event names
     /// </summary>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>The value task</returns>
-    ValueTask RegisterAsync(CancellationToken cancellationToken);
-    
+    /// <param name="eventNames">The event names</param>
+    Task SubscribeAsync(List<string> eventNames);
+
+    /// <summary>
+    /// Sets the value of the consumer received
+    /// </summary>
+    Func<ReadOnlyMemory<byte>, Headers, string, Task> ConsumerReceived { set; }
+
 }

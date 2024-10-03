@@ -6,7 +6,8 @@ namespace SimpleEventBus.RabbitMq;
 
 public class RabbitMqEventSubscriber : AbstractEventSubscriber
 {
-    public RabbitMqEventSubscriber(IEventHandlerInvoker eventHandlerInvoker, IEventExceptionHandler eventExceptionHandler, ISubscriptionProfileManager subscriptionProfileManager) : base(eventHandlerInvoker, eventExceptionHandler, subscriptionProfileManager)
+    protected override Task SubscribeEventsAsync(List<string> eventNames)
     {
+        throw new NotImplementedException();
     }
 }
