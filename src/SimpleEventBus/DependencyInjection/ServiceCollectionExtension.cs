@@ -31,7 +31,6 @@ public static class ServiceCollectionExtension
         
         // Internal
         services.AddSingleton<IInitializer, EventSubscribeInitializer>();
-        services.AddSingleton<IInitializer, CheckSubscriptionProfileManager>();
         
         // Exception
         services.AddSingleton<IExceptionHandlerPipeline, ExceptionHandlerPipeline>();

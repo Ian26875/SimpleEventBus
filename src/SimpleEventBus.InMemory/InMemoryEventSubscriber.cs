@@ -5,7 +5,7 @@ namespace SimpleEventBus.InMemory;
 
 public class InMemoryEventSubscriber : AbstractEventSubscriber
 {
-    private ILogger<InMemoryEventSubscriber> _logger;
+    private readonly ILogger<InMemoryEventSubscriber> _logger;
     
     public InMemoryEventSubscriber(ILogger<InMemoryEventSubscriber> logger)
     {
