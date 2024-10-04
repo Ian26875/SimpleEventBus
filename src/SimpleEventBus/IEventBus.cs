@@ -1,6 +1,4 @@
-﻿using SimpleEventBus.Subscriber;
-
-namespace SimpleEventBus;
+﻿namespace SimpleEventBus;
 
 public interface IEventBus : IEventPublisher
 {

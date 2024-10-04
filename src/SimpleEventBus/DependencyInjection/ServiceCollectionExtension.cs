@@ -44,6 +44,8 @@ public static class ServiceCollectionExtension
         
         services.AddSingleton<ISchemaRegistry>(SchemaRegistry.Instance);
         
+        // EventBus
+       
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);
             

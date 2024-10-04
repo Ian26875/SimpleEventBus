@@ -19,10 +19,10 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DefaultEventHandlerInvoker> _logger;
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
+    
+    private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> _cachedHandlers 
+        = new ConcurrentDictionary<(Type, Type), Func<object, object, Headers, CancellationToken, Task>>();
 
-    // 缓存委托
-    private static readonly ConcurrentDictionary<Type, Func<object, object, Headers, CancellationToken, Task>> _cachedHandlers 
-        = new ConcurrentDictionary<Type, Func<object, object, Headers, CancellationToken, Task>>();
 
     public DefaultEventHandlerInvoker(IServiceProvider serviceProvider, ILogger<DefaultEventHandlerInvoker> logger, ISubscriptionProfileManager subscriptionProfileManager)
     {
@@ -61,7 +61,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
                 continue;
             }
 
-            var task = ExecuteHandlerWithExceptionHandling(eventType, handler, @event, headers, cancellationToken);
+            var task = ExecuteHandlerWithExceptionHandling(eventType, eventHandlerType, handler, @event, headers, cancellationToken);
             tasks.Add(task);
         }
 
@@ -70,17 +70,17 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 
         _logger.LogTrace($"Processed event {eventType.Name}.");
     }
-
-    /// <summary>
-    /// 封装Handler的执行并且处理异常的逻辑
-    /// </summary>
-    private async Task ExecuteHandlerWithExceptionHandling(Type eventType, object handler, object @event, Headers headers, CancellationToken cancellationToken)
+    
+    private async Task ExecuteHandlerWithExceptionHandling(Type eventType, Type eventHandlerType, object handler, object @event, Headers headers, CancellationToken cancellationToken)
     {
-        var handlerDelegate = _cachedHandlers.GetOrAdd(eventType, type => CreateHandlerDelegate(type));
+        var handlerDelegate = _cachedHandlers.GetOrAdd
+        (
+            (eventType, eventHandlerType), 
+            key => CreateHandlerDelegate(key.EventType, key.HandlerType)
+        );
 
         try
         {
-            // 调用处理程序
             await handlerDelegate(handler, @event, headers, cancellationToken);
         }
         catch (Exception exception)
@@ -91,21 +91,22 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         }
     }
 
-    private static Func<object, object, Headers, CancellationToken, Task> CreateHandlerDelegate(Type eventType)
+    private static Func<object, object, Headers, CancellationToken, Task> CreateHandlerDelegate(Type eventType, Type handlerType)
     {
+        // 查找指定类型的事件处理方法
         var eventHandlerInterfaceType = typeof(IEventHandler<>).MakeGenericType(eventType);
-        var methodInfo = eventHandlerInterfaceType.GetMethod(nameof(IEventHandler<object>.HandleAsync));
+        var methodInfo = handlerType.GetInterfaceMap(eventHandlerInterfaceType).TargetMethods.FirstOrDefault();
         if (methodInfo is null)
         {
-            throw new MissingMethodException();
+            throw new MissingMethodException($"Handler {handlerType.Name} does not implement the event handler for event {eventType.Name}");
         }
-        
+
         var handlerParam = Expression.Parameter(typeof(object), "handler");
         var eventParam = Expression.Parameter(typeof(object), "event");
         var headersParam = Expression.Parameter(typeof(Headers), "headers");
         var cancellationTokenParam = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
 
-        var castHandler = Expression.Convert(handlerParam, eventHandlerInterfaceType);
+        var castHandler = Expression.Convert(handlerParam, handlerType);
         var castEvent = Expression.Convert(eventParam, eventType);
 
         var call = Expression.Call

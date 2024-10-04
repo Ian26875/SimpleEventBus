@@ -19,8 +19,9 @@ public static class EventBusBuilderExtension
     public static IEventBusBuilder UseInMemory(this IEventBusBuilder eventBusBuilder,int capacity = 10)
     {
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>(new BackgroundQueue(capacity));
-        eventBusBuilder.Services.TryAddSingleton<IEventBus, InMemoryEventPublisher>();
-        eventBusBuilder.Services.TryAddSingleton<IEventPublisher, InMemoryEventPublisher>();
+        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();  // Register the implementation as a singleton
+        eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
         eventBusBuilder.Services.TryAddSingleton<IEventSubscriber, InMemoryEventSubscriber>();
         eventBusBuilder.Services.AddHostedService<QueuedHostedService>();
         return eventBusBuilder;
