@@ -1,4 +1,5 @@
 using SimpleEventBus.Event;
+using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
 
 namespace SimpleEventBus.InMemory;
@@ -18,13 +19,12 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// Initializes a new instance of the <see cref="InMemoryEventPublisher"/> class
     /// </summary>
     /// <param name="serializer">The serializer</param>
-    /// <param name="backgroundQueue">The background queue</param>
-    internal InMemoryEventPublisher(ISerializer serializer, 
-                                    BackgroundQueue backgroundQueue) : base(serializer)
+    /// <param name="schemaRegistry">The schema registry</param>
+    public InMemoryEventPublisher(ISerializer serializer, ISchemaRegistry schemaRegistry)
+                                : base(serializer, schemaRegistry)
     {
-        _backgroundQueue = backgroundQueue;
     }
-
+    
     /// <summary>
     /// Publishes the event using the specified event data
     /// </summary>
@@ -34,4 +34,6 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     {
         await _backgroundQueue.EnqueueAsync(eventData, cancellationToken);
     }
+
+    
 }

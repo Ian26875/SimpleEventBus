@@ -36,6 +36,11 @@ public static class ServiceCollectionExtension
         
         // Exception
         services.AddSingleton<IEventExceptionHandlerResolver, DefaultEventExceptionHandlerResolver>();
+
+        // ApplicationBootstrapper
+        services.AddSingleton<IApplicationBootstrapper, DefaultApplicationBootstrapper>();
+        
+        services.AddSingleton<IServiceScopeFactory>(p => p.GetRequiredService<IServiceScopeFactory>());
         
         var options = new EventBusOption();
         configureOptions?.Invoke(options);
@@ -44,8 +49,8 @@ public static class ServiceCollectionExtension
         
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);
-        
-       
+            
+        services.AddHostedService<DefaultApplicationBootstrapper>();
         
         return services;
     }

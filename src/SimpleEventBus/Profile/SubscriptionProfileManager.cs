@@ -1,4 +1,6 @@
-﻿namespace SimpleEventBus.Profile;
+﻿using SimpleEventBus.Schema;
+
+namespace SimpleEventBus.Profile;
 
 /// <summary>
 /// Aggregates multiple subscription profiles into a single cohesive unit.
@@ -7,18 +9,17 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
 {
     private readonly IEnumerable<SubscriptionProfile> _profiles;
 
-    private Dictionary<Type, List<Type>> EventHandlers { get; set; }
-
+    private readonly ISchemaRegistry _schemaRegistry;
     
+    private Dictionary<Type, List<Type>> EventHandlers { get; set; }
     private Dictionary<Type, List<Type>> ErrorHandlers { get; set; }
     
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SubscriptionProfileManager"/> class
-    /// </summary>
-    /// <param name="profiles">Collection of subscription profiles to aggregate</param>
-    public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles)
+    
+    public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
+                                      ISchemaRegistry schemaRegistry)
     {
         _profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
+        this._schemaRegistry = schemaRegistry;
         AggregateProfiles();
     }
 
@@ -33,6 +34,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
             {
                 foreach (var handler in pair.Value)
                 {
+                   
                     TryAddHandler(EventHandlers, pair.Key, handler);
                 }
             }
@@ -42,6 +44,11 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
                 {
                     TryAddHandler(ErrorHandlers, pair.Key, handler);
                 }
+            }
+
+            foreach (var @event in EventHandlers.Keys)
+            {
+                _schemaRegistry.Register(@event);
             }
         }
     }

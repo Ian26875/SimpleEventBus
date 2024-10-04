@@ -1,3 +1,5 @@
+using SimpleEventBus.Schema;
+
 namespace SimpleEventBus.RabbitMq
 {
     /// <summary>
@@ -8,12 +10,12 @@ namespace SimpleEventBus.RabbitMq
         /// <summary>
         /// Gets or sets the value of the exchange bindings
         /// </summary>
-        public Dictionary<Type, string> ExchangeBindings { get; set; } = new Dictionary<Type, string>();
+        public Dictionary<string, string> ExchangeBindings { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Gets or sets the value of the queue bindings
         /// </summary>
-        public Dictionary<Type, string> QueueBindings { get; set; } = new Dictionary<Type, string>();
+        public Dictionary<string, string> QueueBindings { get; set; } = new Dictionary<string, string>();
         
         /// <summary>
         /// Gets or sets the global exchange name
@@ -24,6 +26,11 @@ namespace SimpleEventBus.RabbitMq
         /// Gets or sets the global queue name
         /// </summary>
         public string GlobalQueue { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the value of the schema registry
+        /// </summary>
+        public ISchemaRegistry SchemaRegistry { get; set; }
     }
 
     /// <summary>
@@ -35,7 +42,7 @@ namespace SimpleEventBus.RabbitMq
         /// The options
         /// </summary>
         private readonly RabbitMqBindingOption _options;
-
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="EventBinder{TEvent}"/> class
         /// </summary>
@@ -52,7 +59,8 @@ namespace SimpleEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareExchange(string exchangeName)
         {
-            _options.ExchangeBindings[typeof(TEvent)] = exchangeName;
+            var eventName = _options.SchemaRegistry.GetEventName(typeof(TEvent));
+            _options.ExchangeBindings[eventName] = exchangeName;
             return this;
         }
 
@@ -63,7 +71,8 @@ namespace SimpleEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareQueue(string queueName)
         {
-            _options.QueueBindings[typeof(TEvent)] = queueName;
+            var eventName = _options.SchemaRegistry.GetEventName(typeof(TEvent));
+            _options.QueueBindings[eventName] = queueName;
             return this;
         }
     }

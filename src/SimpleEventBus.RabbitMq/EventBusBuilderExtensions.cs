@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SimpleEventBus.RabbitMq;
+using SimpleEventBus.Schema;
 
 namespace SimpleEventBus.DependencyInjection;
 
@@ -22,9 +23,21 @@ public static class EventBusBuilderExtensions
         eventBusBuilder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
         eventBusBuilder.Services.Configure(setUpOption);
-
-        eventBusBuilder.Services.Configure(setUpBindOption);
-
+        
+ 
+        eventBusBuilder.Services.PostConfigure<RabbitMqBindingOption>(option =>
+        {
+            var scopeFactory = eventBusBuilder.Services.BuildServiceProvider()
+                                              .GetRequiredService<IServiceScopeFactory>();
+            using (var scope = scopeFactory.CreateScope())
+            {
+                var schemaRegistry = scope.ServiceProvider.GetRequiredService<ISchemaRegistry>();
+                option.SchemaRegistry = schemaRegistry;
+            }
+            
+            setUpBindOption(option);
+        });
+        
         return eventBusBuilder;
     }
 

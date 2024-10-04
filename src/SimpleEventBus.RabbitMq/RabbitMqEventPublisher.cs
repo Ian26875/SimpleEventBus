@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleEventBus.Event;
 using SimpleEventBus.Schema;
+using ISerializer = SimpleEventBus.Serialization.ISerializer;
 
 namespace SimpleEventBus.RabbitMq;
 
@@ -34,22 +35,13 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// </summary>
     private IAdvancedBus AdvancedBus { get; set; }
     
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RabbitMqEventPublisher"/> class
-    /// </summary>
-    /// <param name="rabbitMqOption">The rabbit mq option</param>
-    /// <param name="rabbitMqBindingOption">The rabbit mq binding option</param>
-    /// <param name="logger">The logger</param>
-    public RabbitMqEventPublisher(IOptions<RabbitMqOption> rabbitMqOption,
-                                  IOptions<RabbitMqBindingOption> rabbitMqBindingOption, 
-                                  ILogger<RabbitMqEventPublisher> logger)
+    
+    public RabbitMqEventPublisher(ISerializer serializer, 
+                                  ISchemaRegistry schemaRegistry) 
+        : base(serializer, schemaRegistry)
     {
-        _logger = logger;
-        _rabbitMqOption = rabbitMqOption.Value;
-        _rabbitMqBindingOption = rabbitMqBindingOption.Value;
-        InitializeBus();
     }
-
+    
     /// <summary>
     /// Initializes the bus
     /// </summary>
@@ -58,56 +50,10 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
         var bus = RabbitHutch.CreateBus($"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/");
         AdvancedBus = bus.Advanced;
     }
-
-    /// <summary>
-    /// Publishes the event using the specified event context
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="eventContext">The event context</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <exception cref="ArgumentNullException"></exception>
-    protected override async Task PublishEventAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default)
+    
+    private async Task<Exchange> GetOrDeclareExchangeAsync(EventData eventData, CancellationToken cancellationToken)
     {
-        if (eventContext is null)
-        {
-            throw new ArgumentNullException(nameof(eventContext));
-        }
-        
-        var exchange = await GetOrDeclareExchangeAsync(eventContext, cancellationToken);
-        
-        var routeKey = SchemaRegistry.Instance.GetEventName(eventContext.EventType);
-        
-        byte[] messageBody = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(eventContext.Event);
-        
-        _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
-
-        _logger.LogTrace("Publishing event to RabbitMQ...");
-        
-        await AdvancedBus.PublishAsync
-        (
-            exchange,
-            routeKey, 
-            false,
-            new MessageProperties
-            {
-                DeliveryMode = DeliveryMode.Persistent,
-                Headers = eventContext.Headers,
-            },
-            messageBody,
-            cancellationToken
-        );
-    }
-
-    /// <summary>
-    /// Gets the or declare exchange using the specified event context
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="eventContext">The event context</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>The exchange</returns>
-    private async Task<Exchange> GetOrDeclareExchangeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken) where TEvent : class
-    {
-        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventContext.EventType, out var bindingExchangeName)
+        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventData.EventName, out var bindingExchangeName)
                                ? bindingExchangeName 
                                : _rabbitMqBindingOption.GlobalExchange;
 
@@ -122,13 +68,42 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
                        );
         return exchange;
     }
+    
 
+    protected override async Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (eventData is null)
+        {
+            throw new ArgumentNullException(nameof(eventData));
+        }
+        
+        var exchange = await GetOrDeclareExchangeAsync(eventData, cancellationToken);
+        
+        var routeKey = eventData.EventName;
+        
+        _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
 
-    /// <summary>
-    /// Disposes this instance
-    /// </summary>
-    public override void Dispose()
+        _logger.LogTrace("Publishing event to RabbitMQ...");
+        
+        await AdvancedBus.PublishAsync
+        (
+            exchange,
+            routeKey, 
+            false,
+            new MessageProperties
+            {
+                DeliveryMode = DeliveryMode.Persistent,
+                Headers = eventData.Headers,
+            },
+            eventData.Data,
+            cancellationToken
+        );
+    }
+
+    public void Dispose()
     {
         AdvancedBus.Dispose();
     }
+
+    
 }

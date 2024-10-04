@@ -6,7 +6,7 @@ namespace SimpleEventBus.Profile;
 /// <summary>
 /// The fluent subscription builder interface
 /// </summary>
-public interface IFluentSubscriptionBuilder<TEvent> where TEvent : class
+public interface IFluentSubscriptionBuilder<out TEvent> where TEvent : class
 {
     /// <summary>
     /// Gets the value of the current profile

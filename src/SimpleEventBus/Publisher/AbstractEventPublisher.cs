@@ -6,11 +6,14 @@ namespace SimpleEventBus;
 
 public abstract class AbstractEventPublisher : IEventBus
 {
-    private readonly ISerializer _serializer;
+    protected readonly ISerializer _serializer;
 
-    protected AbstractEventPublisher(ISerializer serializer)
+    protected readonly ISchemaRegistry _schemaRegistry;
+    
+    protected AbstractEventPublisher(ISerializer serializer, ISchemaRegistry schemaRegistry)
     {
         _serializer = serializer;
+        _schemaRegistry = schemaRegistry;
     }
 
     public Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
@@ -29,7 +32,7 @@ public abstract class AbstractEventPublisher : IEventBus
         (
             serializedData,
             headers,
-            SchemaRegistry.Instance.GetEventName(typeof(TEvent))
+            _schemaRegistry.GetEventName(typeof(TEvent))
         );
         
         return this.PublishEventAsync(eventData, cancellationToken);
