@@ -9,4 +9,9 @@ public interface ISubscriptionProfileManager
     public bool HasSubscriptionsForEvent(Type eventType);
 
     public List<Type> GetAllEventTypes();
+
+    public List<Type> GetEventHandlersForEvent(Type eventType);
+
+    public List<Type> GetErrorHandlersForEvent(Type eventType);
+
 }

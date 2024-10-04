@@ -20,9 +20,13 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// </summary>
     /// <param name="serializer">The serializer</param>
     /// <param name="schemaRegistry">The schema registry</param>
-    public InMemoryEventPublisher(ISerializer serializer, ISchemaRegistry schemaRegistry)
+    /// <param name="backgroundQueue">The background queue</param>
+    public InMemoryEventPublisher(ISerializer serializer, 
+                                  ISchemaRegistry schemaRegistry, 
+                                  BackgroundQueue backgroundQueue)
                                 : base(serializer, schemaRegistry)
     {
+        _backgroundQueue = backgroundQueue;
     }
     
     /// <summary>

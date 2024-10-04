@@ -10,9 +10,9 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     private readonly IEnumerable<SubscriptionProfile> _profiles;
 
     private readonly ISchemaRegistry _schemaRegistry;
-    
-    private Dictionary<Type, List<Type>> EventHandlers { get; set; }
-    private Dictionary<Type, List<Type>> ErrorHandlers { get; set; }
+
+    private Dictionary<Type, List<Type>> EventHandlers { get; set; } = new Dictionary<Type, List<Type>>();
+    private Dictionary<Type, List<Type>> ErrorHandlers { get; set; } = new Dictionary<Type, List<Type>>();
     
     
     public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
@@ -91,5 +91,20 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     public List<Type> GetAllEventTypes()
     {
         return this.EventHandlers.Keys.ToList();
+    }
+
+    public List<Type> GetEventHandlersForEvent(Type eventType)
+    {
+        return this.EventHandlers[eventType];
+    }
+
+    public List<Type> GetErrorHandlersForEvent(Type eventType)
+    {
+        return this.ErrorHandlers[eventType];
+    }
+
+    public List<Type> GetEventHandlersForEvent<TEvent>() where TEvent : class
+    {
+        return GetEventHandlersForEvent(typeof(TEvent));
     }
 }

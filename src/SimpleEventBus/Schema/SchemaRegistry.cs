@@ -18,14 +18,21 @@ public class SchemaRegistry : ISchemaRegistry
 
     public void Register(Type eventType)
     {
+        string eventName;
+        string eventVersion;
         var eventAttribute = eventType.GetCustomAttribute<EventAttribute>();
-        if (eventAttribute == null)
+        if (eventAttribute is null)
         {
-            throw new ArgumentException($"The event type {eventType.Name} does not have an EventAttribute.");
+            eventName = eventType.Name;
+            eventVersion = "1";
+        }
+        else
+        {
+            eventName = string.IsNullOrWhiteSpace(eventAttribute.Name) ? eventType.Name : eventAttribute.Name;
+            eventVersion = string.IsNullOrWhiteSpace(eventAttribute.Version) ? "1" : eventAttribute.Version;
         }
 
-        var eventName = string.IsNullOrWhiteSpace(eventAttribute.Name) ? eventType.Name : eventAttribute.Name;
-        var value = $"{eventName}_v{eventAttribute.Version}";
+        var value = $"{eventName}_v{eventVersion}";
 
         if (!_schemas.TryAdd(eventType, value))
         {
@@ -45,7 +52,7 @@ public class SchemaRegistry : ISchemaRegistry
         {
             return eventName;
         }
-
+        
         throw new KeyNotFoundException($"No schema registered for type {type.Name}.");
     }
 

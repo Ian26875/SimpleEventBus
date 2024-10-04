@@ -103,12 +103,6 @@ public class EventSubscribeInitializer : IInitializer
             var serviceProvider = serviceScope.ServiceProvider;
             
             var eventType = serviceProvider.GetRequiredService<ISchemaRegistry>().GetEventType(eventName);
-
-            if (_subscriptionProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
-            {
-                _logger.LogTrace("There are no subscriptions for this event.");
-                return;
-            }
             
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 

@@ -7,6 +7,11 @@ namespace SimpleEventBus.Subscriber;
 /// </summary>
 public interface IEventHandlerInvoker
 {
-
-    Task InvokeAsync<T>(T @event, Headers headers, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+    /// <summary>
+    /// Invokes the event
+    /// </summary>
+    /// <param name="event">The event</param>
+    /// <param name="headers">The headers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    Task InvokeAsync(object @event,Headers headers, CancellationToken cancellationToken = default(CancellationToken));
 }

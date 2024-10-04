@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Internal;
 using SimpleEventBus.Profile;
+using SimpleEventBus.Schema;
+using SimpleEventBus.Serialization;
 using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.DependencyInjection;
@@ -18,34 +20,30 @@ public static class ServiceCollectionExtension
     /// </summary>
     /// <param name="services">The services</param>
     /// <param name="configureBuilder">The configure builder</param>
-    /// <param name="configureOptions">The configure options</param>
     /// <returns>The services</returns>
     public static IServiceCollection AddEventBus(this IServiceCollection services, 
-                                                 Action<IEventBusBuilder> configureBuilder, 
-                                                 Action<EventBusOption>? configureOptions = default(Action<EventBusOption>?))
+                                                 Action<IEventBusBuilder> configureBuilder)
     {
         // Subscriber
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
-        services.TryAddSingleton<IEventHandlerResolver, DefaultEventHandlerResolver>();
-        
         // Profile
         services.TryAddSingleton<ISubscriptionProfileManager,SubscriptionProfileManager>();
         
         // Internal
         services.AddSingleton<IInitializer, EventSubscribeInitializer>();
+        services.AddSingleton<IInitializer, CheckSubscriptionProfileManager>();
         
         // Exception
-        services.AddSingleton<IEventExceptionHandlerResolver, DefaultEventExceptionHandlerResolver>();
-
+        services.AddSingleton<IExceptionHandlerPipeline, ExceptionHandlerPipeline>();
+        
         // ApplicationBootstrapper
         services.AddSingleton<IApplicationBootstrapper, DefaultApplicationBootstrapper>();
         
         services.AddSingleton<IServiceScopeFactory>(p => p.GetRequiredService<IServiceScopeFactory>());
+
+        services.AddSingleton<ISerializer, JsonSerializer>();
         
-        var options = new EventBusOption();
-        configureOptions?.Invoke(options);
-        
-        services.AddSingleton(options);
+        services.AddSingleton<ISchemaRegistry>(SchemaRegistry.Instance);
         
         var eventBusBuilder = new EventBusBuilder(services);
         configureBuilder(eventBusBuilder);

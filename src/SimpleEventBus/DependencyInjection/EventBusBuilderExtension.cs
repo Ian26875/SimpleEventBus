@@ -50,7 +50,7 @@ public static class EventBusBuilderExtension
                     (
                         serviceType: scanResult.InterfaceType,
                         implementationType: scanResult.HandlerType,
-                        lifetime: ServiceLifetime.Scoped
+                        lifetime: ServiceLifetime.Singleton
                     )
                 );
                 
@@ -60,7 +60,7 @@ public static class EventBusBuilderExtension
                     (
                         serviceType: scanResult.HandlerType,
                         implementationType: scanResult.HandlerType,
-                        lifetime: ServiceLifetime.Scoped
+                        lifetime: ServiceLifetime.Singleton
                     )
                 );
             }

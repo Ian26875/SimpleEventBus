@@ -18,25 +18,18 @@ internal class QueuedHostedService : BackgroundService
     /// <summary>
     /// The logger
     /// </summary>
-    private readonly ILogger _logger;
+    private readonly ILogger<QueuedHostedService> _logger;
     
     /// <summary>
     /// The event subscriber
     /// </summary>
     private readonly IEventSubscriber _eventSubscriber;
-    
-    /// <summary>
-    /// Initializes a new instance of the <see cref="QueuedHostedService"/> class
-    /// </summary>
-    /// <param name="backgroundQueue">The background queue</param>
-    /// <param name="loggerFactory">The logger factory</param>
-    /// <param name="eventSubscriber">The event subscriber</param>
-    internal QueuedHostedService(BackgroundQueue backgroundQueue, 
-                                 ILoggerFactory loggerFactory, IEventSubscriber eventSubscriber)
+
+    public QueuedHostedService(BackgroundQueue backgroundQueue, ILogger<QueuedHostedService> logger, IEventSubscriber eventSubscriber)
     {
         _backgroundQueue = backgroundQueue;
+        _logger = logger;
         _eventSubscriber = eventSubscriber;
-        _logger = loggerFactory.CreateLogger<QueuedHostedService>();
     }
 
     /// <summary>

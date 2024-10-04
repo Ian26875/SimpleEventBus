@@ -28,7 +28,7 @@ public class EventContext<TEvent> where TEvent : class
     internal EventContext(TEvent @event, Headers headers)
     {
         Event = @event;
-        EventType = typeof(TEvent);
+        EventType = @event.GetType();
         Headers = headers;
     }
 }

@@ -1,4 +1,11 @@
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SimpleEventBus.Event;
+using SimpleEventBus.ExceptionHandlers;
+using SimpleEventBus.Profile;
 using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus;
@@ -9,112 +16,114 @@ namespace SimpleEventBus;
 /// <seealso cref="IEventHandlerInvoker" />
 internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 {
-    /// <summary>
-    ///     The event bus option
-    /// </summary>
-    private readonly EventBusOption _eventBusOption;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<DefaultEventHandlerInvoker> _logger;
+    private readonly ISubscriptionProfileManager _subscriptionProfileManager;
 
-    /// <summary>
-    ///     The event handler resolver
-    /// </summary>
-    private readonly IEventHandlerResolver _eventHandlerResolver;
+    // 缓存委托
+    private static readonly ConcurrentDictionary<Type, Func<object, object, Headers, CancellationToken, Task>> _cachedHandlers 
+        = new ConcurrentDictionary<Type, Func<object, object, Headers, CancellationToken, Task>>();
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="DefaultEventHandlerInvoker" /> class
-    /// </summary>
-    /// <param name="eventBusOption">The event bus option</param>
-    /// <param name="eventHandlerResolver">The event handler resolver</param>
-    public DefaultEventHandlerInvoker(EventBusOption eventBusOption, IEventHandlerResolver eventHandlerResolver)
+    public DefaultEventHandlerInvoker(IServiceProvider serviceProvider, ILogger<DefaultEventHandlerInvoker> logger, ISubscriptionProfileManager subscriptionProfileManager)
     {
-        _eventBusOption = eventBusOption;
-        _eventHandlerResolver = eventHandlerResolver;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+        _subscriptionProfileManager = subscriptionProfileManager;
     }
-    
-    /// <summary>
-    /// Fors the each invoke event handler using the specified event context
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="eventContext">The event context</param>
-    /// <param name="eventHandlers">The event handlers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    private async Task ForEachInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
-                                                         IEnumerable<IEventHandler<TEvent>> eventHandlers,
-                                                         CancellationToken cancellationToken) where TEvent : class
+
+    public async Task InvokeAsync(object @event, Headers headers, CancellationToken cancellationToken = default)
     {
-        foreach (var eventHandler in eventHandlers)
+        if (@event is null)
         {
-            await eventHandler.HandleAsync(eventContext.Event,eventContext.Headers, cancellationToken);
+            throw new ArgumentNullException(nameof(@event));
+        }
+
+        var eventType = @event.GetType();
+
+        if (!_subscriptionProfileManager.HasSubscriptionsForEvent(eventType))
+        {
+            _logger.LogTrace("There are no subscriptions for this event.");
+            return;
+        }
+
+        var eventHandlerTypes = _subscriptionProfileManager.GetEventHandlersForEvent(eventType);
+
+        var tasks = new List<Task>();
+
+        foreach (var eventHandlerType in eventHandlerTypes)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var handler = _serviceProvider.GetRequiredService(eventHandlerType);
+            if (handler is null)
+            {
+                _logger.LogWarning($"There are no handlers for the following event: {eventType.Name}");
+                continue;
+            }
+
+            var task = ExecuteHandlerWithExceptionHandling(eventType, handler, @event, headers, cancellationToken);
+            tasks.Add(task);
+        }
+
+        await Task.Yield();
+        await Task.WhenAll(tasks);
+
+        _logger.LogTrace($"Processed event {eventType.Name}.");
+    }
+
+    /// <summary>
+    /// 封装Handler的执行并且处理异常的逻辑
+    /// </summary>
+    private async Task ExecuteHandlerWithExceptionHandling(Type eventType, object handler, object @event, Headers headers, CancellationToken cancellationToken)
+    {
+        var handlerDelegate = _cachedHandlers.GetOrAdd(eventType, type => CreateHandlerDelegate(type));
+
+        try
+        {
+            // 调用处理程序
+            await handlerDelegate(handler, @event, headers, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            var exceptionContext = new ExceptionContext(@event, headers, exception);
+            var pipeline = this._serviceProvider.GetRequiredService<IExceptionHandlerPipeline>();
+            pipeline.Execute(exceptionContext);
         }
     }
 
-    /// <summary>
-    /// Tasks the when all invoke event handler using the specified event context
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="eventContext">The event context</param>
-    /// <param name="eventHandlers">The event handlers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    private async Task TaskWhenAllInvokeEventHandler<TEvent>(EventContext<TEvent> eventContext,
-                                                             IEnumerable<IEventHandler<TEvent>> eventHandlers,
-                                                             CancellationToken cancellationToken) where TEvent : class
+    private static Func<object, object, Headers, CancellationToken, Task> CreateHandlerDelegate(Type eventType)
     {
-        await Task.WhenAll
+        var eventHandlerInterfaceType = typeof(IEventHandler<>).MakeGenericType(eventType);
+        var methodInfo = eventHandlerInterfaceType.GetMethod(nameof(IEventHandler<object>.HandleAsync));
+        if (methodInfo is null)
+        {
+            throw new MissingMethodException();
+        }
+        
+        var handlerParam = Expression.Parameter(typeof(object), "handler");
+        var eventParam = Expression.Parameter(typeof(object), "event");
+        var headersParam = Expression.Parameter(typeof(Headers), "headers");
+        var cancellationTokenParam = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
+
+        var castHandler = Expression.Convert(handlerParam, eventHandlerInterfaceType);
+        var castEvent = Expression.Convert(eventParam, eventType);
+
+        var call = Expression.Call
         (
-            eventHandlers.Select(e => e.HandleAsync(eventContext.Event,eventContext.Headers, cancellationToken))
+            castHandler,
+            methodInfo,
+            castEvent,
+            headersParam,
+            cancellationTokenParam
         );
-    }
 
-    /// <summary>
-    /// Invokes the event context
-    /// </summary>
-    /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="eventContext">The event context</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public async Task InvokeAsync<TEvent>(EventContext<TEvent> eventContext, CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
-    {
-        var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(eventContext.Event);
-        
-        switch (_eventBusOption.HandlerStrategy)
-        {
-            case HandlerStrategy.ForEach:
-                await ForEachInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
-                break;
-
-            case HandlerStrategy.TaskWhenAll:
-                await TaskWhenAllInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-    
-
-    /// <summary>
-    /// Invokes the event
-    /// </summary>
-    /// <typeparam name="T">The </typeparam>
-    /// <param name="@event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public async Task InvokeAsync<T>(T @event, Headers headers, CancellationToken cancellationToken = default(CancellationToken)) where T : class
-    {
-        var eventContext = new EventContext<T>(@event, headers);
-        
-        var eventHandlers = _eventHandlerResolver.GetHandlersForEvent(@event);
-        
-        switch (_eventBusOption.HandlerStrategy)
-        {
-            case HandlerStrategy.ForEach:
-                await ForEachInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
-                break;
-
-            case HandlerStrategy.TaskWhenAll:
-                await TaskWhenAllInvokeEventHandler(eventContext, eventHandlers, cancellationToken);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+        return Expression.Lambda<Func<object, object, Headers, CancellationToken, Task>>
+        (
+            call, 
+            handlerParam, 
+            eventParam, 
+            headersParam,
+            cancellationTokenParam
+        ).Compile();
     }
 }
