@@ -7,6 +7,7 @@ using SimpleEventBus.Event;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Subscriber;
+using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus;
 
@@ -16,17 +17,21 @@ namespace SimpleEventBus;
 /// <seealso cref="IEventHandlerInvoker" />
 internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 {
-    private readonly IServiceProvider _serviceProvider;
+    /// <summary>
+    ///     The service provider
+    /// </summary>
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<DefaultEventHandlerInvoker> _logger;
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
     
-    private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> _cachedHandlers 
+    private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> CachedHandlers 
         = new ConcurrentDictionary<(Type, Type), Func<object, object, Headers, CancellationToken, Task>>();
-
-
-    public DefaultEventHandlerInvoker(IServiceProvider serviceProvider, ILogger<DefaultEventHandlerInvoker> logger, ISubscriptionProfileManager subscriptionProfileManager)
+    
+    public DefaultEventHandlerInvoker(IServiceScopeFactory serviceScopeFactory, 
+                                      ILogger<DefaultEventHandlerInvoker> logger, 
+                                      ISubscriptionProfileManager subscriptionProfileManager)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _subscriptionProfileManager = subscriptionProfileManager;
     }
@@ -40,91 +45,61 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 
         var eventType = @event.GetType();
 
-        if (!_subscriptionProfileManager.HasSubscriptionsForEvent(eventType))
+        if (_subscriptionProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
         {
             _logger.LogTrace("There are no subscriptions for this event.");
             return;
         }
 
-        var eventHandlerTypes = _subscriptionProfileManager.GetEventHandlersForEvent(eventType);
-
+        var executors = _subscriptionProfileManager.GetEventHandlerExecutorForEvent(eventType);
+        
         var tasks = new List<Task>();
+        
+        await using var serviceScope = this._serviceScopeFactory.CreateAsyncScope();
 
-        foreach (var eventHandlerType in eventHandlerTypes)
+        var serviceProvider = serviceScope.ServiceProvider;
+        
+        foreach (var executor in executors)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            var handler = _serviceProvider.GetRequiredService(eventHandlerType);
-            if (handler is null)
-            {
-                _logger.LogWarning($"There are no handlers for the following event: {eventType.Name}");
-                continue;
-            }
-
-            var task = ExecuteHandlerWithExceptionHandling(eventType, eventHandlerType, handler, @event, headers, cancellationToken);
+            
+           
+            var task = ExecuteHandlerWithExceptionHandling(serviceProvider,executor, @event, headers, cancellationToken);
             tasks.Add(task);
         }
-
+        
         await Task.Yield();
         await Task.WhenAll(tasks);
 
         _logger.LogTrace($"Processed event {eventType.Name}.");
     }
     
-    private async Task ExecuteHandlerWithExceptionHandling(Type eventType, Type eventHandlerType, object handler, object @event, Headers headers, CancellationToken cancellationToken)
+    private async Task ExecuteHandlerWithExceptionHandling(IServiceProvider serviceProvider,
+                                                           IEventHandlerExecutor eventHandlerExecutor, 
+                                                           object @event, Headers headers, CancellationToken cancellationToken)
     {
-        var handlerDelegate = _cachedHandlers.GetOrAdd
+        var handlerInstance = serviceProvider.GetRequiredService(eventHandlerExecutor.HandlerType);
+        if (handlerInstance is null)
+        {
+            _logger.LogWarning($"There are no handlers for the following event: {eventHandlerExecutor.EventType.Name}");
+            return;
+        }
+        
+        var handlerDelegate = CachedHandlers.GetOrAdd
         (
-            (eventType, eventHandlerType), 
-            key => CreateHandlerDelegate(key.EventType, key.HandlerType)
+            (eventHandlerExecutor.EventType, eventHandlerExecutor.HandlerType), 
+            key => eventHandlerExecutor.CreateHandlerDelegate()
         );
 
         try
         {
-            await handlerDelegate(handler, @event, headers, cancellationToken);
+            await handlerDelegate(handlerInstance, @event, headers, cancellationToken);
         }
         catch (Exception exception)
         {
             var exceptionContext = new ExceptionContext(@event, headers, exception);
-            var pipeline = this._serviceProvider.GetRequiredService<IExceptionHandlerPipeline>();
+            var pipeline = serviceProvider.GetRequiredService<IExceptionHandlerPipeline>();
             pipeline.Execute(exceptionContext);
         }
-    }
-
-    private static Func<object, object, Headers, CancellationToken, Task> CreateHandlerDelegate(Type eventType, Type handlerType)
-    {
-        // 查找指定类型的事件处理方法
-        var eventHandlerInterfaceType = typeof(IEventHandler<>).MakeGenericType(eventType);
-        var methodInfo = handlerType.GetInterfaceMap(eventHandlerInterfaceType).TargetMethods.FirstOrDefault();
-        if (methodInfo is null)
-        {
-            throw new MissingMethodException($"Handler {handlerType.Name} does not implement the event handler for event {eventType.Name}");
-        }
-
-        var handlerParam = Expression.Parameter(typeof(object), "handler");
-        var eventParam = Expression.Parameter(typeof(object), "event");
-        var headersParam = Expression.Parameter(typeof(Headers), "headers");
-        var cancellationTokenParam = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
-
-        var castHandler = Expression.Convert(handlerParam, handlerType);
-        var castEvent = Expression.Convert(eventParam, eventType);
-
-        var call = Expression.Call
-        (
-            castHandler,
-            methodInfo,
-            castEvent,
-            headersParam,
-            cancellationTokenParam
-        );
-
-        return Expression.Lambda<Func<object, object, Headers, CancellationToken, Task>>
-        (
-            call, 
-            handlerParam, 
-            eventParam, 
-            headersParam,
-            cancellationTokenParam
-        ).Compile();
     }
 }

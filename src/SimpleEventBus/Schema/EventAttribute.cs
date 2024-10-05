@@ -5,40 +5,55 @@ namespace SimpleEventBus.Schema;
 /// </summary>
 /// <seealso cref="Attribute"/>
 [AttributeUsage(AttributeTargets.Class,Inherited = false)]
-public class EventAttribute : Attribute
+public sealed class EventAttribute : Attribute
 {
+    /// <summary>
+    /// The default version
+    /// </summary>
+    public const int DefaultVersion = 1;
+    
     /// <summary>
     /// Sets or gets the value of the version
     /// </summary>
-    public string Version { set; get; }
+    public string Version { get; }
 
-    public string Name { get; set; }
+    /// <summary>
+    /// Gets the value of the name
+    /// </summary>
+    public string Name { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EventAttribute"/> class
     /// </summary>
-    /// <param name="version">The version</param>
-    public EventAttribute(string version)
+    /// <param name="name">The name</param>
+    /// <param name="major">The major</param>
+    public EventAttribute(string name, int major = DefaultVersion)
     {
-        Version = version;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EventAttribute"/> class
-    /// </summary>
-    /// <param name="version">The version</param>
-    public EventAttribute(Version version)
-    {
-        Version = version.ToString();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+        }
+        
+        if (major <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(major));
+        }
+        
+        Name = name;
+        Version = major.ToString();
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EventAttribute"/> class
     /// </summary>
     /// <param name="major">The major</param>
-    /// <param name="minor">The minor</param>
-    public EventAttribute(int major, int minor)
+    public EventAttribute(int major)
     {
-        Version = new Version(major, minor).ToString();
+        if (major <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(major));
+        }
+        Name = string.Empty;
+        Version = major.ToString();
     }
 }

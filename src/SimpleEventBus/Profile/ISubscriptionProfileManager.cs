@@ -1,4 +1,6 @@
-﻿namespace SimpleEventBus.Profile;
+﻿using SimpleEventBus.Subscriber.Executors;
+
+namespace SimpleEventBus.Profile;
 
 public interface ISubscriptionProfileManager
 {
@@ -11,6 +13,8 @@ public interface ISubscriptionProfileManager
     public List<Type> GetAllEventTypes();
 
     public List<Type> GetEventHandlersForEvent(Type eventType);
+    
+    public List<IEventHandlerExecutor> GetEventHandlerExecutorForEvent(Type eventType);
 
     public List<Type> GetErrorHandlersForEvent(Type eventType);
 
