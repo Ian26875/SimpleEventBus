@@ -1,36 +1,71 @@
+using SimpleEventBus.Subscriber.Executors;
+
 namespace SimpleEventBus.Profile;
 
 /// <summary>
-/// The base class for subscription profiles.
+///     The base class for subscription profiles.
 /// </summary>
 public abstract class SubscriptionProfile
 {
     /// <summary>
-    /// Maps event types to their list of handler types.
+    ///     Initializes a new instance of the <see cref="SubscriptionProfile" /> class
+    /// </summary>
+    protected SubscriptionProfile()
+    {
+        EventHandlers = new Dictionary<Type, List<Type>>();
+        ErrorHandlers = new Dictionary<Type, List<Type>>();
+        EventHandlerExecutors = new Dictionary<Type, List<IEventHandlerExecutor>>();
+    }
+
+    /// <summary>
+    ///     Maps event types to their list of handler types.
     /// </summary>
     internal Dictionary<Type, List<Type>> EventHandlers { get; }
 
     /// <summary>
-    /// Gets the value of the error handlers
+    /// Gets the value of the event handler executors
+    /// </summary>
+    internal Dictionary<Type, List<IEventHandlerExecutor>> EventHandlerExecutors { get; }
+
+    /// <summary>
+    ///     Gets the value of the error handlers
     /// </summary>
     internal Dictionary<Type, List<Type>> ErrorHandlers { get; }
-    
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="SubscriptionProfile"/> class
+    /// Adds the subscription using the specified event type
     /// </summary>
-    protected SubscriptionProfile()
+    /// <param name="eventType">The event type</param>
+    /// <param name="eventHandlerExecutor">The event handler executor</param>
+    /// <exception cref="ArgumentException">Handler type '{eventHandlerExecutor}' is already registered for event type '{eventType.FullName}'.</exception>
+    internal void AddSubscription(Type eventType, IEventHandlerExecutor eventHandlerExecutor)
     {
-        this.EventHandlers = new Dictionary<Type, List<Type>>();
-        this.ErrorHandlers = new Dictionary<Type, List<Type>>();
+        if (EventHandlerExecutors.TryGetValue(eventType, out var handlersList).Equals(false))
+        {
+            handlersList = new List<IEventHandlerExecutor>();
+            EventHandlerExecutors[eventType] = handlersList;
+        }
+
+        if (handlersList.Contains(eventHandlerExecutor))
+        {
+            throw new ArgumentException(
+                $"Handler type '{eventHandlerExecutor}' is already registered for event type '{eventType.FullName}'.");
+            
+        }
+
+        handlersList.Add(eventHandlerExecutor);
     }
 
     /// <summary>
-    /// Creates the subscription using the specified event type
+    ///     Creates the subscription using the specified event type
     /// </summary>
     /// <param name="eventType">The event type</param>
     /// <param name="eventHandlerType">The event handler type</param>
-    /// <exception cref="ArgumentException">Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
-    internal void AddSubscription(Type eventType,Type eventHandlerType)
+    /// <exception cref="ArgumentException">
+    ///     Handler type '{eventHandlerType.FullName}' is already registered for event type
+    ///     '{eventType.FullName}'.
+    /// </exception>
+    internal void AddSubscription(Type eventType, Type eventHandlerType)
     {
         if (EventHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {
@@ -39,19 +74,21 @@ public abstract class SubscriptionProfile
         }
 
         if (handlersList.Contains(eventHandlerType))
-        {
-            throw new ArgumentException($"Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
-        }
+            throw new ArgumentException(
+                $"Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
 
         handlersList.Add(eventHandlerType);
     }
 
     /// <summary>
-    /// Creates the error handler using the specified event type
+    ///     Creates the error handler using the specified event type
     /// </summary>
     /// <param name="eventType">The event type</param>
     /// <param name="errorHandlerType">The error handler type</param>
-    /// <exception cref="ArgumentException">Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.</exception>
+    /// <exception cref="ArgumentException">
+    ///     Handler type '{errorHandlerType.FullName}' is already registered for event type
+    ///     '{eventType.FullName}'.
+    /// </exception>
     internal void AddErrorFilter(Type eventType, Type errorHandlerType)
     {
         if (ErrorHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
@@ -61,9 +98,8 @@ public abstract class SubscriptionProfile
         }
 
         if (handlersList.Contains(errorHandlerType))
-        {
-            throw new ArgumentException($"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
-        }
+            throw new ArgumentException(
+                $"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
 
         handlersList.Add(errorHandlerType);
     }

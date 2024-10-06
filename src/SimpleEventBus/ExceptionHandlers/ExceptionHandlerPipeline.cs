@@ -4,13 +4,28 @@ using SimpleEventBus.Profile;
 
 namespace SimpleEventBus.ExceptionHandlers;
 
+/// <summary>
+/// The exception handler pipeline class
+/// </summary>
+/// <seealso cref="IExceptionHandlerPipeline"/>
 public class ExceptionHandlerPipeline : IExceptionHandlerPipeline
 {
     
+    /// <summary>
+    /// The subscription profile manager
+    /// </summary>
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
 
+    /// <summary>
+    /// The service scope factory
+    /// </summary>
     private readonly IServiceScopeFactory _serviceScopeFactory;
     
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExceptionHandlerPipeline"/> class
+    /// </summary>
+    /// <param name="subscriptionProfileManager">The subscription profile manager</param>
+    /// <param name="serviceScopeFactory">The service scope factory</param>
     public ExceptionHandlerPipeline(ISubscriptionProfileManager subscriptionProfileManager,
                                     IServiceScopeFactory serviceScopeFactory)
     {
@@ -18,6 +33,10 @@ public class ExceptionHandlerPipeline : IExceptionHandlerPipeline
         _serviceScopeFactory = serviceScopeFactory;
     }
 
+    /// <summary>
+    /// Executes the context
+    /// </summary>
+    /// <param name="context">The context</param>
     public void Execute(ExceptionContext context)
     {
         var errorHandlerTypes = _subscriptionProfileManager.GetErrorHandlersForEvent(context.Event.GetType());

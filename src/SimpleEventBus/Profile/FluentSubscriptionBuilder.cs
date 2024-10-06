@@ -1,5 +1,8 @@
+using System.Linq.Expressions;
+using SimpleEventBus.Event;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Subscriber;
+using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus.Profile;
 
@@ -30,7 +33,13 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// <returns>A fluent subscription builder of t event</returns>
     public IFluentSubscriptionBuilder<TEvent> ToDo<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
     {
-        Profile.AddSubscription(typeof(TEvent),typeof(TEventHandler));
+        Profile.AddSubscription(typeof(TEvent),new InterfaceEventHandlerExecutor<TEvent,TEventHandler>());
+        return this;
+    }
+
+    public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, Headers, CancellationToken, Task>>> expression) where THandler : class
+    {
+        Profile.AddSubscription(typeof(TEvent),new ExpressionEventHandlerExecutor<TEvent,THandler>(expression));
         return this;
     }
 

@@ -1,0 +1,6 @@
+﻿services:
+  aspnetcore.inmemorysample:
+    image: aspnetcore.inmemorysample
+    build:
+      context: .
+      dockerfile: AspNetCore.InMemorySample/Dockerfile

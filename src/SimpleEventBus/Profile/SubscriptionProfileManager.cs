@@ -1,4 +1,5 @@
 ﻿using SimpleEventBus.Schema;
+using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus.Profile;
 
@@ -13,6 +14,9 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
 
     private Dictionary<Type, List<Type>> EventHandlers { get; set; } = new Dictionary<Type, List<Type>>();
     private Dictionary<Type, List<Type>> ErrorHandlers { get; set; } = new Dictionary<Type, List<Type>>();
+
+    private Dictionary<Type, List<IEventHandlerExecutor>> EventHandlerExecutors =
+        new Dictionary<Type, List<IEventHandlerExecutor>>();
     
     
     public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
@@ -38,6 +42,14 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
                     TryAddHandler(EventHandlers, pair.Key, handler);
                 }
             }
+            foreach (var pair in profile.EventHandlerExecutors)
+            {
+                foreach (var handler in pair.Value)
+                {
+                    TryAddExecutors(EventHandlerExecutors, pair.Key, handler);
+                }
+            }
+            
             foreach (var pair in profile.ErrorHandlers)
             {
                 foreach (var handler in pair.Value)
@@ -47,6 +59,11 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
             }
 
             foreach (var @event in EventHandlers.Keys)
+            {
+                _schemaRegistry.Register(@event);
+            }
+            
+            foreach (var @event in EventHandlerExecutors.Keys)
             {
                 _schemaRegistry.Register(@event);
             }
@@ -73,6 +90,20 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
         }
     }
 
+    private void TryAddExecutors(Dictionary<Type, List<IEventHandlerExecutor>> handlersDictionary, Type eventType, IEventHandlerExecutor handlerType)
+    {
+        if (!handlersDictionary.TryGetValue(eventType, out var handlersList))
+        {
+            handlersList = new List<IEventHandlerExecutor>();
+            handlersDictionary[eventType] = handlersList;
+        }
+
+        if (!handlersList.Contains(handlerType))
+        {
+            handlersList.Add(handlerType);
+        }
+    }
+    
     public Dictionary<Type, List<Type>> GetAllEventHandlers()
     {
         return this.EventHandlers;
@@ -85,7 +116,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
 
     public bool HasSubscriptionsForEvent(Type eventType)
     {
-        return this.EventHandlers.ContainsKey(eventType);
+        return this.EventHandlers.ContainsKey(eventType)|| this.EventHandlerExecutors.ContainsKey(eventType);
     }
 
     public List<Type> GetAllEventTypes()
@@ -96,6 +127,11 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     public List<Type> GetEventHandlersForEvent(Type eventType)
     {
         return this.EventHandlers[eventType];
+    }
+
+    public List<IEventHandlerExecutor> GetEventHandlerExecutorForEvent(Type eventType)
+    {
+        return this.EventHandlerExecutors[eventType];
     }
 
     public List<Type> GetErrorHandlersForEvent(Type eventType)
