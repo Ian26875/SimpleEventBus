@@ -8,7 +8,7 @@ Provider Simple event bus and fluent settings
 ## Publish
 
 
-```csharp!
+```csharp
 
 
 private IEventPublisher _eventPublisher;
@@ -30,11 +30,17 @@ public async Task<IActionResult> Index()
 ## Subscripe
 
 
-```csharp!
+```csharp
 public class OrderPlacedEvent 
 {
     
 }
+```
+
+
+There are two ways to implement an EventHandler. The first is by implementing the IEventHandler interface, and the second is by implementing a delegate method.
+
+```csharp
 
 public class EmailService : IEventHandler<OrderPlacedEvent> 
 {
