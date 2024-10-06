@@ -40,6 +40,8 @@ public class OrderPlacedEvent
 
 There are two ways to implement an EventHandler. The first is by implementing the IEventHandler interface, and the second is by implementing a delegate method.
 
+### Implementing the `IEventHandler<TEvent>` interface
+
 ```csharp
 
 public class EmailService : IEventHandler<OrderPlacedEvent> 
@@ -52,52 +54,53 @@ public class EmailService : IEventHandler<OrderPlacedEvent>
     }
 }
 
-
-public class SmsService : IEventHandler<OrderPlacedEvent> 
-{
-
-    public Task HandleAsync(OrderPlacedEvent @event,Headers headers, CancellationToken cancellationToken)
-    {
-    
-    
-    }
-}
-
-
-public class ExceptionLoggingHandler : IHandlerExceptionHandler
-{
-    private ILogger<LoggingService> _logger;
-
-    public ExceptionLoggingHandler(ILogger<LoggingService> logger)
-    {
-        this._logger = logger;
-    }
-
-    public void OnException(ErrorContext errorContext)
-    {
-        
-    }
-}
 ```
-
-
 
 `CustomProfile.cs`
 
-```csharp!
+```csharp
 
-public class CustomProfile : SubscriptionProfile
+public class OrderSubscriptionProfile : SubscriptionProfile
 {
     public CustomProfile()
     {
         WhenOccurs<OrderPlacedEvent>().ToDo<EmailService>() 
-                                      .ToDo<SmsService>()
                                       .CatchExceptionToDo<ExceptionLoggingHandler>();
     }
 }
+```
 
+### Implementing the `Func<object,IDictionary<string,object>,CancellationToken>` method
+
+```csharp
+
+public class EmailService : IEmailService
+{
+
+	public Task SendAsync(OrderPlacedEvent @event, IDictionary<string,object> headers, CancellationToken cancellationToken)
+	{
+		// 
+	}
+}
 
 ```
+
+`CustomProfile.cs`
+
+```csharp
+
+public class OrderSubscriptionProfile : SubscriptionProfile
+{
+    public CustomProfile()
+    {
+        WhenOccurs<OrderPlacedEvent>().ToDo<IEmailService>(s=>s.SendAsync) 
+                                      .CatchExceptionToDo<ExceptionLoggingHandler>();
+    }
+}
+```
+
+
+
 
 
 --- 
