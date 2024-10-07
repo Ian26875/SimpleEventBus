@@ -8,7 +8,7 @@ namespace SimpleEventBus.Subscriber.Executors;
 /// The expression event handler executor class
 /// </summary>
 /// <seealso cref="IEventHandlerExecutor"/>
-public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExecutor where THandler : class 
+public class ExpressionEventHandlerExecutor<TEvent, THandler> : IEventHandlerExecutor where THandler : class 
                                                                                      where TEvent : class
 {
     /// <summary>
@@ -54,41 +54,34 @@ public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExec
                 return handlerFunc(typedEvent, headers, cancellationToken);
             }
 
-            throw new ArgumentException("Handler or event type mismatch");
+            throw new ArgumentException("The handler or event type does not match.");
         };
     }
 
     private static MethodInfo GetMethodInfo(Expression method)
     {
-        // 檢查是否為 Lambda 表達式
         if (method is not LambdaExpression lambda)
         {
-            throw new ArgumentException("參數不是有效的 Lambda 表達式。");
+            throw new ArgumentException("The argument is not a valid Lambda expression.");
         }
-
-        // 取得表達式的主體部分
-        Expression expressionBody = lambda.Body;
-    
-        // 處理類型轉換表達式（例如 (c => (object)c.Method)）
-        if (expressionBody is UnaryExpression unaryExpression && unaryExpression.NodeType == ExpressionType.Convert)
+        
+        var expressionBody = lambda.Body;
+        
+        if (expressionBody is UnaryExpression { NodeType: ExpressionType.Convert } unaryExpression)
         {
             expressionBody = unaryExpression.Operand;
         }
-
-        // 確認主體是否為方法呼叫表達式
+        
         if (expressionBody is not MethodCallExpression methodCall)
         {
-            throw new ArgumentException("該表達式的格式不正確 (應該是 c => c.Method)。");
+            throw new ArgumentException("The format of the expression is incorrect (should be c => c.Method).");
         }
-
-        // 從常數表達式中取得方法資訊
-        if (methodCall.Object is ConstantExpression constantExpression && constantExpression.Value is MethodInfo methodInfo)
+        
+        if (methodCall.Object is ConstantExpression { Value: MethodInfo methodInfo })
         {
             return methodInfo;
         }
 
-        throw new ArgumentException("無法從表達式中取得方法資訊。");
+        throw new ArgumentException("Unable to retrieve method information from the expression.");
     }
-
-
 }

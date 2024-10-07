@@ -38,11 +38,21 @@ public class InterfaceEventHandlerExecutor<TEvent,THandler> : IEventHandlerExecu
         MethodInfo = GetMethodInfo(EventType);
     }
     
+    /// <summary>
+    /// Creates the handler delegate
+    /// </summary>
+    /// <returns>A func of object and object and headers and cancellation token and task</returns>
     public Func<object, object, Headers, CancellationToken, Task> CreateHandlerDelegate()
     {
         return CreateDelegate(HandlerType, EventType, MethodInfo);
     }
     
+    /// <summary>
+    /// Gets the method info using the specified event type
+    /// </summary>
+    /// <param name="eventType">The event type</param>
+    /// <exception cref="MissingMemberException">{eventHandlerInterfaceType} miss 'HandlerAsync' method.</exception>
+    /// <returns>The method info</returns>
     private static MethodInfo GetMethodInfo(Type eventType)
     {
         var eventHandlerInterfaceType = typeof(IEventHandler<>).MakeGenericType(eventType);
