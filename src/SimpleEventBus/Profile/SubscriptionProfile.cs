@@ -20,17 +20,17 @@ public abstract class SubscriptionProfile
     /// <summary>
     ///     Maps event types to their list of handler types.
     /// </summary>
-    internal Dictionary<Type, List<Type>> EventHandlers { get; }
+    public Dictionary<Type, List<Type>> EventHandlers { get; }
 
     /// <summary>
     /// Gets the value of the event handler executors
     /// </summary>
-    internal Dictionary<Type, List<IEventHandlerExecutor>> EventHandlerExecutors { get; }
+    public Dictionary<Type, List<IEventHandlerExecutor>> EventHandlerExecutors { get; }
 
     /// <summary>
     ///     Gets the value of the error handlers
     /// </summary>
-    internal Dictionary<Type, List<Type>> ErrorHandlers { get; }
+    public Dictionary<Type, List<Type>> ErrorHandlers { get; }
 
     /// <summary>
     /// Adds the subscription using the specified event type
@@ -38,7 +38,7 @@ public abstract class SubscriptionProfile
     /// <param name="eventType">The event type</param>
     /// <param name="eventHandlerExecutor">The event handler executor</param>
     /// <exception cref="ArgumentException">Handler type '{eventHandlerExecutor}' is already registered for event type '{eventType.FullName}'.</exception>
-    internal void AddSubscription(Type eventType, IEventHandlerExecutor eventHandlerExecutor)
+    public void AddSubscription(Type eventType, IEventHandlerExecutor eventHandlerExecutor)
     {
         if (EventHandlerExecutors.TryGetValue(eventType, out var handlersList).Equals(false))
         {
@@ -65,7 +65,7 @@ public abstract class SubscriptionProfile
     ///     Handler type '{eventHandlerType.FullName}' is already registered for event type
     ///     '{eventType.FullName}'.
     /// </exception>
-    internal void AddSubscription(Type eventType, Type eventHandlerType)
+    public void AddSubscription(Type eventType, Type eventHandlerType)
     {
         if (EventHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {
@@ -89,7 +89,7 @@ public abstract class SubscriptionProfile
     ///     Handler type '{errorHandlerType.FullName}' is already registered for event type
     ///     '{eventType.FullName}'.
     /// </exception>
-    internal void AddErrorFilter(Type eventType, Type errorHandlerType)
+    public void AddErrorFilter(Type eventType, Type errorHandlerType)
     {
         if (ErrorHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
         {

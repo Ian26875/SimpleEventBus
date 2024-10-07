@@ -15,7 +15,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// Initializes a new instance of the <see cref="FluentSubscriptionBuilder{TEvent}"/> class
     /// </summary>
     /// <param name="subscriptionProfile">The subscription profile</param>
-    internal FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
+    public FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
     {
         this.Profile = subscriptionProfile;
     }
@@ -37,6 +37,12 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
         return this;
     }
 
+    /// <summary>
+    /// Returns the do using the specified expression
+    /// </summary>
+    /// <typeparam name="THandler">The handler</typeparam>
+    /// <param name="expression">The expression</param>
+    /// <returns>A fluent subscription builder of t event</returns>
     public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, Headers, CancellationToken, Task>>> expression) where THandler : class
     {
         Profile.AddSubscription(typeof(TEvent),new ExpressionEventHandlerExecutor<TEvent,THandler>(expression));
