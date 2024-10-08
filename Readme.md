@@ -91,7 +91,7 @@ public async Task<IActionResult> Index()
 
 There are two ways to implement an EventHandler. The first is by implementing the IEventHandler interface, and the second is by implementing a delegate method.
 
-### Implementing the `SimpleEventBus.IEventHandler<TEvent>` interface
+### 1.Implementing the `SimpleEventBus.IEventHandler<TEvent>` interface
 
 ```csharp
 
@@ -141,7 +141,7 @@ public class OrderSubscriptionProfile : SubscriptionProfile
 
 
 
-### Implementing the `Func<object,IDictionary<string,object>,CancellationToken>` method
+### 2.Implementing the `Func<object,IDictionary<string,object>,CancellationToken>` method
 
 ```csharp
 
