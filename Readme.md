@@ -36,6 +36,26 @@ builder.Services.AddEventBus
 
 builder.Services.AddControllers();    
 ```
+or
+
+```csharp
+
+```csharp
+
+builder.Services.AddEventBus
+(
+    o => o.UseInMemory()
+          .AddProfile
+          (
+                p => p.WhenOccurs<OrderPlacedEvent>().ToDo<EmailService>() 
+                                                .ToDo<SmsService>();
+          )
+          .AddHandlersFromAssemblies(typeof(Program).Assembly);
+);
+
+builder.Services.AddControllers();    
+```
+
 
 ### Publisher
 
