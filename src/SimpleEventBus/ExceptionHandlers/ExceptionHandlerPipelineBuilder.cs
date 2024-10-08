@@ -12,21 +12,7 @@ public class ExceptionHandlerPipelineBuilder : IExceptionHandlerPipelineBuilder
     /// The components
     /// </summary>
     private readonly List<Func<ExceptionContextHandlerDelegate, ExceptionContextHandlerDelegate>> _components = new();
-
-    /// <summary>
-    /// The service provider
-    /// </summary>
-    private readonly IServiceProvider _serviceProvider;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ExceptionHandlerPipelineBuilder"/> class
-    /// </summary>
-    /// <param name="serviceProvider">The service provider</param>
-    public ExceptionHandlerPipelineBuilder(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
+    
     /// <summary>
     /// Uses the exception handler
     /// </summary>
@@ -37,26 +23,7 @@ public class ExceptionHandlerPipelineBuilder : IExceptionHandlerPipelineBuilder
         _components.Add(exceptionHandler);
         return this;
     }
-
-    /// <summary>
-    /// Uses this instance
-    /// </summary>
-    /// <typeparam name="TExceptionContextHandler">The exception context handler</typeparam>
-    /// <returns>The exception handler pipeline builder</returns>
-    public IExceptionHandlerPipelineBuilder Use<TExceptionContextHandler>() where TExceptionContextHandler : IExceptionContextHandler
-    {
-        _components.Add(next => async context =>
-        {
-            var handler = (TExceptionContextHandler)_serviceProvider.GetRequiredService(typeof(TExceptionContextHandler));
-            
-            await handler.InvokeAsync(context);
-            
-            await next(context);
-        });
-
-        return this;
-    }
-
+    
     /// <summary>
     /// Builds this instance
     /// </summary>

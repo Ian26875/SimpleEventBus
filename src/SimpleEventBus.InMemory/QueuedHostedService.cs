@@ -44,14 +44,7 @@ internal class QueuedHostedService : BackgroundService
         {
             try
             {
-                var eventData = await _backgroundQueue.DequeueAsync(stoppingToken);
-                
-                _logger.LogInformation("Executing a task from the queue.");
-
-                await _eventSubscriber.ConsumerReceived(eventData);
-                
-                _logger.LogInformation("Task executed successfully.");
-                
+                await this._eventSubscriber.ReceiveAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -62,7 +55,6 @@ internal class QueuedHostedService : BackgroundService
                 _logger.LogError(ex, "Error occurred executing task.");
             }
         }
-
-        _logger.LogInformation("Queued Hosted Service is stopping.");
+        
     }
 }

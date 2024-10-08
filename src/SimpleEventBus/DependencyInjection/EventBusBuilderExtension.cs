@@ -23,6 +23,23 @@ public static class EventBusBuilderExtension
         return eventBusBuilder;
     }
     
+    /// <summary>
+    /// Adds the profile using the specified event bus builder
+    /// </summary>
+    /// <param name="eventBusBuilder">The event bus builder</param>
+    /// <param name="subscriptionProfileSetUp">The subscription profile set up</param>
+    /// <returns>The event bus builder</returns>
+    public static IEventBusBuilder AddProfile(this IEventBusBuilder eventBusBuilder,Action<SubscriptionProfile> subscriptionProfileSetUp)
+    {
+        var profile = new InternalSubscriptionProfile();
+        subscriptionProfileSetUp(profile);
+        
+        eventBusBuilder.Services.AddSingleton<SubscriptionProfile>(profile);
+        
+        return eventBusBuilder;
+    }
+    
+    
       /// <summary>
         /// Adds the handlers from assemblies using the specified event bus builder
         /// </summary>

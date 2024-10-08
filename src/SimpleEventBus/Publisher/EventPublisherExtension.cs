@@ -14,8 +14,9 @@ public static class EventPublisherExtension
     /// <param name="eventPublisher">The event bus</param>
     /// <param name="event">The event</param>
     /// <param name="headers">The headers</param>
-    public static void Publish<TEvent>(IEventPublisher eventPublisher, TEvent @event, Headers? headers = null) where TEvent : class
+    public static void Publish<TEvent>(this IEventPublisher eventPublisher, TEvent @event, Headers? headers = null) where TEvent : class
     {
         eventPublisher.PublishAsync(@event, headers).ConfigureAwait(false).GetAwaiter().GetResult();
     }
+    
 }

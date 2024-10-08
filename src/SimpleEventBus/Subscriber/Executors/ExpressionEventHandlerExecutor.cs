@@ -32,10 +32,12 @@ public class ExpressionEventHandlerExecutor<TEvent, THandler> : IEventHandlerExe
     /// Gets the value of the handler type
     /// </summary>
     public Type HandlerType { get; }
+    
     /// <summary>
     /// Gets the value of the event type
     /// </summary>
     public Type EventType { get; }
+    
     /// <summary>
     /// Gets the value of the method info
     /// </summary>
@@ -58,6 +60,14 @@ public class ExpressionEventHandlerExecutor<TEvent, THandler> : IEventHandlerExe
         };
     }
 
+    /// <summary>
+    /// Gets the method info using the specified method
+    /// </summary>
+    /// <param name="method">The method</param>
+    /// <exception cref="ArgumentException">The argument is not a valid Lambda expression.</exception>
+    /// <exception cref="ArgumentException">The format of the expression is incorrect (should be c =&gt; c.Method).</exception>
+    /// <exception cref="ArgumentException">Unable to retrieve method information from the expression.</exception>
+    /// <returns>The method info</returns>
     private static MethodInfo GetMethodInfo(Expression method)
     {
         if (method is not LambdaExpression lambda)

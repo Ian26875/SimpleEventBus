@@ -1,3 +1,4 @@
+using System.Text;
 using SimpleEventBus.Event;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
@@ -36,7 +37,7 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// <param name="cancellationToken">The cancellation token</param>
     protected override async Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken))
     {
-        await _backgroundQueue.EnqueueAsync(eventData, cancellationToken);
+        await _backgroundQueue.SendAsync(eventData.Data, eventData.Headers,eventData.EventName, cancellationToken: cancellationToken);
     }
 
     
