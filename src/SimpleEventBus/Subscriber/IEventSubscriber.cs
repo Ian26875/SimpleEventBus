@@ -15,7 +15,7 @@ public interface IEventSubscriber
     Task SubscribeAsync(List<string> eventNames,CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// Sets the value of the consumer received
+    /// consumer received
     /// </summary>
     Func<EventData, Task> ConsumerReceived { set; get; }
 

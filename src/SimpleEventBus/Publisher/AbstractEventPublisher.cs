@@ -35,11 +35,12 @@ public abstract class AbstractEventPublisher : IEventBus
     /// Publishes the event
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
-    /// <param name="@event">The event</param>
+    /// <param name="event">The event</param>
     /// <param name="headers">The headers</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
+    public Task PublishAsync<TEvent>(TEvent @event, 
+                                     Headers? headers = null,
                                      CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
     {
         if (@event is null)

@@ -124,7 +124,7 @@ Create `OrderSubscriptionProfile.cs`
 
 public class OrderSubscriptionProfile : SubscriptionProfile
 {
-    public CustomProfile()
+    public OrderSubscriptionProfile()
     {
         WhenOccurs<OrderPlacedEvent>().ToDo<EmailService>() 
                                       .ToDo<SmsService>();

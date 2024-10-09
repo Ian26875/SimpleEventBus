@@ -1,6 +1,6 @@
 using SimpleEventBus.Subscriber.Executors;
 
-namespace SimpleEventBus.Profile;
+namespace SimpleEventBus;
 
 /// <summary>
 ///     The base class for subscription profiles.
