@@ -98,8 +98,9 @@ public abstract class SubscriptionProfile
         }
 
         if (handlersList.Contains(errorHandlerType))
-            throw new ArgumentException(
-                $"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
+        {
+            throw new ArgumentException($"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
+        }
 
         handlersList.Add(errorHandlerType);
     }

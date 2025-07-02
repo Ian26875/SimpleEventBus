@@ -22,15 +22,16 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
                                       ISchemaRegistry schemaRegistry)
     {
-        _profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
-        this._schemaRegistry = schemaRegistry;
-        AggregateProfiles();
+        this._profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
+        this._schemaRegistry = schemaRegistry ?? throw new ArgumentNullException(nameof(schemaRegistry));
     }
 
+    
+    
     /// <summary>
     /// Aggregates subscription and error handler information from multiple profiles.
     /// </summary>
-    private void AggregateProfiles()
+    public void Initialize()
     {
         foreach (var profile in _profiles)
         {

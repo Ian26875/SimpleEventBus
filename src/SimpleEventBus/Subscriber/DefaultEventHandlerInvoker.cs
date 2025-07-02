@@ -21,12 +21,29 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     ///     The service provider
     /// </summary>
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    
+    /// <summary>
+    /// The logger
+    /// </summary>
     private readonly ILogger<DefaultEventHandlerInvoker> _logger;
+    
+    /// <summary>
+    /// The subscription profile manager
+    /// </summary>
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
     
+    /// <summary>
+    /// The task
+    /// </summary>
     private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> CachedHandlers 
         = new ConcurrentDictionary<(Type, Type), Func<object, object, Headers, CancellationToken, Task>>();
     
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DefaultEventHandlerInvoker"/> class
+    /// </summary>
+    /// <param name="serviceScopeFactory">The service scope factory</param>
+    /// <param name="logger">The logger</param>
+    /// <param name="subscriptionProfileManager">The subscription profile manager</param>
     public DefaultEventHandlerInvoker(IServiceScopeFactory serviceScopeFactory, 
                                       ILogger<DefaultEventHandlerInvoker> logger, 
                                       ISubscriptionProfileManager subscriptionProfileManager)
@@ -36,6 +53,13 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         _subscriptionProfileManager = subscriptionProfileManager;
     }
 
+    /// <summary>
+    /// Invokes the event
+    /// </summary>
+    /// <param name="@event">The event</param>
+    /// <param name="headers">The headers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <exception cref="ArgumentNullException"></exception>
     public async Task InvokeAsync(object @event, Headers headers, CancellationToken cancellationToken = default)
     {
         if (@event is null)
@@ -74,11 +98,21 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         _logger.LogTrace($"Processed event {eventType.Name}.");
     }
     
+    /// <summary>
+    /// Executes the handler with exception handling using the specified service provider
+    /// </summary>
+    /// <param name="serviceProvider">The service provider</param>
+    /// <param name="eventHandlerExecutor">The event handler executor</param>
+    /// <param name="event">The event</param>
+    /// <param name="headers">The headers</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     private async Task ExecuteHandlerWithExceptionHandling(IServiceProvider serviceProvider,
                                                            IEventHandlerExecutor eventHandlerExecutor, 
-                                                           object @event, Headers headers, CancellationToken cancellationToken)
+                                                           object @event, 
+                                                           Headers headers, 
+                                                           CancellationToken cancellationToken)
     {
-        var handlerInstance = serviceProvider.GetRequiredService(eventHandlerExecutor.HandlerType);
+        var handlerInstance = serviceProvider.GetService(eventHandlerExecutor.HandlerType);
         if (handlerInstance is null)
         {
             _logger.LogWarning($"There are no handlers for the following event: {eventHandlerExecutor.EventType.Name}");
@@ -99,7 +133,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         {
             var exceptionContext = new ExceptionContext(@event, headers, exception);
             var pipeline = serviceProvider.GetRequiredService<IExceptionHandlerPipeline>();
-            pipeline.Execute(exceptionContext);
+            await pipeline.ExecuteAsync(exceptionContext,cancellationToken);
         }
     }
 }
