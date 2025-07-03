@@ -5,27 +5,28 @@ using SimpleEventBus.Subscriber;
 namespace SimpleEventBus.InMemory;
 
 /// <summary>
-/// The queued hosted service class
+///     The queued hosted service class
 /// </summary>
-/// <seealso cref="BackgroundService"/>
+/// <seealso cref="BackgroundService" />
 internal class QueuedHostedService : BackgroundService
 {
     /// <summary>
-    /// The background queue
+    ///     The background queue
     /// </summary>
     private readonly BackgroundQueue _backgroundQueue;
-    
+
     /// <summary>
-    /// The logger
-    /// </summary>
-    private readonly ILogger<QueuedHostedService> _logger;
-    
-    /// <summary>
-    /// The event subscriber
+    ///     The event subscriber
     /// </summary>
     private readonly IEventSubscriber _eventSubscriber;
 
-    public QueuedHostedService(BackgroundQueue backgroundQueue, ILogger<QueuedHostedService> logger, IEventSubscriber eventSubscriber)
+    /// <summary>
+    ///     The logger
+    /// </summary>
+    private readonly ILogger<QueuedHostedService> _logger;
+
+    public QueuedHostedService(BackgroundQueue backgroundQueue, ILogger<QueuedHostedService> logger,
+        IEventSubscriber eventSubscriber)
     {
         _backgroundQueue = backgroundQueue;
         _logger = logger;
@@ -33,7 +34,7 @@ internal class QueuedHostedService : BackgroundService
     }
 
     /// <summary>
-    /// Executes the stopping token
+    ///     Executes the stopping token
     /// </summary>
     /// <param name="stoppingToken">The stopping token</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,17 +42,15 @@ internal class QueuedHostedService : BackgroundService
         _logger.LogInformation("Queued Hosted Service is starting.");
 
         while (stoppingToken.IsCancellationRequested.Equals(false))
-        {
             try
             {
                 var eventData = await _backgroundQueue.DequeueAsync(stoppingToken);
-                
+
                 _logger.LogInformation("Executing a task from the queue.");
 
                 await _eventSubscriber.ConsumerReceived(eventData);
-                
+
                 _logger.LogInformation("Task executed successfully.");
-                
             }
             catch (OperationCanceledException)
             {
@@ -61,7 +60,6 @@ internal class QueuedHostedService : BackgroundService
             {
                 _logger.LogError(ex, "Error occurred executing task.");
             }
-        }
 
         _logger.LogInformation("Queued Hosted Service is stopping.");
     }

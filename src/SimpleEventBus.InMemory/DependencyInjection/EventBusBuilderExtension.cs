@@ -10,9 +10,8 @@ namespace SimpleEventBus.DependencyInjection;
 /// </summary>
 public static class EventBusBuilderExtension
 {
-
     /// <summary>
-    /// Uses the in memory using the specified event bus builder
+    ///     Uses the in memory using the specified event bus builder
     /// </summary>
     /// <param name="eventBusBuilder">The event bus builder</param>
     /// <param name="capacity">The capacity</param>
@@ -31,9 +30,11 @@ public static class EventBusBuilderExtension
             OnAlert = onAlert
         });
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>();
-        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();  // Register the implementation as a singleton
-        eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
-        eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>(); // Register the implementation as a singleton
+        eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider =>
+            provider.GetRequiredService<InMemoryEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider =>
+            provider.GetRequiredService<InMemoryEventPublisher>());
         eventBusBuilder.Services.TryAddSingleton<IEventSubscriber, InMemoryEventSubscriber>();
         eventBusBuilder.Services.AddHostedService<QueuedHostedService>();
         return eventBusBuilder;
