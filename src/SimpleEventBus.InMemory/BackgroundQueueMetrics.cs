@@ -7,12 +7,9 @@ internal static class BackgroundQueueMetrics
     private static readonly Meter Meter = new(Telemetry.SimpleEventBus.BackgroundQueueMeter);
 
     private static Func<Measurement<int>>? _pendingCountCallback;
-
-    // Total number of enqueued events
+    
     public static Counter<long> EnqueueCounter { get; } =
         Meter.CreateCounter<long>("backgroundqueue_enqueue_total", "events", "Total number of events enqueued");
-
-    // Total number of dequeued events
     public static Counter<long> DequeueCounter { get; } =
         Meter.CreateCounter<long>("backgroundqueue_dequeue_total", "events", "Total number of events dequeued");
 
