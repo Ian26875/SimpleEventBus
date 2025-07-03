@@ -28,7 +28,7 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     The schema registry
     /// </summary>
-    private readonly ISchemaRegistry _schemaRegistry;
+    private readonly IEventMapper _eventMapper;
 
 
     /// <summary>
@@ -48,18 +48,18 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="subscriptionProfileManager">The subscription profile manager</param>
     /// <param name="logger">The logger</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
-    /// <param name="schemaRegistry">The schema registry</param>
+    /// <param name="eventMapper">The schema registry</param>
     public EventSubscribeInitializer(IEventSubscriber eventSubscriber,
                                      ISubscriptionProfileManager subscriptionProfileManager,
                                      ILogger<EventSubscribeInitializer> logger,
                                      IServiceScopeFactory serviceScopeFactory,
-                                     ISchemaRegistry schemaRegistry)
+                                     IEventMapper eventMapper)
     {
         _eventSubscriber = eventSubscriber;
         _subscriptionProfileManager = subscriptionProfileManager;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
-        _schemaRegistry = schemaRegistry;
+        _eventMapper = eventMapper;
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class EventSubscribeInitializer : IInitializer
         
         var eventTypes = _subscriptionProfileManager.GetAllEventTypes();
 
-        var eventNames = eventTypes.Select(eventType => _schemaRegistry.GetEventName(eventType)).ToList();
+        var eventNames = eventTypes.Select(eventType => _eventMapper.GetEventName(eventType)).ToList();
 
         await _eventSubscriber.SubscribeAsync(eventNames);
 
@@ -104,7 +104,7 @@ public class EventSubscribeInitializer : IInitializer
         {
             var serviceProvider = serviceScope.ServiceProvider;
             
-            var eventType = serviceProvider.GetRequiredService<ISchemaRegistry>().GetEventType(eventName);
+            var eventType = serviceProvider.GetRequiredService<IEventMapper>().GetEventType(eventName);
             
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 

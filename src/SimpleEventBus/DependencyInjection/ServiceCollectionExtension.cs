@@ -26,6 +26,7 @@ public static class ServiceCollectionExtension
     {
         // Subscriber
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
+        
         // Profile
         services.TryAddSingleton<ISubscriptionProfileManager,SubscriptionProfileManager>();
         
@@ -42,7 +43,7 @@ public static class ServiceCollectionExtension
 
         services.AddSingleton<ISerializer, JsonSerializer>();
         
-        services.AddSingleton<ISchemaRegistry>(SchemaRegistry.Instance);
+        services.AddSingleton<IEventMapper>(EventMapper.Instance);
         
         // EventBus
        

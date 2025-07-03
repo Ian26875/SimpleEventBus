@@ -8,12 +8,12 @@ public abstract class AbstractEventPublisher : IEventBus
 {
     protected readonly ISerializer _serializer;
 
-    protected readonly ISchemaRegistry _schemaRegistry;
+    protected readonly IEventMapper EventMapper;
     
-    protected AbstractEventPublisher(ISerializer serializer, ISchemaRegistry schemaRegistry)
+    protected AbstractEventPublisher(ISerializer serializer, IEventMapper eventMapper)
     {
         _serializer = serializer;
-        _schemaRegistry = schemaRegistry;
+        EventMapper = eventMapper;
     }
 
     public Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
@@ -32,7 +32,7 @@ public abstract class AbstractEventPublisher : IEventBus
         (
             serializedData,
             headers,
-            _schemaRegistry.GetEventName(typeof(TEvent))
+            EventMapper.GetEventName(typeof(TEvent))
         );
         
         return this.PublishEventAsync(eventData, cancellationToken);

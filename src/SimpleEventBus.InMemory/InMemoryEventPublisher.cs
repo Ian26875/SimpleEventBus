@@ -19,12 +19,12 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// Initializes a new instance of the <see cref="InMemoryEventPublisher"/> class
     /// </summary>
     /// <param name="serializer">The serializer</param>
-    /// <param name="schemaRegistry">The schema registry</param>
+    /// <param name="eventMapper">The schema registry</param>
     /// <param name="backgroundQueue">The background queue</param>
     public InMemoryEventPublisher(ISerializer serializer, 
-                                  ISchemaRegistry schemaRegistry, 
+                                  IEventMapper eventMapper, 
                                   BackgroundQueue backgroundQueue)
-                                : base(serializer, schemaRegistry)
+                                : base(serializer, eventMapper)
     {
         _backgroundQueue = backgroundQueue;
     }

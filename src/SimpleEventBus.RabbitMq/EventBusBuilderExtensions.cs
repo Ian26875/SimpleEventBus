@@ -31,8 +31,8 @@ public static class EventBusBuilderExtensions
                                               .GetRequiredService<IServiceScopeFactory>();
             using (var scope = scopeFactory.CreateScope())
             {
-                var schemaRegistry = scope.ServiceProvider.GetRequiredService<ISchemaRegistry>();
-                option.SchemaRegistry = schemaRegistry;
+                var schemaRegistry = scope.ServiceProvider.GetRequiredService<IEventMapper>();
+                option.EventMapper = schemaRegistry;
             }
             
             setUpBindOption(option);

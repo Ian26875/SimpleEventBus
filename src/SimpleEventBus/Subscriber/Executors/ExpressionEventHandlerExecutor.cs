@@ -65,11 +65,9 @@ public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExec
         {
             throw new ArgumentException("參數不是有效的 Lambda 表達式。");
         }
-
-        // 取得表達式的主體部分
+        
         Expression expressionBody = lambda.Body;
-    
-        // 處理類型轉換表達式（例如 (c => (object)c.Method)）
+        
         if (expressionBody is UnaryExpression unaryExpression && unaryExpression.NodeType == ExpressionType.Convert)
         {
             expressionBody = unaryExpression.Operand;
@@ -82,13 +80,11 @@ public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExec
         }
 
         // 從常數表達式中取得方法資訊
-        if (methodCall.Object is ConstantExpression constantExpression && constantExpression.Value is MethodInfo methodInfo)
+        if (methodCall.Object is ConstantExpression {Value: MethodInfo methodInfo})
         {
             return methodInfo;
         }
 
         throw new ArgumentException("無法從表達式中取得方法資訊。");
     }
-
-
 }

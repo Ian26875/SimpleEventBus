@@ -6,13 +6,13 @@ namespace SimpleEventBus.Schema;
 /// <summary>
 /// The schema registry class
 /// </summary>
-/// <seealso cref="ISchemaRegistry"/>
-public class SchemaRegistry : ISchemaRegistry
+/// <seealso cref="IEventMapper"/>
+public class EventMapper : IEventMapper
 {
     /// <summary>
     /// The schema registry
     /// </summary>
-    private static readonly Lazy<SchemaRegistry> _instance = new Lazy<SchemaRegistry>(() => new SchemaRegistry());
+    private static readonly Lazy<EventMapper> _instance = new Lazy<EventMapper>(() => new EventMapper());
     
     /// <summary>
     /// The type
@@ -25,16 +25,16 @@ public class SchemaRegistry : ISchemaRegistry
     private readonly ConcurrentDictionary<string, Type> _typesByName = new ConcurrentDictionary<string, Type>();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SchemaRegistry"/> class
+    /// Initializes a new instance of the <see cref="EventMapper"/> class
     /// </summary>
-    private SchemaRegistry()
+    private EventMapper()
     {
     }
 
     /// <summary>
     /// Gets the value of the instance
     /// </summary>
-    public static SchemaRegistry Instance => _instance.Value;
+    public static EventMapper Instance => _instance.Value;
 
     /// <summary>
     /// Registers the event type

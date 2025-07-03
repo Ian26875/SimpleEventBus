@@ -37,8 +37,8 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     
     
     public RabbitMqEventPublisher(ISerializer serializer, 
-                                  ISchemaRegistry schemaRegistry) 
-        : base(serializer, schemaRegistry)
+                                  IEventMapper eventMapper) 
+        : base(serializer, eventMapper)
     {
     }
     
