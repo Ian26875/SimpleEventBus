@@ -42,6 +42,7 @@ internal class QueuedHostedService : BackgroundService
         _logger.LogInformation("Queued Hosted Service is starting.");
 
         while (stoppingToken.IsCancellationRequested.Equals(false))
+        {
             try
             {
                 var eventData = await _backgroundQueue.DequeueAsync(stoppingToken);
@@ -60,6 +61,7 @@ internal class QueuedHostedService : BackgroundService
             {
                 _logger.LogError(ex, "Error occurred executing task.");
             }
+        }
 
         _logger.LogInformation("Queued Hosted Service is stopping.");
     }
