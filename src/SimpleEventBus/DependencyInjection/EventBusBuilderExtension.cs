@@ -16,8 +16,7 @@ public static class EventBusBuilderExtension
     /// <typeparam name="TProfile">The profile</typeparam>
     /// <param name="eventBusBuilder">The event bus builder</param>
     /// <returns>The event bus builder</returns>
-    public static IEventBusBuilder WithProfile<TProfile>(this IEventBusBuilder eventBusBuilder)
-        where TProfile : SubscriptionProfile
+    public static IEventBusBuilder WithProfile<TProfile>(this IEventBusBuilder eventBusBuilder) where TProfile : SubscriptionProfile
     {
         eventBusBuilder.Services.AddSingleton(typeof(SubscriptionProfile), typeof(TProfile));
 
@@ -30,8 +29,7 @@ public static class EventBusBuilderExtension
     /// <param name="eventBusBuilder">The event bus builder</param>
     /// <param name="assemblies">The assemblies</param>
     /// <returns>The event bus builder</returns>
-    public static IEventBusBuilder ScanHandlersFrom(this IEventBusBuilder eventBusBuilder,
-        params Assembly[] assemblies)
+    public static IEventBusBuilder ScanHandlersFrom(this IEventBusBuilder eventBusBuilder, params Assembly[] assemblies)
     {
         var eventHandlerType = typeof(IEventHandler<>);
         var assemblyScanResults = from type in assemblies.SelectMany(x => x.GetExportedTypes().Distinct())
