@@ -16,7 +16,7 @@ public static class EventBusBuilderExtensions
     /// <param name="setUpOption">The set up option</param>
     /// <param name="setUpBindOption">The set up bind option</param>
     /// <returns>The event bus builder</returns>
-    public static IEventBusBuilder UseRabbitMq(this IEventBusBuilder eventBusBuilder,
+    public static IEventBusBuilder UseRabbitMqTransport(this IEventBusBuilder eventBusBuilder,
                                                Action<RabbitMqOption> setUpOption,
                                                Action<RabbitMqBindingOption> setUpBindOption)
     {
@@ -25,7 +25,7 @@ public static class EventBusBuilderExtensions
         eventBusBuilder.Services.Configure(setUpOption);
         
  
-        eventBusBuilder.Services.PostConfigure<RabbitMqBindingOption>(option =>
+        eventBusBuilder.Services.Configure<RabbitMqBindingOption>(option =>
         {
             var scopeFactory = eventBusBuilder.Services.BuildServiceProvider()
                                               .GetRequiredService<IServiceScopeFactory>();
@@ -34,7 +34,6 @@ public static class EventBusBuilderExtensions
                 var schemaRegistry = scope.ServiceProvider.GetRequiredService<IEventMapper>();
                 option.EventMapper = schemaRegistry;
             }
-            
             setUpBindOption(option);
         });
         

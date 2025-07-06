@@ -9,9 +9,9 @@ internal static class BackgroundQueueMetrics
     private static Func<Measurement<int>>? _pendingCountCallback;
     
     public static Counter<long> EnqueueCounter { get; } =
-        Meter.CreateCounter<long>("backgroundqueue_enqueue_total", "events", "Total number of events enqueued");
+        Meter.CreateCounter<long>("background_queue_enqueue_total", "events", "Total number of events enqueued");
     public static Counter<long> DequeueCounter { get; } =
-        Meter.CreateCounter<long>("backgroundqueue_dequeue_total", "events", "Total number of events dequeued");
+        Meter.CreateCounter<long>("background_queue_dequeue_total", "events", "Total number of events dequeued");
 
     /// <summary>
     ///     Registers a callback to observe the current number of unprocessed events in the queue.

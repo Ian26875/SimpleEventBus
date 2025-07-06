@@ -12,16 +12,10 @@ public abstract class SubscriptionProfile
     /// </summary>
     protected SubscriptionProfile()
     {
-        EventHandlers = new Dictionary<Type, List<Type>>();
         ErrorHandlers = new Dictionary<Type, List<Type>>();
         EventHandlerExecutors = new Dictionary<Type, List<IEventHandlerExecutor>>();
     }
-
-    /// <summary>
-    ///     Maps event types to their list of handler types.
-    /// </summary>
-    internal Dictionary<Type, List<Type>> EventHandlers { get; }
-
+    
     /// <summary>
     /// Gets the value of the event handler executors
     /// </summary>
@@ -55,31 +49,7 @@ public abstract class SubscriptionProfile
 
         handlersList.Add(eventHandlerExecutor);
     }
-
-    /// <summary>
-    ///     Creates the subscription using the specified event type
-    /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <param name="eventHandlerType">The event handler type</param>
-    /// <exception cref="ArgumentException">
-    ///     Handler type '{eventHandlerType.FullName}' is already registered for event type
-    ///     '{eventType.FullName}'.
-    /// </exception>
-    internal void AddSubscription(Type eventType, Type eventHandlerType)
-    {
-        if (EventHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
-        {
-            handlersList = new List<Type>();
-            EventHandlers[eventType] = handlersList;
-        }
-
-        if (handlersList.Contains(eventHandlerType))
-            throw new ArgumentException(
-                $"Handler type '{eventHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
-
-        handlersList.Add(eventHandlerType);
-    }
-
+    
     /// <summary>
     ///     Creates the error handler using the specified event type
     /// </summary>

@@ -25,7 +25,6 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     public SubscriptionProfile Profile { get; }
     
-    
     /// <summary>
     /// Does this instance
     /// </summary>
