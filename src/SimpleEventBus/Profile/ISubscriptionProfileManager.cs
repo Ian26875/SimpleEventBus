@@ -14,7 +14,7 @@ public interface ISubscriptionProfileManager
     internal void Initialize();
     
     /// <summary>
-    /// Hases the subscriptions for event using the specified event type
+    /// Has the subscriptions for event using the specified event type
     /// </summary>
     /// <param name="eventType">The event type</param>
     /// <returns>The bool</returns>
