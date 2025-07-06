@@ -4,7 +4,7 @@ namespace SimpleEventBus.InMemory;
 
 internal static class BackgroundQueueMetrics
 {
-    private static readonly Meter Meter = new(Telemetry.SimpleEventBus.BackgroundQueueMeter);
+    private static readonly Meter Meter = new Meter(Telemetry.SimpleEventBus.BackgroundQueueMeter);
 
     private static Func<Measurement<int>>? _pendingCountCallback;
     
