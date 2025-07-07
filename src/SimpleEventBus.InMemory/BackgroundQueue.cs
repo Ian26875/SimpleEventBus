@@ -7,9 +7,13 @@ namespace SimpleEventBus.InMemory;
 internal class BackgroundQueue
 {
     private readonly int _alertThreshold;
+    
     private readonly BackgroundQueueOptions _backgroundQueueOptions;
+    
     private readonly Channel<EventContext> _channel;
+    
     private readonly ILogger<BackgroundQueue> _logger;
+    
     private int _pendingCount;
 
     public BackgroundQueue(
@@ -55,7 +59,9 @@ internal class BackgroundQueue
     public async ValueTask<EventContext> DequeueAsync(CancellationToken cancellationToken = default)
     {
         var result = await _channel.Reader.ReadAsync(cancellationToken);
+        
         var newCount = Interlocked.Decrement(ref _pendingCount);
+        
         BackgroundQueueMetrics.DequeueCounter.Add(1);
 
         _logger.LogTrace("Event dequeued. PendingCount = {Count}", newCount);
