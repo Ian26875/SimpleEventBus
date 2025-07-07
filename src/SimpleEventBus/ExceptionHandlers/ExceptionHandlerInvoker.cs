@@ -6,8 +6,8 @@ namespace SimpleEventBus.ExceptionHandlers;
 /// <summary>
 ///     The exception handler pipeline class
 /// </summary>
-/// <seealso cref="IExceptionHandlerPipeline" />
-public class ExceptionHandlerPipeline : IExceptionHandlerPipeline
+/// <seealso cref="IExceptionHandlerInvoker" />
+public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
 {
     /// <summary>
     ///     The service scope factory
@@ -20,11 +20,11 @@ public class ExceptionHandlerPipeline : IExceptionHandlerPipeline
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ExceptionHandlerPipeline" /> class
+    ///     Initializes a new instance of the <see cref="ExceptionHandlerInvoker" /> class
     /// </summary>
     /// <param name="subscriptionProfileManager">The subscription profile manager</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
-    public ExceptionHandlerPipeline(ISubscriptionProfileManager subscriptionProfileManager,
+    public ExceptionHandlerInvoker(ISubscriptionProfileManager subscriptionProfileManager,
         IServiceScopeFactory serviceScopeFactory)
     {
         _subscriptionProfileManager = subscriptionProfileManager;

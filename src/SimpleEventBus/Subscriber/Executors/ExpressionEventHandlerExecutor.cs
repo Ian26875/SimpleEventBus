@@ -57,13 +57,13 @@ public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExec
             throw new ArgumentException("Handler or event type mismatch");
         };
     }
-
+    
     private static MethodInfo GetMethodInfo(Expression method)
     {
         // 檢查是否為 Lambda 表達式
         if (method is not LambdaExpression lambda)
         {
-            throw new ArgumentException("參數不是有效的 Lambda 表達式。");
+            throw new ArgumentException("The expression is not a valid lambda.");
         }
         
         Expression expressionBody = lambda.Body;
@@ -85,6 +85,6 @@ public class ExpressionEventHandlerExecutor<TEvent,THandler> : IEventHandlerExec
             return methodInfo;
         }
 
-        throw new ArgumentException("無法從表達式中取得方法資訊。");
+        throw new ArgumentException("Unable to extract method info from expression.");
     }
 }

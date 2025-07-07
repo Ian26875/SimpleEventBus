@@ -8,7 +8,7 @@ internal class BackgroundQueue
 {
     private readonly int _alertThreshold;
     private readonly BackgroundQueueOptions _backgroundQueueOptions;
-    private readonly Channel<EventData> _channel;
+    private readonly Channel<EventContext> _channel;
     private readonly ILogger<BackgroundQueue> _logger;
     private int _pendingCount;
 
@@ -23,7 +23,7 @@ internal class BackgroundQueue
             FullMode = BoundedChannelFullMode.Wait
         };
 
-        _channel = Channel.CreateBounded<EventData>(channelOptions);
+        _channel = Channel.CreateBounded<EventContext>(channelOptions);
         _alertThreshold = opts.AlertThreshold;
         _logger = logger;
         _backgroundQueueOptions = backgroundQueueOptions;
@@ -32,7 +32,7 @@ internal class BackgroundQueue
 
     public int PendingCount => _pendingCount;
 
-    public async ValueTask EnqueueAsync(EventData eventData, CancellationToken cancellationToken = default)
+    public async ValueTask EnqueueAsync(EventContext eventContext, CancellationToken cancellationToken = default)
     {
         var newCount = Interlocked.Increment(ref _pendingCount);
         BackgroundQueueMetrics.EnqueueCounter.Add(1);
@@ -49,10 +49,10 @@ internal class BackgroundQueue
             }
         }
 
-        await _channel.Writer.WriteAsync(eventData, cancellationToken);
+        await _channel.Writer.WriteAsync(eventContext, cancellationToken);
     }
 
-    public async ValueTask<EventData> DequeueAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<EventContext> DequeueAsync(CancellationToken cancellationToken = default)
     {
         var result = await _channel.Reader.ReadAsync(cancellationToken);
         var newCount = Interlocked.Decrement(ref _pendingCount);

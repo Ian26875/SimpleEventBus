@@ -1,6 +1,6 @@
 namespace SimpleEventBus.ExceptionHandlers;
 
-public interface IExceptionHandlerPipeline
+public interface IExceptionHandlerInvoker
 {
     Task ExecuteAsync(ExceptionContext context, CancellationToken cancellationToken);
 }

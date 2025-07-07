@@ -32,10 +32,10 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// <summary>
     ///     Publishes the event using the specified event data
     /// </summary>
-    /// <param name="eventData">The event data</param>
+    /// <param name="eventContext">The event data</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    protected override async Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default)
+    protected override async Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default)
     {
-        await _backgroundQueue.EnqueueAsync(eventData, cancellationToken);
+        await _backgroundQueue.EnqueueAsync(eventContext, cancellationToken);
     }
 }

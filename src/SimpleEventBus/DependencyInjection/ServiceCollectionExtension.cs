@@ -34,7 +34,7 @@ public static class ServiceCollectionExtension
         services.AddSingleton<IInitializer, EventSubscribeInitializer>();
         
         // Exception
-        services.AddSingleton<IExceptionHandlerPipeline, ExceptionHandlerPipeline>();
+        services.AddSingleton<IExceptionHandlerInvoker, ExceptionHandlerInvoker>();
         
         // ApplicationBootstrapper
         services.AddSingleton<IApplicationBootstrapper, DefaultApplicationBootstrapper>();

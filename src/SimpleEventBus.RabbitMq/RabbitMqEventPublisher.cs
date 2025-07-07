@@ -51,9 +51,9 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
         AdvancedBus = bus.Advanced;
     }
     
-    private async Task<Exchange> GetOrDeclareExchangeAsync(EventData eventData, CancellationToken cancellationToken)
+    private async Task<Exchange> GetOrDeclareExchangeAsync(EventContext eventContext, CancellationToken cancellationToken)
     {
-        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventData.EventName, out var bindingExchangeName)
+        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventContext.EventName, out var bindingExchangeName)
                                ? bindingExchangeName 
                                : _rabbitMqBindingOption.GlobalExchange;
 
@@ -70,16 +70,16 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     }
     
 
-    protected override async Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken))
+    protected override async Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default(CancellationToken))
     {
-        if (eventData is null)
+        if (eventContext is null)
         {
-            throw new ArgumentNullException(nameof(eventData));
+            throw new ArgumentNullException(nameof(eventContext));
         }
         
-        var exchange = await GetOrDeclareExchangeAsync(eventData, cancellationToken);
+        var exchange = await GetOrDeclareExchangeAsync(eventContext, cancellationToken);
         
-        var routeKey = eventData.EventName;
+        var routeKey = eventContext.EventName;
         
         _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
 
@@ -93,9 +93,9 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             new MessageProperties
             {
                 DeliveryMode = DeliveryMode.Persistent,
-                Headers = eventData.Headers,
+                Headers = eventContext.Headers,
             },
-            eventData.Data,
+            eventContext.Data,
             cancellationToken
         );
     }

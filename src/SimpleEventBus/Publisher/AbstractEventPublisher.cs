@@ -28,7 +28,7 @@ public abstract class AbstractEventPublisher : IEventBus
         
         var serializedData = _serializer.Serialize(@event);
         
-        var eventData = new EventData
+        var eventData = new EventContext
         (
             serializedData,
             headers,
@@ -38,6 +38,6 @@ public abstract class AbstractEventPublisher : IEventBus
         return this.PublishEventAsync(eventData, cancellationToken);
     }
 
-    protected abstract Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken));
+    protected abstract Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default(CancellationToken));
 
 }

@@ -6,7 +6,6 @@ namespace SimpleEventBus.ExceptionHandlers;
 /// <summary>
 ///     The exception context class
 /// </summary>
-/// <seealso cref="EventContext{object}" />
 public class ExceptionContext
 {
     /// <summary>

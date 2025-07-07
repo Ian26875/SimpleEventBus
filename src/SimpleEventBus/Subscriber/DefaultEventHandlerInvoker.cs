@@ -129,7 +129,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         catch (Exception exception)
         {
             var exceptionContext = new ExceptionContext(@event, headers, exception);
-            var pipeline = serviceProvider.GetRequiredService<IExceptionHandlerPipeline>();
+            var pipeline = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
             await pipeline.ExecuteAsync(exceptionContext, cancellationToken);
         }
     }

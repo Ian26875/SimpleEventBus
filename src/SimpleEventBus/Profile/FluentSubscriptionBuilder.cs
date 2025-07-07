@@ -48,6 +48,12 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
         return this;
     }
 
+    public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, CancellationToken, Task>>> expression) where THandler : class
+    {
+        Profile.AddSubscription(typeof(TEvent),new CompiledEventHandlerExecutor<TEvent,THandler>(expression));
+        return this;
+    }
+
     /// <summary>
     /// Ifs the exception do
     /// </summary>

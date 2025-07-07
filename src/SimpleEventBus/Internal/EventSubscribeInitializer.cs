@@ -82,12 +82,12 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     Consumers the received using the specified event data
     /// </summary>
-    /// <param name="eventData">The event data</param>
-    private async Task ConsumerReceived(EventData eventData)
+    /// <param name="eventContext">The event data</param>
+    private async Task ConsumerReceived(EventContext eventContext)
     {
-        var messageContent = Encoding.UTF8.GetString(eventData.Data.Span);
+        var messageContent = Encoding.UTF8.GetString(eventContext.Data.Span);
 
-        await ProcessEventAsync(eventData.EventName, messageContent, eventData.Headers);
+        await ProcessEventAsync(eventContext.EventName, messageContent, eventContext.Headers);
     }
 
     /// <summary>
