@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SimpleEventBus.Event;
+using SimpleEventBus.Metrics;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
@@ -87,6 +88,8 @@ public class EventSubscribeInitializer : IInitializer
     {
         var messageContent = Encoding.UTF8.GetString(eventContext.Data.Span);
 
+        EventBusMetrics.AddReceived(eventContext.EventName);
+        
         await ProcessEventAsync(eventContext.EventName, messageContent, eventContext.Headers);
     }
 
@@ -98,7 +101,7 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="headers">The headers</param>
     private async Task ProcessEventAsync(string eventName, string message, Headers headers)
     {
-        _logger.LogTrace($"Processing RabbitMQ event: {eventName}...");
+        _logger.LogTrace($"Processing event: {eventName}...");
         
         await using (var serviceScope = _serviceScopeFactory.CreateAsyncScope())
         {

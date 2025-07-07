@@ -30,13 +30,15 @@ public static class EventBusBuilderExtension
             OnAlert = onAlert
         });
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>();
-        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>(); // Register the implementation as a singleton
-        eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider =>
-            provider.GetRequiredService<InMemoryEventPublisher>());
-        eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider =>
-            provider.GetRequiredService<InMemoryEventPublisher>());
-        eventBusBuilder.Services.TryAddSingleton<IEventSubscriber, InMemoryEventSubscriber>();
-        eventBusBuilder.Services.AddHostedService<QueuedHostedService>();
+        
+        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();
+        
+        eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
+        
+        eventBusBuilder.Services.AddSingleton<IEventSubscriber, InMemoryEventSubscriber>();
+        eventBusBuilder.Services.AddHostedService(sp => (InMemoryEventSubscriber)sp.GetRequiredService<IEventSubscriber>());
+
         return eventBusBuilder;
     }
 }

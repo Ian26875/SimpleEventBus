@@ -1,4 +1,5 @@
 using SimpleEventBus.Event;
+using SimpleEventBus.Metrics;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
 
@@ -16,7 +17,7 @@ public abstract class AbstractEventPublisher : IEventBus
         EventMapper = eventMapper;
     }
 
-    public Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
+    public async Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
                                      CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
     {
         if (@event is null)
@@ -27,15 +28,26 @@ public abstract class AbstractEventPublisher : IEventBus
         headers ??= new Headers();
         
         var serializedData = _serializer.Serialize(@event);
+
+        var eventName = EventMapper.GetEventName(typeof(TEvent));
         
         var eventData = new EventContext
         (
             serializedData,
             headers,
-            EventMapper.GetEventName(typeof(TEvent))
+            eventName
         );
         
-        return this.PublishEventAsync(eventData, cancellationToken);
+        try
+        {
+            await this.PublishEventAsync(eventData, cancellationToken);
+            EventBusMetrics.AddPublished(eventName);
+        }
+        catch
+        {
+            EventBusMetrics.AddFailure(eventName);
+            throw;
+        }
     }
 
     protected abstract Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default(CancellationToken));
