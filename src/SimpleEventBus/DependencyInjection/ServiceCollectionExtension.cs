@@ -24,6 +24,8 @@ public static class ServiceCollectionExtension
     public static IServiceCollection AddEventBus(this IServiceCollection services, 
                                                  Action<IEventBusBuilder> configureBuilder)
     {
+        ArgumentNullException.ThrowIfNull(configureBuilder);
+        
         // Subscriber
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
         

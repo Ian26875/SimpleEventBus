@@ -14,7 +14,7 @@ public class ExpressionEventHandlerExecutorTests
         Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
 
         // Act
-        var executor = new ExpressionEventHandlerExecutor<TestEvent, TestHandler>(expression);
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
 
         // Assert
         executor.HandlerType.Should().Be(typeof(TestHandler));
@@ -27,7 +27,7 @@ public class ExpressionEventHandlerExecutorTests
     {
         // Arrange
         Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
-        var executor = new ExpressionEventHandlerExecutor<TestEvent, TestHandler>(expression);
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
 
         var testHandler = new TestHandler();
         var testEvent = new TestEvent(Guid.NewGuid(),"Test");
@@ -49,7 +49,7 @@ public class ExpressionEventHandlerExecutorTests
     {
         // Arrange
         Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
-        var executor = new ExpressionEventHandlerExecutor<TestEvent, TestHandler>(expression);
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
 
         var invalidHandler = new object();
         var testEvent = new TestEvent(Guid.NewGuid(),"Test");
@@ -67,7 +67,7 @@ public class ExpressionEventHandlerExecutorTests
     {
         // Arrange
         Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
-        var executor = new ExpressionEventHandlerExecutor<TestEvent, TestHandler>(expression);
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
 
         var testHandler = new TestHandler();
         var invalidEvent = new object();

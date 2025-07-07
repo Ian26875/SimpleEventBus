@@ -44,13 +44,13 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// <returns>A fluent subscription builder of t event</returns>
     public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, Headers, CancellationToken, Task>>> expression) where THandler : class
     {
-        Profile.AddSubscription(typeof(TEvent),new ExpressionEventHandlerExecutor<TEvent,THandler>(expression));
+        Profile.AddSubscription(typeof(TEvent),new LambdaEventHandlerExecutor<TEvent,THandler>(expression));
         return this;
     }
 
     public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, CancellationToken, Task>>> expression) where THandler : class
     {
-        Profile.AddSubscription(typeof(TEvent),new CompiledEventHandlerExecutor<TEvent,THandler>(expression));
+        Profile.AddSubscription(typeof(TEvent),new LambdaEventHandlerExecutor<TEvent,THandler>(expression));
         return this;
     }
 

@@ -4,16 +4,17 @@ using SimpleEventBus.Event;
 namespace SimpleEventBus.ExceptionHandlers;
 
 /// <summary>
-///     The exception context class
+/// Represents the context of an exception that occurred during event handling.
+/// Includes the original event, its metadata headers, and captured exception details.
 /// </summary>
 public class ExceptionContext
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ExceptionContext" /> class
+    /// Initializes a new instance of the <see cref="ExceptionContext"/> class.
     /// </summary>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="exception">The exception</param>
+    /// <param name="event">The original event object that caused the exception.</param>
+    /// <param name="headers">The metadata headers associated with the event.</param>
+    /// <param name="exception">The exception that was thrown during event processing.</param>
     internal ExceptionContext(object @event, Headers headers, Exception exception)
     {
         Event = @event;
@@ -23,22 +24,22 @@ public class ExceptionContext
     }
 
     /// <summary>
-    ///     Gets or sets the value of the exception
+    /// Gets the exception that was thrown.
     /// </summary>
-    public Exception Exception { get; private set; }
+    public Exception Exception { get; }
 
     /// <summary>
-    ///     Gets or sets the value of the exception dispatch
+    /// Gets the captured exception dispatch information, which preserves the stack trace.
     /// </summary>
-    public ExceptionDispatchInfo ExceptionDispatch { get; private set; }
+    public ExceptionDispatchInfo ExceptionDispatch { get; }
 
     /// <summary>
-    ///     Gets or sets the value of the event
+    /// Gets the original event instance that triggered the exception.
     /// </summary>
-    public object Event { get; private set; }
+    public object Event { get; }
 
     /// <summary>
-    ///     Gets or sets the value of the headers
+    /// Gets the headers associated with the event.
     /// </summary>
-    public Headers Headers { get; private set; }
+    public Headers Headers { get; }
 }
