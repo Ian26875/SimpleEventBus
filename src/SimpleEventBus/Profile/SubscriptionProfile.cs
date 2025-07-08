@@ -9,7 +9,8 @@ public abstract class SubscriptionProfile
 {
     private readonly Dictionary<Type, List<IEventHandlerExecutor>> _eventHandlerExecutors = new();
     private readonly Dictionary<Type, List<Type>> _errorHandlers = new();
-
+    
+    
     /// <summary>
     ///     Initializes a new instance of the <see cref="SubscriptionProfile" /> class.
     /// </summary>

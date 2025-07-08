@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SimpleEventBus.Errors;
 using SimpleEventBus.Event;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Profile;
@@ -25,9 +26,9 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     private readonly ILogger<DefaultEventHandlerInvoker> _logger;
 
     /// <summary>
-    ///     The application-wide service provider for resolving dependencies.
+    ///     
     /// </summary>
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     /// <summary>
     ///     Manages all event subscriptions and provides handler executors.
@@ -38,11 +39,11 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     ///     Initializes a new instance of the <see cref="DefaultEventHandlerInvoker" /> class.
     ///     Pre-caches all handler delegates at construction time.
     /// </summary>
-    public DefaultEventHandlerInvoker(IServiceProvider serviceProvider,
+    public DefaultEventHandlerInvoker(IServiceScopeFactory serviceScopeFactory,
                                       ILogger<DefaultEventHandlerInvoker> logger,
                                       ISubscriptionProfileManager subscriptionProfileManager)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _subscriptionProfileManager = subscriptionProfileManager;
 
@@ -79,28 +80,30 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         
         if (_subscriptionProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
         {
-            _logger.LogTrace("There are no subscriptions for this event.");
+            _logger.LogWarning("No subscription found for event type: {EventType}. Event full name: {EventTypeFullName}. " +
+                               "Ensure it has been mapped and subscribed correctly.", eventType.Name, eventType.FullName);
             return;
         }
 
+
         var executors = _subscriptionProfileManager.GetEventHandlerExecutorsForEvent(eventType);
+        await using var serviceScope = this._serviceScopeFactory.CreateAsyncScope();
+        var serviceProvider = serviceScope.ServiceProvider;
         
         await Parallel.ForEachAsync(executors, cancellationToken, async (executor, token) =>
         {
             try
             {
-                var handler = _serviceProvider.GetService(executor.HandlerType);
+                var handler = serviceProvider.GetService(executor.HandlerType);
                 if (handler is null)
                 {
-                    _logger.LogWarning("Handler not found for {EventType}", executor.EventType.Name);
-                    return;
+                    throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
                 }
                 
                 var key = (executor.EventType, executor.HandlerType);
                 if (CachedHandlers.TryGetValue(key, out var handlerDelegate).Equals(false))
                 {
-                    _logger.LogWarning("Cached handler not found for {EventType}", executor.EventType.Name);
-                    return;
+                    throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
                 }
                 
                 await handlerDelegate!(handler, @event, headers, token);
@@ -108,7 +111,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
             catch (Exception exception)
             {
                 var exceptionContext = new ExceptionContext(@event, headers, exception);
-                var exceptionHandlerInvoker = _serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
+                var exceptionHandlerInvoker = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
                 await exceptionHandlerInvoker.ExecuteAsync(exceptionContext, cancellationToken);
             }
         });

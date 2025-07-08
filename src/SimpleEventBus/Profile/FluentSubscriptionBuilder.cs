@@ -5,6 +5,7 @@ using SimpleEventBus.Subscriber;
 using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus.Profile;
+
 /// <summary>
 /// Represents a fluent builder for configuring event subscriptions for a specific event type.
 /// </summary>

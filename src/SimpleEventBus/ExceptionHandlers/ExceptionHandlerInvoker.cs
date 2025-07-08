@@ -40,12 +40,13 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     {
         var errorHandlerTypes = _subscriptionProfileManager.GetErrorHandlersForEvent(context.Event.GetType());
 
-        using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
+        await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
 
         var serviceProvider = serviceScope.ServiceProvider;
 
-        foreach (var exceptionHandler in errorHandlerTypes.Select(errorHandlerType =>
-                     (IEventExceptionHandler) serviceProvider.GetRequiredService(errorHandlerType)))
+        foreach (var exceptionHandler in errorHandlerTypes.Select(errorHandlerType => (IEventExceptionHandler) serviceProvider.GetRequiredService(errorHandlerType)))
+        {
             await exceptionHandler.OnExceptionAsync(context, cancellationToken);
+        }
     }
 }

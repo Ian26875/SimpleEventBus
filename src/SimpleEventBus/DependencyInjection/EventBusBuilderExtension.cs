@@ -1,5 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Subscriber;
 
@@ -21,6 +23,7 @@ public static class EventBusBuilderExtension
         where TProfile : SubscriptionProfile
     {
         eventBusBuilder.Services.AddSingleton(typeof(SubscriptionProfile), typeof(TProfile));
+        
         return eventBusBuilder;
     }
 
@@ -35,28 +38,34 @@ public static class EventBusBuilderExtension
     {
         ArgumentNullException.ThrowIfNull(assemblies);
         
-        var eventHandlerType = typeof(IEventHandler<>);
+        var eventHandlerInterface = typeof(IEventHandler<>);
+        var exceptionHandlerInterface = typeof(IEventExceptionHandler);
 
-        var assemblyScanResults = from type in assemblies.SelectMany(x => x.GetExportedTypes().Distinct())
-            where !type.IsAbstract && !type.IsGenericTypeDefinition
-            let interfaces = type.GetInterfaces()
-            let genericInterfaces = interfaces.Where(i =>
-                i.IsGenericType && i.GetGenericTypeDefinition() == eventHandlerType)
-            let matchingInterface = genericInterfaces.FirstOrDefault()
-            where matchingInterface != null
-            select (InterfaceType: matchingInterface, HandlerType: type);
+        var allTypes = assemblies
+            .SelectMany(x => x.GetExportedTypes().Distinct())
+            .Where(type => type is {IsAbstract: false, IsGenericTypeDefinition: false})
+            .ToList();
 
-        foreach (var scanResult in assemblyScanResults)
+        foreach (var type in allTypes)
         {
-            // Register handler interface (IEventHandler<T>) to concrete implementation
-            eventBusBuilder.Services.Add(
-                new ServiceDescriptor(scanResult.InterfaceType, scanResult.HandlerType, ServiceLifetime.Singleton));
+            var interfaces = type.GetInterfaces();
 
-            // Register the handler itself in case it's resolved directly (optional)
-            eventBusBuilder.Services.Add(
-                new ServiceDescriptor(scanResult.HandlerType, scanResult.HandlerType, ServiceLifetime.Singleton));
+            foreach (var interfaceType in interfaces.Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == eventHandlerInterface))
+            {
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(interfaceType, type, ServiceLifetime.Singleton));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Singleton));
+            }
+            
+            if (exceptionHandlerInterface.IsAssignableFrom(type))
+            {
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(typeof(IEventExceptionHandler), type, ServiceLifetime.Singleton));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Singleton));
+            }
         }
-
+        
+        
+        
+        
         return eventBusBuilder;
     }
 
