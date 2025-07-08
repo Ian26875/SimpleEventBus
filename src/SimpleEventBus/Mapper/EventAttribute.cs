@@ -1,4 +1,4 @@
-namespace SimpleEventBus.Schema;
+namespace SimpleEventBus.Mapper;
 
 /// <summary>
 /// The event version attribute class

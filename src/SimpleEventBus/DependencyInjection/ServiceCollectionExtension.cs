@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Internal;
+using SimpleEventBus.Mapper;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;

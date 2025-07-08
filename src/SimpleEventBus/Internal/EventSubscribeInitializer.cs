@@ -30,8 +30,7 @@ public class EventSubscribeInitializer : IInitializer
     ///     The schema registry
     /// </summary>
     private readonly IEventMapper _eventMapper;
-
-
+    
     /// <summary>
     ///     The service provider
     /// </summary>

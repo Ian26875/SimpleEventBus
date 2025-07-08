@@ -1,7 +1,8 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using SimpleEventBus.Schema;
 
-namespace SimpleEventBus.Schema;
+namespace SimpleEventBus.Mapper;
 
 /// <summary>
 /// The schema registry class
