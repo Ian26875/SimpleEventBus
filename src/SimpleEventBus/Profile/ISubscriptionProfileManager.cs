@@ -1,43 +1,47 @@
 using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus.Profile;
-
 /// <summary>
-/// The subscription profile manager interface
+/// Represents a manager for subscription profiles used to handle event-to-handler mappings
+/// and associated error-handling logic.
 /// </summary>
 public interface ISubscriptionProfileManager
 {
-
     /// <summary>
-    /// Initializes this instance
+    /// Initializes the manager by loading all subscription profiles and their handler mappings.
     /// </summary>
     internal void Initialize();
-    
-    /// <summary>
-    /// Has the subscriptions for event using the specified event type
-    /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <returns>The bool</returns>
-    public bool HasSubscriptionsForEvent(Type eventType);
 
     /// <summary>
-    /// Gets the all event types
+    /// Determines whether there are any registered subscriptions for the specified event type.
     /// </summary>
-    /// <returns>A list of type</returns>
-    public List<Type> GetAllEventTypes();
-    
-    /// <summary>
-    /// Gets the event handler executor for event using the specified event type
-    /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <returns>A list of i event handler executor</returns>
-    public List<IEventHandlerExecutor> GetEventHandlerExecutorsForEvent(Type eventType);
+    /// <param name="eventType">The event type to check.</param>
+    /// <returns><c>true</c> if the event has at least one registered handler; otherwise, <c>false</c>.</returns>
+    bool HasSubscriptionsForEvent(Type eventType);
 
     /// <summary>
-    /// Gets the error handlers for event using the specified event type
+    /// Gets a list of all event types that have been registered in the system.
     /// </summary>
-    /// <param name="eventType">The event type</param>
-    /// <returns>A list of type</returns>
-    public List<Type> GetErrorHandlersForEvent(Type eventType);
+    /// <returns>A list of registered event types.</returns>
+    IReadOnlyList<Type> GetAllEventTypes();
 
+    /// <summary>
+    /// Retrieves all handler executors associated with the specified event type.
+    /// </summary>
+    /// <param name="eventType">The type of the event.</param>
+    /// <returns>A list of <see cref="IEventHandlerExecutor"/> instances that will handle the event.</returns>
+    IReadOnlyList<IEventHandlerExecutor> GetEventHandlerExecutorsForEvent(Type eventType);
+
+    /// <summary>
+    /// Retrieves all error handler types registered to handle exceptions for the specified event type.
+    /// </summary>
+    /// <param name="eventType">The type of the event.</param>
+    /// <returns>A list of types implementing <see cref="IEventExceptionHandler"/>.</returns>
+    IReadOnlyList<Type> GetErrorHandlersForEvent(Type eventType);
+
+    /// <summary>
+    /// Gets all event subscriptions and their corresponding handler executors.
+    /// </summary>
+    /// <returns>A dictionary of event type to its list of executors.</returns>
+    Dictionary<Type, List<IEventHandlerExecutor>> GetAllSubscriptions();
 }

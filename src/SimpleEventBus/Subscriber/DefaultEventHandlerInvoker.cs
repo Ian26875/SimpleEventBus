@@ -4,68 +4,79 @@ using Microsoft.Extensions.Logging;
 using SimpleEventBus.Event;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Profile;
-using SimpleEventBus.Subscriber;
-using SimpleEventBus.Subscriber.Executors;
 
-namespace SimpleEventBus;
+namespace SimpleEventBus.Subscriber;
 
 /// <summary>
-///     The default event handler invoker class
+///     The default implementation of the event handler invoker.
+///     Responsible for executing registered event handlers with exception handling support.
 /// </summary>
 /// <seealso cref="IEventHandlerInvoker" />
 internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 {
     /// <summary>
-    ///     The task
+    ///     A cache of handler delegates to improve performance by avoiding repetitive delegate generation.
     /// </summary>
-    private static readonly
-        ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>>
-        CachedHandlers
-            = new();
+    private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> CachedHandlers = new();
 
     /// <summary>
-    ///     The logger
+    ///     Logger instance.
     /// </summary>
     private readonly ILogger<DefaultEventHandlerInvoker> _logger;
 
     /// <summary>
-    ///     The service provider
+    ///     The application-wide service provider for resolving dependencies.
     /// </summary>
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
-    ///     The subscription profile manager
+    ///     Manages all event subscriptions and provides handler executors.
     /// </summary>
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="DefaultEventHandlerInvoker" /> class
+    ///     Initializes a new instance of the <see cref="DefaultEventHandlerInvoker" /> class.
+    ///     Pre-caches all handler delegates at construction time.
     /// </summary>
-    /// <param name="serviceScopeFactory">The service scope factory</param>
-    /// <param name="logger">The logger</param>
-    /// <param name="subscriptionProfileManager">The subscription profile manager</param>
-    public DefaultEventHandlerInvoker(IServiceScopeFactory serviceScopeFactory,
-        ILogger<DefaultEventHandlerInvoker> logger,
-        ISubscriptionProfileManager subscriptionProfileManager)
+    public DefaultEventHandlerInvoker(IServiceProvider serviceProvider,
+                                      ILogger<DefaultEventHandlerInvoker> logger,
+                                      ISubscriptionProfileManager subscriptionProfileManager)
     {
-        _serviceScopeFactory = serviceScopeFactory;
+        _serviceProvider = serviceProvider;
         _logger = logger;
         _subscriptionProfileManager = subscriptionProfileManager;
+
+        InitializeHandlerCache();
     }
 
     /// <summary>
-    ///     Invokes the event
+    ///     Eagerly creates and caches all handler delegates for fast lookup during invocation.
     /// </summary>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <exception cref="ArgumentNullException"></exception>
+    private void InitializeHandlerCache()
+    {
+        foreach (var (eventType, executors) in _subscriptionProfileManager.GetAllSubscriptions())
+        {
+            foreach (var executor in executors)
+            {
+                var key = (executor.EventType, executor.HandlerType);
+                CachedHandlers.TryAdd(key, executor.CreateHandlerDelegate());
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Invokes all registered handlers for a given event instance.
+    /// </summary>
+    /// <param name="event">The event instance.</param>
+    /// <param name="headers">Associated headers metadata.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     public async Task InvokeAsync(object @event, Headers headers, CancellationToken cancellationToken = default)
     {
-        if (@event is null) throw new ArgumentNullException(nameof(@event));
+        ArgumentNullException.ThrowIfNull(@event);
+        ArgumentNullException.ThrowIfNull(headers);
 
         var eventType = @event.GetType();
-
+        
         if (_subscriptionProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
         {
             _logger.LogTrace("There are no subscriptions for this event.");
@@ -73,64 +84,35 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         }
 
         var executors = _subscriptionProfileManager.GetEventHandlerExecutorsForEvent(eventType);
-
-        var tasks = new List<Task>();
-
-        await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
-
-        var serviceProvider = serviceScope.ServiceProvider;
-
-        foreach (var executor in executors)
+        
+        await Parallel.ForEachAsync(executors, cancellationToken, async (executor, token) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                var handler = _serviceProvider.GetService(executor.HandlerType);
+                if (handler is null)
+                {
+                    _logger.LogWarning("Handler not found for {EventType}", executor.EventType.Name);
+                    return;
+                }
+                
+                var key = (executor.EventType, executor.HandlerType);
+                if (CachedHandlers.TryGetValue(key, out var handlerDelegate).Equals(false))
+                {
+                    _logger.LogWarning("Cached handler not found for {EventType}", executor.EventType.Name);
+                    return;
+                }
+                
+                await handlerDelegate!(handler, @event, headers, token);
+            }
+            catch (Exception exception)
+            {
+                var exceptionContext = new ExceptionContext(@event, headers, exception);
+                var exceptionHandlerInvoker = _serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
+                await exceptionHandlerInvoker.ExecuteAsync(exceptionContext, cancellationToken);
+            }
+        });
 
-            var task = ExecuteHandlerWithExceptionHandling(serviceProvider, executor, @event, headers, cancellationToken);
-
-            tasks.Add(task);
-        }
-
-        await Task.Yield();
-        await Task.WhenAll(tasks);
-
-        _logger.LogTrace($"Processed event {eventType.Name}.");
-    }
-
-    /// <summary>
-    ///     Executes the handler with exception handling using the specified service provider
-    /// </summary>
-    /// <param name="serviceProvider">The service provider</param>
-    /// <param name="eventHandlerExecutor">The event handler executor</param>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    private async Task ExecuteHandlerWithExceptionHandling(IServiceProvider serviceProvider,
-        IEventHandlerExecutor eventHandlerExecutor,
-        object @event,
-        Headers headers,
-        CancellationToken cancellationToken)
-    {
-        var handlerInstance = serviceProvider.GetService(eventHandlerExecutor.HandlerType);
-        if (handlerInstance is null)
-        {
-            _logger.LogWarning($"There are no handlers for the following event: {eventHandlerExecutor.EventType.Name}");
-            return;
-        }
-
-        var handlerDelegate = CachedHandlers.GetOrAdd
-        (
-            (eventHandlerExecutor.EventType, eventHandlerExecutor.HandlerType),
-            key => eventHandlerExecutor.CreateHandlerDelegate()
-        );
-
-        try
-        {
-            await handlerDelegate(handlerInstance, @event, headers, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            var exceptionContext = new ExceptionContext(@event, headers, exception);
-            var pipeline = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
-            await pipeline.ExecuteAsync(exceptionContext, cancellationToken);
-        }
+        _logger.LogTrace("Processed event {EventType}", eventType.Name);
     }
 }

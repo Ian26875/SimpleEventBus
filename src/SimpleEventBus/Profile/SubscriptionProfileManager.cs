@@ -136,7 +136,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
         return this.EventHandlerExecutors.ContainsKey(eventType)|| this.EventHandlerExecutors.ContainsKey(eventType);
     }
 
-    public List<Type> GetAllEventTypes()
+    public IReadOnlyList<Type> GetAllEventTypes()
     {
         return this.EventHandlerExecutors.Keys.ToList();
     }
@@ -146,7 +146,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     /// </summary>
     /// <param name="eventType">The event type</param>
     /// <returns>A list of i event handler executor</returns>
-    public List<IEventHandlerExecutor> GetEventHandlerExecutorsForEvent(Type eventType)
+    public IReadOnlyList<IEventHandlerExecutor> GetEventHandlerExecutorsForEvent(Type eventType)
     {
         return this.EventHandlerExecutors[eventType];
     }
@@ -156,9 +156,20 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     /// </summary>
     /// <param name="eventType">The event type</param>
     /// <returns>A list of type</returns>
-    public List<Type> GetErrorHandlersForEvent(Type eventType)
+    public IReadOnlyList<Type> GetErrorHandlersForEvent(Type eventType)
     {
         return this.ErrorHandlers[eventType];
     }
     
+    /// <summary>
+    /// Gets all event subscriptions and their corresponding handler executors.
+    /// </summary>
+    /// <returns>A dictionary of event type to its list of executors.</returns>
+    public Dictionary<Type, List<IEventHandlerExecutor>> GetAllSubscriptions()
+    {
+        return this.EventHandlerExecutors.ToDictionary(
+            pair => pair.Key,
+            pair => new List<IEventHandlerExecutor>(pair.Value)
+        );
+    }   
 }
