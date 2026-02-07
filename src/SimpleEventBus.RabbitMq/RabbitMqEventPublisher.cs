@@ -21,7 +21,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <summary>
     /// The rabbit mq option
     /// </summary>
-    private readonly RabbitMqOption _rabbitMqOption;
+    private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
     
     /// <summary>
     /// The rabbit mq binding option
@@ -43,16 +43,16 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     
     public RabbitMqEventPublisher(ISerializer serializer, 
                                   IEventMapper eventMapper,
-                                  IOptions<RabbitMqOption> rabbitMqOptions,
+                                  IOptions<RabbitMqConnectionOption> rabbitMqOptions,
                                   IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
                                   ILogger<RabbitMqEventPublisher> logger) 
         : base(serializer, eventMapper)
     {
-        _rabbitMqOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
         _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        ValidateOptions(_rabbitMqOption);
+        ValidateOptions(_rabbitMqConnectionOption);
     }
     
     /// <summary>
@@ -72,7 +72,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
                 return;
             }
 
-            var connectionString = $"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/";
+            var connectionString = $"amqp://{_rabbitMqConnectionOption.UserName}:{_rabbitMqConnectionOption.Password}@{_rabbitMqConnectionOption.Host}/";
             _bus = RabbitHutch.CreateBus(connectionString);
             _advancedBus = _bus.Advanced;
         }
@@ -84,21 +84,21 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
         return _advancedBus!;
     }
 
-    private static void ValidateOptions(RabbitMqOption option)
+    private static void ValidateOptions(RabbitMqConnectionOption connectionOption)
     {
-        if (string.IsNullOrWhiteSpace(option.UserName))
+        if (string.IsNullOrWhiteSpace(connectionOption.UserName))
         {
-            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(connectionOption));
         }
 
-        if (string.IsNullOrWhiteSpace(option.Password))
+        if (string.IsNullOrWhiteSpace(connectionOption.Password))
         {
-            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(connectionOption));
         }
 
-        if (string.IsNullOrWhiteSpace(option.Host))
+        if (string.IsNullOrWhiteSpace(connectionOption.Host))
         {
-            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(connectionOption));
         }
     }
     

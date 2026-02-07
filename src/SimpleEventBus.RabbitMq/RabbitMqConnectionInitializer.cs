@@ -12,21 +12,21 @@ namespace SimpleEventBus.RabbitMq;
 /// </summary>
 public sealed class RabbitMqConnectionInitializer : IInitializer
 {
-    private readonly RabbitMqOption _options;
+    private readonly RabbitMqConnectionOption _connectionOptions;
     private readonly ILogger<RabbitMqConnectionInitializer> _logger;
 
-    public RabbitMqConnectionInitializer(IOptions<RabbitMqOption> options,
+    public RabbitMqConnectionInitializer(IOptions<RabbitMqConnectionOption> options,
                                          ILogger<RabbitMqConnectionInitializer> logger)
     {
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _connectionOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public Task InitializeAsync(CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.UserName) ||
-            string.IsNullOrWhiteSpace(_options.Password) ||
-            string.IsNullOrWhiteSpace(_options.Host))
+        if (string.IsNullOrWhiteSpace(_connectionOptions.UserName) ||
+            string.IsNullOrWhiteSpace(_connectionOptions.Password) ||
+            string.IsNullOrWhiteSpace(_connectionOptions.Host))
         {
             throw new ArgumentException("RabbitMqOption is not fully configured.");
         }
@@ -35,7 +35,7 @@ public sealed class RabbitMqConnectionInitializer : IInitializer
 
         try
         {
-            var connectionString = $"{_options.UserName}:{_options.Password}@{_options.Host}/";
+            var connectionString = $"amqp://{_connectionOptions.UserName}:{_connectionOptions.Password}@{_connectionOptions.Host}/";
             using var bus = EasyNetQ.RabbitHutch.CreateBus(connectionString);
             _ = bus.Advanced;
         }

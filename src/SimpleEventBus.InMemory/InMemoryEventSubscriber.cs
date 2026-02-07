@@ -20,7 +20,7 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
     /// <summary>
     /// The delegate to handle received events
     /// </summary>
-    public Func<EventContext, Task> ConsumerReceived { get; set; }
+    public Func<EventContext, Task>? ConsumerReceived { get; set; }
 
     /// <summary>
     /// Subscribe to the given list of event names

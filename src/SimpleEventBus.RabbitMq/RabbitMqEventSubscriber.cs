@@ -13,7 +13,7 @@ namespace SimpleEventBus.RabbitMq;
 
 public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
 {
-    private readonly RabbitMqOption _rabbitMqOption;
+    private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
     private readonly RabbitMqBindingOption _rabbitMqBindingOption;
     private readonly ILogger<RabbitMqEventSubscriber> _logger;
     private readonly object _initLock = new();
@@ -21,15 +21,15 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
     private IAdvancedBus? _advancedBus;
     private readonly List<IDisposable> _consumers = new();
 
-    public RabbitMqEventSubscriber(IOptions<RabbitMqOption> rabbitMqOptions,
+    public RabbitMqEventSubscriber(IOptions<RabbitMqConnectionOption> rabbitMqOptions,
                                    IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
                                    ILogger<RabbitMqEventSubscriber> logger)
     {
-        _rabbitMqOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
         _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        ValidateOptions(_rabbitMqOption);
+        ValidateOptions(_rabbitMqConnectionOption);
     }
 
     protected override async Task SubscribeEventsAsync(List<string> eventNames)
@@ -37,6 +37,8 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
         ArgumentNullException.ThrowIfNull(eventNames);
 
         var advancedBus = GetAdvancedBus();
+
+        TryConfigurePrefetch(advancedBus);
 
         foreach (var eventName in eventNames.Distinct())
         {
@@ -47,6 +49,16 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
             var queueName = _rabbitMqBindingOption.QueueBindings.TryGetValue(eventName, out var bindingQueueName)
                 ? bindingQueueName
                 : _rabbitMqBindingOption.GlobalQueue;
+
+            if (string.IsNullOrWhiteSpace(exchangeName))
+            {
+                exchangeName = "eventbus.topic";
+            }
+
+            if (string.IsNullOrWhiteSpace(queueName))
+            {
+                queueName = $"{_rabbitMqBindingOption.ServiceName}.{_rabbitMqBindingOption.EnvironmentName}";
+            }
 
             if (string.IsNullOrWhiteSpace(exchangeName))
             {
@@ -103,7 +115,7 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
                 return;
             }
 
-            var connectionString = $"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/";
+            var connectionString = $"amqp://{_rabbitMqConnectionOption.UserName}:{_rabbitMqConnectionOption.Password}@{_rabbitMqConnectionOption.Host}/";
             _bus = RabbitHutch.CreateBus(connectionString);
             _advancedBus = _bus.Advanced;
         }
@@ -115,21 +127,21 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
         return _advancedBus!;
     }
 
-    private static void ValidateOptions(RabbitMqOption option)
+    private static void ValidateOptions(RabbitMqConnectionOption connectionOption)
     {
-        if (string.IsNullOrWhiteSpace(option.UserName))
+        if (string.IsNullOrWhiteSpace(connectionOption.UserName))
         {
-            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(connectionOption));
         }
 
-        if (string.IsNullOrWhiteSpace(option.Password))
+        if (string.IsNullOrWhiteSpace(connectionOption.Password))
         {
-            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(connectionOption));
         }
 
-        if (string.IsNullOrWhiteSpace(option.Host))
+        if (string.IsNullOrWhiteSpace(connectionOption.Host))
         {
-            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(option));
+            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(connectionOption));
         }
     }
 
@@ -141,5 +153,24 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
         }
 
         _bus?.Dispose();
+    }
+
+    private void TryConfigurePrefetch(IAdvancedBus advancedBus)
+    {
+        if (_rabbitMqBindingOption.PrefetchCount == 0)
+        {
+            return;
+        }
+
+        var type = advancedBus.GetType();
+        var method = type.GetMethod("Qos", new[] { typeof(uint), typeof(ushort), typeof(bool) })
+                     ?? type.GetMethod("SetQos", new[] { typeof(uint), typeof(ushort), typeof(bool) });
+
+        if (method is null)
+        {
+            return;
+        }
+
+        method.Invoke(advancedBus, new object[] { 0u, _rabbitMqBindingOption.PrefetchCount, false });
     }
 }

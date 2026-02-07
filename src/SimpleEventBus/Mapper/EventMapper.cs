@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Linq;
 using SimpleEventBus.Schema;
 
 namespace SimpleEventBus.Mapper;
@@ -84,8 +85,86 @@ public class EventMapper : IEventMapper
     private static string GetEventKey(Type type)
     {
         var attr = type.GetCustomAttribute<EventAttribute>();
-        var name = string.IsNullOrWhiteSpace(attr?.Name) ? type.Name : attr.Name;
         var version = string.IsNullOrWhiteSpace(attr?.Version) ? "1" : attr.Version;
-        return $"{name}_v{version}";
+        var baseName = !string.IsNullOrWhiteSpace(attr?.Name) && attr.Name.Contains('.')
+            ? attr.Name
+            : BuildConventionalName(type);
+
+        return $"{baseName}.v{version}";
+    }
+
+    private static string BuildConventionalName(Type type)
+    {
+        var domain = type.Namespace?.Split('.').LastOrDefault();
+        if (string.IsNullOrWhiteSpace(domain))
+        {
+            domain = "app";
+        }
+        domain = domain.ToLowerInvariant();
+
+        var tokens = SplitPascal(type.Name);
+        if (tokens.Count == 0)
+        {
+            return $"{domain}.event.unknown";
+        }
+
+        if (tokens.Count == 1)
+        {
+            return $"{domain}.{tokens[0].ToLowerInvariant()}.event";
+        }
+
+        var action = tokens[^1].ToLowerInvariant();
+        var entity = string.Join(".", tokens.Take(tokens.Count - 1)).ToLowerInvariant();
+
+        return $"{domain}.{entity}.{action}";
+    }
+
+    private static List<string> SplitPascal(string name)
+    {
+        var result = new List<string>();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return result;
+        }
+
+        var start = 0;
+        for (var i = 1; i < name.Length; i++)
+        {
+            var prev = name[i - 1];
+            var curr = name[i];
+            var next = i + 1 < name.Length ? name[i + 1] : '\0';
+
+            var boundary = false;
+
+            if (char.IsDigit(prev) && !char.IsDigit(curr))
+            {
+                boundary = true;
+            }
+            else if (!char.IsDigit(prev) && char.IsDigit(curr))
+            {
+                boundary = true;
+            }
+            else if (char.IsUpper(curr))
+            {
+                if (char.IsLower(prev))
+                {
+                    boundary = true;
+                }
+                else if (char.IsUpper(prev) && next != '\0' && char.IsLower(next))
+                {
+                    boundary = true;
+                }
+            }
+
+            if (boundary)
+            {
+                result.Add(name.Substring(start, i - start));
+                start = i;
+            }
+        }
+
+        result.Add(name.Substring(start));
+
+        return result;
     }
 }

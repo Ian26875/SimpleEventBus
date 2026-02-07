@@ -86,11 +86,9 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="eventContext">The event data</param>
     private async Task ConsumerReceived(EventContext eventContext)
     {
-        var messageContent = Encoding.UTF8.GetString(eventContext.Data.Span);
-
         EventBusMetrics.AddReceived(eventContext.EventName);
         
-        await ProcessEventAsync(eventContext.EventName, messageContent, eventContext.Headers);
+        await ProcessEventAsync(eventContext.EventName, eventContext.Data, eventContext.Headers);
     }
 
     /// <summary>
@@ -99,7 +97,7 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="eventName">The event name</param>
     /// <param name="message">The message</param>
     /// <param name="headers">The headers</param>
-    private async Task ProcessEventAsync(string eventName, string message, Headers headers)
+    private async Task ProcessEventAsync(string eventName, ReadOnlyMemory<byte> message, Headers headers)
     {
         _logger.LogTrace($"Processing event: {eventName}...");
         
@@ -111,7 +109,16 @@ public class EventSubscribeInitializer : IInitializer
             
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 
-            var @event = serializer.Deserialize(message, eventType);
+            object? @event;
+            if (serializer is JsonSerializer jsonSerializer)
+            {
+                @event = jsonSerializer.Deserialize(message, eventType);
+            }
+            else
+            {
+                var messageContent = Encoding.UTF8.GetString(message.Span);
+                @event = serializer.Deserialize(messageContent, eventType);
+            }
             if (@event is null)
             {
                 throw new InvalidOperationException($"Failed to deserialize event '{eventName}' to type '{eventType.FullName}'.");

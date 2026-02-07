@@ -20,7 +20,7 @@ public static class EventBusBuilderExtensions
     /// <param name="setUpBindOption">The set up bind option</param>
     /// <returns>The event bus builder</returns>
     public static IEventBusBuilder UseRabbitMqTransport(this IEventBusBuilder eventBusBuilder,
-                                               Action<RabbitMqOption> setUpOption,
+                                               Action<RabbitMqConnectionOption> setUpOption,
                                                Action<RabbitMqBindingOption> setUpBindOption)
     {
         eventBusBuilder.Services.AddSingleton<RabbitMqEventPublisher>();
@@ -50,7 +50,7 @@ public static class EventBusBuilderExtensions
     /// <param name="setUpOption">The set up option</param>
     /// <returns>The rabbit mq event bus builder</returns>
     public static IRabbitMqEventBusBuilder UseRabbitMq(this IEventBusBuilder eventBusBuilder,
-                                                       Action<RabbitMqOption> setUpOption)
+                                                       Action<RabbitMqConnectionOption> setUpOption)
     {
         return new RabbitMqEventBusBuilder(eventBusBuilder.Services);
     }

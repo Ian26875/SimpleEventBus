@@ -21,8 +21,8 @@
         <Using Include="Xunit"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\SimpleEventBus\SimpleEventBus.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleEventBus\SimpleEventBus.csproj" />
+  </ItemGroup>
 
 </Project>
