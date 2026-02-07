@@ -39,6 +39,10 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     public async Task ExecuteAsync(ExceptionContext context, CancellationToken cancellationToken)
     {
         var errorHandlerTypes = _subscriptionProfileManager.GetErrorHandlersForEvent(context.Event.GetType());
+        if (errorHandlerTypes.Count == 0)
+        {
+            return;
+        }
 
         await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
 

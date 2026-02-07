@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using EasyNetQ;
 using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
@@ -33,13 +36,23 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <summary>
     /// Gets or sets the value of the advanced bus
     /// </summary>
-    private IAdvancedBus AdvancedBus { get; set; }
+    private IAdvancedBus? _advancedBus;
+    private IBus? _bus;
+    private readonly object _initLock = new();
     
     
     public RabbitMqEventPublisher(ISerializer serializer, 
-                                  IEventMapper eventMapper) 
+                                  IEventMapper eventMapper,
+                                  IOptions<RabbitMqOption> rabbitMqOptions,
+                                  IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
+                                  ILogger<RabbitMqEventPublisher> logger) 
         : base(serializer, eventMapper)
     {
+        _rabbitMqOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        ValidateOptions(_rabbitMqOption);
     }
     
     /// <summary>
@@ -47,8 +60,46 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// </summary>
     private void InitializeBus()
     {
-        var bus = RabbitHutch.CreateBus($"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/");
-        AdvancedBus = bus.Advanced;
+        if (_advancedBus is not null)
+        {
+            return;
+        }
+
+        lock (_initLock)
+        {
+            if (_advancedBus is not null)
+            {
+                return;
+            }
+
+            var connectionString = $"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/";
+            _bus = RabbitHutch.CreateBus(connectionString);
+            _advancedBus = _bus.Advanced;
+        }
+    }
+
+    private IAdvancedBus GetAdvancedBus()
+    {
+        InitializeBus();
+        return _advancedBus!;
+    }
+
+    private static void ValidateOptions(RabbitMqOption option)
+    {
+        if (string.IsNullOrWhiteSpace(option.UserName))
+        {
+            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(option));
+        }
+
+        if (string.IsNullOrWhiteSpace(option.Password))
+        {
+            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(option));
+        }
+
+        if (string.IsNullOrWhiteSpace(option.Host))
+        {
+            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(option));
+        }
     }
     
     private async Task<Exchange> GetOrDeclareExchangeAsync(EventContext eventContext, CancellationToken cancellationToken)
@@ -57,7 +108,12 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
                                ? bindingExchangeName 
                                : _rabbitMqBindingOption.GlobalExchange;
 
-        var exchange = await AdvancedBus.ExchangeDeclareAsync
+        if (string.IsNullOrWhiteSpace(exchangeName))
+        {
+            throw new InvalidOperationException($"Exchange is not configured for event '{eventContext.EventName}'.");
+        }
+
+        var exchange = await GetAdvancedBus().ExchangeDeclareAsync
                        (
                            exchangeName, 
                            configure: configuration =>
@@ -85,7 +141,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
 
         _logger.LogTrace("Publishing event to RabbitMQ...");
         
-        await AdvancedBus.PublishAsync
+        await GetAdvancedBus().PublishAsync
         (
             exchange,
             routeKey, 
@@ -102,7 +158,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
 
     public void Dispose()
     {
-        AdvancedBus.Dispose();
+        _bus?.Dispose();
     }
 
     

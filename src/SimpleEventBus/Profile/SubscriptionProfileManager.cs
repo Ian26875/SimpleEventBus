@@ -1,3 +1,4 @@
+using System;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Subscriber.Executors;
 
@@ -69,11 +70,11 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
                     TryAddHandler(ErrorHandlers, pair.Key, handler);
                 }
             }
-            
-            foreach (var @event in EventHandlerExecutors.Keys)
-            {
-                _eventMapper.Register(@event);
-            }
+        }
+
+        foreach (var @event in EventHandlerExecutors.Keys)
+        {
+            _eventMapper.Register(@event);
         }
     }
 
@@ -158,7 +159,9 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     /// <returns>A list of type</returns>
     public IReadOnlyList<Type> GetErrorHandlersForEvent(Type eventType)
     {
-        return this.ErrorHandlers[eventType];
+        return this.ErrorHandlers.TryGetValue(eventType, out var handlers)
+            ? handlers
+            : Array.Empty<Type>();
     }
     
     /// <summary>

@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using SimpleEventBus;
+using SimpleEventBus.Internal;
 using SimpleEventBus.RabbitMq;
 using SimpleEventBus.Schema;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.DependencyInjection;
 
@@ -20,22 +23,22 @@ public static class EventBusBuilderExtensions
                                                Action<RabbitMqOption> setUpOption,
                                                Action<RabbitMqBindingOption> setUpBindOption)
     {
-        eventBusBuilder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+        eventBusBuilder.Services.AddSingleton<RabbitMqEventPublisher>();
+        eventBusBuilder.Services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
+
+        eventBusBuilder.Services.AddSingleton<RabbitMqEventSubscriber>();
+        eventBusBuilder.Services.AddSingleton<IEventSubscriber>(sp => sp.GetRequiredService<RabbitMqEventSubscriber>());
+        eventBusBuilder.Services.AddSingleton<IInitializer, RabbitMqConnectionInitializer>();
 
         eventBusBuilder.Services.Configure(setUpOption);
-        
- 
-        eventBusBuilder.Services.Configure<RabbitMqBindingOption>(option =>
-        {
-            var scopeFactory = eventBusBuilder.Services.BuildServiceProvider()
-                                              .GetRequiredService<IServiceScopeFactory>();
-            using (var scope = scopeFactory.CreateScope())
+
+        eventBusBuilder.Services.AddOptions<RabbitMqBindingOption>()
+            .Configure<IEventMapper>((option, mapper) =>
             {
-                var schemaRegistry = scope.ServiceProvider.GetRequiredService<IEventMapper>();
-                option.EventMapper = schemaRegistry;
-            }
-            setUpBindOption(option);
-        });
+                option.EventMapper = mapper;
+                setUpBindOption(option);
+            });
         
         return eventBusBuilder;
     }

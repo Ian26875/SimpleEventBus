@@ -20,10 +20,7 @@ public abstract class AbstractEventPublisher : IEventBus
     public async Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
                                      CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
     {
-        if (@event is null)
-        {
-            throw new ArgumentNullException(nameof(@event));
-        }
+        ArgumentNullException.ThrowIfNull(@event);
 
         headers ??= new Headers();
         

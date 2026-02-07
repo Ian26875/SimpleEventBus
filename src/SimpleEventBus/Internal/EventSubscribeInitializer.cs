@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -111,6 +112,10 @@ public class EventSubscribeInitializer : IInitializer
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 
             var @event = serializer.Deserialize(message, eventType);
+            if (@event is null)
+            {
+                throw new InvalidOperationException($"Failed to deserialize event '{eventName}' to type '{eventType.FullName}'.");
+            }
 
             var eventHandlerInvoker = serviceProvider.GetRequiredService<IEventHandlerInvoker>();
 

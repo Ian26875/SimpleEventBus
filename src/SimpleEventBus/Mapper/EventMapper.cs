@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using SimpleEventBus.Schema;
@@ -12,6 +13,7 @@ public class EventMapper : IEventMapper
 
     private readonly ConcurrentDictionary<Type, string> _schemas = new();
     private readonly ConcurrentDictionary<string, Type> _typesByName = new();
+    private readonly object _sync = new();
 
     private EventMapper() { }
 
@@ -29,11 +31,32 @@ public class EventMapper : IEventMapper
 
         var schemaName = GetEventKey(eventType);
 
-        if (!_schemas.TryAdd(eventType, schemaName))
-            throw new ArgumentException($"Schema already registered for {eventType.FullName}.");
+        lock (_sync)
+        {
+            if (_schemas.TryGetValue(eventType, out var existingSchema))
+            {
+                if (!string.Equals(existingSchema, schemaName, StringComparison.Ordinal))
+                {
+                    throw new ArgumentException($"Schema already registered for {eventType.FullName}.");
+                }
 
-        if (!_typesByName.TryAdd(schemaName, eventType))
-            throw new ArgumentException($"Schema name '{schemaName}' is already mapped to another type.");
+                return;
+            }
+
+            if (_typesByName.TryGetValue(schemaName, out var existingType))
+            {
+                if (existingType != eventType)
+                {
+                    throw new ArgumentException($"Schema name '{schemaName}' is already mapped to another type.");
+                }
+
+                _schemas.TryAdd(eventType, schemaName);
+                return;
+            }
+
+            _schemas.TryAdd(eventType, schemaName);
+            _typesByName.TryAdd(schemaName, eventType);
+        }
     }
 
     /// <summary>
