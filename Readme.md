@@ -10,8 +10,10 @@ Simple event bus library for .NET with fluent subscription profiles.
 
 ## Target Frameworks
 
-- `net8.0`
 - `net6.0`
+- `net8.0`
+- `net9.0`
+- `net10.0`
 
 ## Quick Start (In-Memory)
 
