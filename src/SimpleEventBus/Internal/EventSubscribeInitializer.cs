@@ -1,7 +1,9 @@
+using System;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SimpleEventBus.Event;
+using SimpleEventBus.Metrics;
 using SimpleEventBus.Profile;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
@@ -28,9 +30,8 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     The schema registry
     /// </summary>
-    private readonly ISchemaRegistry _schemaRegistry;
-
-
+    private readonly IEventMapper _eventMapper;
+    
     /// <summary>
     ///     The service provider
     /// </summary>
@@ -48,18 +49,18 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="subscriptionProfileManager">The subscription profile manager</param>
     /// <param name="logger">The logger</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
-    /// <param name="schemaRegistry">The schema registry</param>
+    /// <param name="eventMapper">The schema registry</param>
     public EventSubscribeInitializer(IEventSubscriber eventSubscriber,
                                      ISubscriptionProfileManager subscriptionProfileManager,
                                      ILogger<EventSubscribeInitializer> logger,
                                      IServiceScopeFactory serviceScopeFactory,
-                                     ISchemaRegistry schemaRegistry)
+                                     IEventMapper eventMapper)
     {
         _eventSubscriber = eventSubscriber;
         _subscriptionProfileManager = subscriptionProfileManager;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
-        _schemaRegistry = schemaRegistry;
+        _eventMapper = eventMapper;
     }
 
     /// <summary>
@@ -68,9 +69,11 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="cancellationToken">The cancellation token</param>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        _subscriptionProfileManager.Initialize();
+        
         var eventTypes = _subscriptionProfileManager.GetAllEventTypes();
 
-        var eventNames = eventTypes.Select(eventType => _schemaRegistry.GetEventName(eventType)).ToList();
+        var eventNames = eventTypes.Select(eventType => _eventMapper.GetEventName(eventType)).ToList();
 
         await _eventSubscriber.SubscribeAsync(eventNames, cancellationToken);
 
@@ -80,12 +83,12 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     Consumers the received using the specified event data
     /// </summary>
-    /// <param name="eventData">The event data</param>
-    private async Task ConsumerReceived(EventData eventData)
+    /// <param name="eventContext">The event data</param>
+    private async Task ConsumerReceived(EventContext eventContext)
     {
-        var messageContent = Encoding.UTF8.GetString(eventData.Data.Span);
-
-        await ProcessEventAsync(eventData.EventName, messageContent, eventData.Headers);
+        EventBusMetrics.AddReceived(eventContext.EventName);
+        
+        await ProcessEventAsync(eventContext.EventName, eventContext.Data, eventContext.Headers);
     }
 
     /// <summary>
@@ -94,19 +97,32 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="eventName">The event name</param>
     /// <param name="message">The message</param>
     /// <param name="headers">The headers</param>
-    private async Task ProcessEventAsync(string eventName, string message, Headers headers)
+    private async Task ProcessEventAsync(string eventName, ReadOnlyMemory<byte> message, Headers headers)
     {
-        _logger.LogTrace($"Processing RabbitMQ event: {eventName}...");
+        _logger.LogTrace($"Processing event: {eventName}...");
         
         await using (var serviceScope = _serviceScopeFactory.CreateAsyncScope())
         {
             var serviceProvider = serviceScope.ServiceProvider;
             
-            var eventType = serviceProvider.GetRequiredService<ISchemaRegistry>().GetEventType(eventName);
+            var eventType = serviceProvider.GetRequiredService<IEventMapper>().GetEventType(eventName);
             
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 
-            var @event = serializer.Deserialize(message, eventType);
+            object? @event;
+            if (serializer is JsonSerializer jsonSerializer)
+            {
+                @event = jsonSerializer.Deserialize(message, eventType);
+            }
+            else
+            {
+                var messageContent = Encoding.UTF8.GetString(message.Span);
+                @event = serializer.Deserialize(messageContent, eventType);
+            }
+            if (@event is null)
+            {
+                throw new InvalidOperationException($"Failed to deserialize event '{eventName}' to type '{eventType.FullName}'.");
+            }
 
             var eventHandlerInvoker = serviceProvider.GetRequiredService<IEventHandlerInvoker>();
 

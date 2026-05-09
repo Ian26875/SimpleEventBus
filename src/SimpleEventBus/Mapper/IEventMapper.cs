@@ -3,7 +3,7 @@ namespace SimpleEventBus.Schema;
 /// <summary>
 /// The schema registry interface
 /// </summary>
-public interface ISchemaRegistry
+public interface IEventMapper
 {
     /// <summary>
     /// Registers the event type

@@ -7,29 +7,49 @@ namespace SimpleEventBus;
 /// </summary>
 public abstract class SubscriptionProfile
 {
+    private readonly Dictionary<Type, List<IEventHandlerExecutor>> _eventHandlerExecutors = new();
+    private readonly Dictionary<Type, List<Type>> _errorHandlers = new();
+    
+    
     /// <summary>
-    ///     Initializes a new instance of the <see cref="SubscriptionProfile" /> class
+    ///     Initializes a new instance of the <see cref="SubscriptionProfile" /> class.
     /// </summary>
     protected SubscriptionProfile()
     {
-        EventHandlers = new Dictionary<Type, List<Type>>();
-        ErrorHandlers = new Dictionary<Type, List<Type>>();
-        EventHandlerExecutors = new Dictionary<Type, List<IEventHandlerExecutor>>();
+        
     }
 
     /// <summary>
-    ///     Maps event types to their list of handler types.
+    ///     Gets the registered event handler executors.
     /// </summary>
+<<<<<<< HEAD
     public Dictionary<Type, List<Type>> EventHandlers { get; }
+=======
+    public IReadOnlyDictionary<Type, IReadOnlyList<IEventHandlerExecutor>> EventHandlerExecutors =>
+        _eventHandlerExecutors.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlyList<IEventHandlerExecutor>)kvp.Value.AsReadOnly()
+        );
+>>>>>>> feature/BuildEventHandlerExecutor
 
     /// <summary>
-    /// Gets the value of the event handler executors
+    ///     Gets the registered error handler types.
     /// </summary>
+<<<<<<< HEAD
     public Dictionary<Type, List<IEventHandlerExecutor>> EventHandlerExecutors { get; }
 
+=======
+    public IReadOnlyDictionary<Type, IReadOnlyList<Type>> ErrorHandlers =>
+        _errorHandlers.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlyList<Type>)kvp.Value.AsReadOnly()
+        );
+    
+>>>>>>> feature/BuildEventHandlerExecutor
     /// <summary>
-    ///     Gets the value of the error handlers
+    ///     Adds a subscription for the specified event type.
     /// </summary>
+<<<<<<< HEAD
     public Dictionary<Type, List<Type>> ErrorHandlers { get; }
 
     /// <summary>
@@ -39,26 +59,20 @@ public abstract class SubscriptionProfile
     /// <param name="eventHandlerExecutor">The event handler executor</param>
     /// <exception cref="ArgumentException">Handler type '{eventHandlerExecutor}' is already registered for event type '{eventType.FullName}'.</exception>
     public void AddSubscription(Type eventType, IEventHandlerExecutor eventHandlerExecutor)
+=======
+    /// <param name="eventType">The event type.</param>
+    /// <param name="eventHandlerExecutor">The handler executor instance.</param>
+    /// <exception cref="ArgumentException">Thrown if the handler has already been registered for the event type.</exception>
+    internal void AddSubscription(Type eventType, IEventHandlerExecutor eventHandlerExecutor)
+>>>>>>> feature/BuildEventHandlerExecutor
     {
-        if (EventHandlerExecutors.TryGetValue(eventType, out var handlersList).Equals(false))
-        {
-            handlersList = new List<IEventHandlerExecutor>();
-            EventHandlerExecutors[eventType] = handlersList;
-        }
-
-        if (handlersList.Contains(eventHandlerExecutor))
-        {
-            throw new ArgumentException(
-                $"Handler type '{eventHandlerExecutor}' is already registered for event type '{eventType.FullName}'.");
-            
-        }
-
-        handlersList.Add(eventHandlerExecutor);
+        AddToDictionaryList(_eventHandlerExecutors, eventType, eventHandlerExecutor);
     }
 
     /// <summary>
-    ///     Creates the subscription using the specified event type
+    ///     Adds an error filter for the specified event type.
     /// </summary>
+<<<<<<< HEAD
     /// <param name="eventType">The event type</param>
     /// <param name="eventHandlerType">The event handler type</param>
     /// <exception cref="ArgumentException">
@@ -90,17 +104,37 @@ public abstract class SubscriptionProfile
     ///     '{eventType.FullName}'.
     /// </exception>
     public void AddErrorFilter(Type eventType, Type errorHandlerType)
+=======
+    /// <param name="eventType">The event type.</param>
+    /// <param name="errorHandlerType">The error handler type.</param>
+    /// <exception cref="ArgumentException">Thrown if the error handler has already been registered for the event type.</exception>
+    internal void AddErrorFilter(Type eventType, Type errorHandlerType)
+>>>>>>> feature/BuildEventHandlerExecutor
     {
-        if (ErrorHandlers.TryGetValue(eventType, out var handlersList).Equals(false))
+        AddToDictionaryList(_errorHandlers, eventType, errorHandlerType);
+    }
+
+    /// <summary>
+    ///     Helper method to add an item to a dictionary of lists.
+    /// </summary>
+    /// <typeparam name="T">The list item type.</typeparam>
+    /// <param name="dictionary">The dictionary to update.</param>
+    /// <param name="key">The dictionary key.</param>
+    /// <param name="value">The value to add.</param>
+    /// <exception cref="ArgumentException">Thrown if the value already exists in the list for the given key.</exception>
+    private static void AddToDictionaryList<T>(Dictionary<Type, List<T>> dictionary, Type key, T value)
+    {
+        if (!dictionary.TryGetValue(key, out var list))
         {
-            handlersList = new List<Type>();
-            ErrorHandlers[eventType] = handlersList;
+            list = new List<T>();
+            dictionary[key] = list;
         }
 
-        if (handlersList.Contains(errorHandlerType))
-            throw new ArgumentException(
-                $"Handler type '{errorHandlerType.FullName}' is already registered for event type '{eventType.FullName}'.");
+        if (list.Contains(value))
+        {
+            throw new ArgumentException($"Handler of type '{value}' is already registered for event type '{key.FullName}'.");
+        }
 
-        handlersList.Add(errorHandlerType);
+        list.Add(value);
     }
 }

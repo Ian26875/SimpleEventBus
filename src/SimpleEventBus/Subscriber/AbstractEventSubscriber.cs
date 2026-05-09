@@ -16,6 +16,11 @@ public abstract class AbstractEventSubscriber : IEventSubscriber
         return SubscribeEventsAsync(eventNames,cancellationToken);
     }
 
+<<<<<<< HEAD
     public Func<EventData, Task> ConsumerReceived { get; set; }
     public abstract Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken));
 }
+=======
+    public Func<EventContext, Task>? ConsumerReceived { get; set; }
+}
+>>>>>>> feature/BuildEventHandlerExecutor

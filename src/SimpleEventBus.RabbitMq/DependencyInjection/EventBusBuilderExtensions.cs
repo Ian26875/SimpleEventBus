@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using SimpleEventBus;
+using SimpleEventBus.Internal;
 using SimpleEventBus.RabbitMq;
 using SimpleEventBus.Schema;
+using SimpleEventBus.Subscriber;
 
 namespace SimpleEventBus.DependencyInjection;
 
@@ -16,27 +19,26 @@ public static class EventBusBuilderExtensions
     /// <param name="setUpOption">The set up option</param>
     /// <param name="setUpBindOption">The set up bind option</param>
     /// <returns>The event bus builder</returns>
-    public static IEventBusBuilder UseRabbitMq(this IEventBusBuilder eventBusBuilder,
-                                               Action<RabbitMqOption> setUpOption,
+    public static IEventBusBuilder UseRabbitMqTransport(this IEventBusBuilder eventBusBuilder,
+                                               Action<RabbitMqConnectionOption> setUpOption,
                                                Action<RabbitMqBindingOption> setUpBindOption)
     {
-        eventBusBuilder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+        eventBusBuilder.Services.AddSingleton<RabbitMqEventPublisher>();
+        eventBusBuilder.Services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
+        eventBusBuilder.Services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
+
+        eventBusBuilder.Services.AddSingleton<RabbitMqEventSubscriber>();
+        eventBusBuilder.Services.AddSingleton<IEventSubscriber>(sp => sp.GetRequiredService<RabbitMqEventSubscriber>());
+        eventBusBuilder.Services.AddSingleton<IInitializer, RabbitMqConnectionInitializer>();
 
         eventBusBuilder.Services.Configure(setUpOption);
-        
- 
-        eventBusBuilder.Services.PostConfigure<RabbitMqBindingOption>(option =>
-        {
-            var scopeFactory = eventBusBuilder.Services.BuildServiceProvider()
-                                              .GetRequiredService<IServiceScopeFactory>();
-            using (var scope = scopeFactory.CreateScope())
+
+        eventBusBuilder.Services.AddOptions<RabbitMqBindingOption>()
+            .Configure<IEventMapper>((option, mapper) =>
             {
-                var schemaRegistry = scope.ServiceProvider.GetRequiredService<ISchemaRegistry>();
-                option.SchemaRegistry = schemaRegistry;
-            }
-            
-            setUpBindOption(option);
-        });
+                option.EventMapper = mapper;
+                setUpBindOption(option);
+            });
         
         return eventBusBuilder;
     }
@@ -48,7 +50,7 @@ public static class EventBusBuilderExtensions
     /// <param name="setUpOption">The set up option</param>
     /// <returns>The rabbit mq event bus builder</returns>
     public static IRabbitMqEventBusBuilder UseRabbitMq(this IEventBusBuilder eventBusBuilder,
-                                                       Action<RabbitMqOption> setUpOption)
+                                                       Action<RabbitMqConnectionOption> setUpOption)
     {
         return new RabbitMqEventBusBuilder(eventBusBuilder.Services);
     }

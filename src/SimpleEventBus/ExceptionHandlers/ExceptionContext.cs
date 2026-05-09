@@ -1,46 +1,45 @@
 using System.Runtime.ExceptionServices;
-using System.Text;
 using SimpleEventBus.Event;
 
 namespace SimpleEventBus.ExceptionHandlers;
 
 /// <summary>
-/// The exception context class
+/// Represents the context of an exception that occurred during event handling.
+/// Includes the original event, its metadata headers, and captured exception details.
 /// </summary>
-/// <seealso cref="EventContext{object}"/>
-public class ExceptionContext 
+public class ExceptionContext
 {
     /// <summary>
-    /// Gets or sets the value of the exception
+    /// Initializes a new instance of the <see cref="ExceptionContext"/> class.
     /// </summary>
-    public Exception Exception { get; private set; }
-
-    /// <summary>
-    /// Gets or sets the value of the exception dispatch
-    /// </summary>
-    public ExceptionDispatchInfo ExceptionDispatch { get; private set;}
-
-    /// <summary>
-    /// Gets or sets the value of the event
-    /// </summary>
-    public object Event { get; private set; }
-
-    /// <summary>
-    /// Gets or sets the value of the headers
-    /// </summary>
-    public Headers Headers { get; private set; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ExceptionContext"/> class
-    /// </summary>
-    /// <param name="event">The event</param>
-    /// <param name="headers">The headers</param>
-    /// <param name="exception">The exception</param>
-    internal ExceptionContext(object @event, Headers headers,Exception exception)
+    /// <param name="event">The original event object that caused the exception.</param>
+    /// <param name="headers">The metadata headers associated with the event.</param>
+    /// <param name="exception">The exception that was thrown during event processing.</param>
+    internal ExceptionContext(object @event, Headers headers, Exception exception)
     {
         Event = @event;
         Headers = headers;
         Exception = exception;
         ExceptionDispatch = ExceptionDispatchInfo.Capture(exception);
     }
+
+    /// <summary>
+    /// Gets the exception that was thrown.
+    /// </summary>
+    public Exception Exception { get; }
+
+    /// <summary>
+    /// Gets the captured exception dispatch information, which preserves the stack trace.
+    /// </summary>
+    public ExceptionDispatchInfo ExceptionDispatch { get; }
+
+    /// <summary>
+    /// Gets the original event instance that triggered the exception.
+    /// </summary>
+    public object Event { get; }
+
+    /// <summary>
+    /// Gets the headers associated with the event.
+    /// </summary>
+    public Headers Headers { get; }
 }

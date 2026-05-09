@@ -3,34 +3,33 @@ using Microsoft.Extensions.DependencyInjection;
 namespace SimpleEventBus.DependencyInjection;
 
 /// <summary>
-/// The event bus builder interface
+/// Defines the interface for building an Event Bus and accessing its registered services.
 /// </summary>
 public interface IEventBusBuilder
 {
     /// <summary>
-    /// Gets the value of the services
+    /// Gets the <see cref="IServiceCollection"/> used to register services into the dependency injection container.
     /// </summary>
     IServiceCollection Services { get; }
 }
 
+
 /// <summary>
-/// The event bus builder class
+/// Provides a concrete implementation of <see cref="IEventBusBuilder"/> for configuring Event Bus-related services.
 /// </summary>
-/// <seealso cref="IEventBusBuilder"/>
 public class EventBusBuilder : IEventBusBuilder
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="EventBusBuilder"/> class
+    /// Initializes a new instance of the <see cref="EventBusBuilder"/> class with the specified service collection.
     /// </summary>
-    /// <param name="services">The services</param>
+    /// <param name="services">The <see cref="IServiceCollection"/> instance to register services with.</param>
     public EventBusBuilder(IServiceCollection services)
     {
         Services = services;
     }
 
     /// <summary>
-    /// Gets the value of the services
+    /// Gets the <see cref="IServiceCollection"/> used to register services into the dependency injection container.
     /// </summary>
     public IServiceCollection Services { get; }
-    
 }

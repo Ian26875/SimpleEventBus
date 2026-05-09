@@ -17,11 +17,15 @@ public interface IEventSubscriber
     /// <summary>
     /// consumer received
     /// </summary>
-    Func<EventData, Task> ConsumerReceived { set; get; }
+    Func<EventContext, Task>? ConsumerReceived { set; get; }
 
+<<<<<<< HEAD
     /// <summary>
     /// Receives the cancellation token
     /// </summary>
     /// <param name="cancellationToken">The cancellation token</param>
     Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken));
 }
+=======
+}
+>>>>>>> feature/BuildEventHandlerExecutor

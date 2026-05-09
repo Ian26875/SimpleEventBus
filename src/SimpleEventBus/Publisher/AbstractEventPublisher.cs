@@ -1,4 +1,5 @@
 using SimpleEventBus.Event;
+using SimpleEventBus.Metrics;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Serialization;
 
@@ -15,6 +16,7 @@ public abstract class AbstractEventPublisher : IEventBus
     /// </summary>
     protected readonly ISerializer _serializer;
 
+<<<<<<< HEAD
     /// <summary>
     /// The schema registry
     /// </summary>
@@ -26,11 +28,17 @@ public abstract class AbstractEventPublisher : IEventBus
     /// <param name="serializer">The serializer</param>
     /// <param name="schemaRegistry">The schema registry</param>
     protected AbstractEventPublisher(ISerializer serializer, ISchemaRegistry schemaRegistry)
+=======
+    protected readonly IEventMapper EventMapper;
+    
+    protected AbstractEventPublisher(ISerializer serializer, IEventMapper eventMapper)
+>>>>>>> feature/BuildEventHandlerExecutor
     {
         _serializer = serializer;
-        _schemaRegistry = schemaRegistry;
+        EventMapper = eventMapper;
     }
 
+<<<<<<< HEAD
     /// <summary>
     /// Publishes the event
     /// </summary>
@@ -41,32 +49,47 @@ public abstract class AbstractEventPublisher : IEventBus
     /// <exception cref="ArgumentNullException"></exception>
     public Task PublishAsync<TEvent>(TEvent @event, 
                                      Headers? headers = null,
+=======
+    public async Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
+>>>>>>> feature/BuildEventHandlerExecutor
                                      CancellationToken cancellationToken = default(CancellationToken)) where TEvent : class
     {
-        if (@event is null)
-        {
-            throw new ArgumentNullException(nameof(@event));
-        }
+        ArgumentNullException.ThrowIfNull(@event);
 
         headers ??= new Headers();
         
         var serializedData = _serializer.Serialize(@event);
+
+        var eventName = EventMapper.GetEventName(typeof(TEvent));
         
-        var eventData = new EventData
+        var eventData = new EventContext
         (
             serializedData,
             headers,
-            _schemaRegistry.GetEventName(typeof(TEvent))
+            eventName
         );
         
-        return this.PublishEventAsync(eventData, cancellationToken);
+        try
+        {
+            await this.PublishEventAsync(eventData, cancellationToken);
+            EventBusMetrics.AddPublished(eventName);
+        }
+        catch
+        {
+            EventBusMetrics.AddFailure(eventName);
+            throw;
+        }
     }
 
+<<<<<<< HEAD
     /// <summary>
     /// Publishes the event using the specified event data
     /// </summary>
     /// <param name="eventData">The event data</param>
     /// <param name="cancellationToken">The cancellation token</param>
     protected abstract Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken));
+=======
+    protected abstract Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default(CancellationToken));
+>>>>>>> feature/BuildEventHandlerExecutor
 
 }

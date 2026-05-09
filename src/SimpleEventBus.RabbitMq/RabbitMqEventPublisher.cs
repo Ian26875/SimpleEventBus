@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using EasyNetQ;
 using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
@@ -18,7 +21,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <summary>
     /// The rabbit mq option
     /// </summary>
-    private readonly RabbitMqOption _rabbitMqOption;
+    private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
     
     /// <summary>
     /// The rabbit mq binding option
@@ -33,13 +36,23 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// <summary>
     /// Gets or sets the value of the advanced bus
     /// </summary>
-    private IAdvancedBus AdvancedBus { get; set; }
+    private IAdvancedBus? _advancedBus;
+    private IBus? _bus;
+    private readonly object _initLock = new();
     
     
     public RabbitMqEventPublisher(ISerializer serializer, 
-                                  ISchemaRegistry schemaRegistry) 
-        : base(serializer, schemaRegistry)
+                                  IEventMapper eventMapper,
+                                  IOptions<RabbitMqConnectionOption> rabbitMqOptions,
+                                  IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
+                                  ILogger<RabbitMqEventPublisher> logger) 
+        : base(serializer, eventMapper)
     {
+        _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        ValidateOptions(_rabbitMqConnectionOption);
     }
     
     /// <summary>
@@ -47,17 +60,60 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     /// </summary>
     private void InitializeBus()
     {
-        var bus = RabbitHutch.CreateBus($"{_rabbitMqOption.UserName}:{_rabbitMqOption.Password}@{_rabbitMqOption.Host}/");
-        AdvancedBus = bus.Advanced;
+        if (_advancedBus is not null)
+        {
+            return;
+        }
+
+        lock (_initLock)
+        {
+            if (_advancedBus is not null)
+            {
+                return;
+            }
+
+            var connectionString = $"amqp://{_rabbitMqConnectionOption.UserName}:{_rabbitMqConnectionOption.Password}@{_rabbitMqConnectionOption.Host}/";
+            _bus = RabbitHutch.CreateBus(connectionString);
+            _advancedBus = _bus.Advanced;
+        }
+    }
+
+    private IAdvancedBus GetAdvancedBus()
+    {
+        InitializeBus();
+        return _advancedBus!;
+    }
+
+    private static void ValidateOptions(RabbitMqConnectionOption connectionOption)
+    {
+        if (string.IsNullOrWhiteSpace(connectionOption.UserName))
+        {
+            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(connectionOption));
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionOption.Password))
+        {
+            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(connectionOption));
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionOption.Host))
+        {
+            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(connectionOption));
+        }
     }
     
-    private async Task<Exchange> GetOrDeclareExchangeAsync(EventData eventData, CancellationToken cancellationToken)
+    private async Task<Exchange> GetOrDeclareExchangeAsync(EventContext eventContext, CancellationToken cancellationToken)
     {
-        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventData.EventName, out var bindingExchangeName)
+        var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventContext.EventName, out var bindingExchangeName)
                                ? bindingExchangeName 
                                : _rabbitMqBindingOption.GlobalExchange;
 
-        var exchange = await AdvancedBus.ExchangeDeclareAsync
+        if (string.IsNullOrWhiteSpace(exchangeName))
+        {
+            throw new InvalidOperationException($"Exchange is not configured for event '{eventContext.EventName}'.");
+        }
+
+        var exchange = await GetAdvancedBus().ExchangeDeclareAsync
                        (
                            exchangeName, 
                            configure: configuration =>
@@ -70,22 +126,22 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
     }
     
 
-    protected override async Task PublishEventAsync(EventData eventData, CancellationToken cancellationToken = default(CancellationToken))
+    protected override async Task PublishEventAsync(EventContext eventContext, CancellationToken cancellationToken = default(CancellationToken))
     {
-        if (eventData is null)
+        if (eventContext is null)
         {
-            throw new ArgumentNullException(nameof(eventData));
+            throw new ArgumentNullException(nameof(eventContext));
         }
         
-        var exchange = await GetOrDeclareExchangeAsync(eventData, cancellationToken);
+        var exchange = await GetOrDeclareExchangeAsync(eventContext, cancellationToken);
         
-        var routeKey = eventData.EventName;
+        var routeKey = eventContext.EventName;
         
         _logger.LogTrace("Declaring RabbitMQ exchange to publish event ...");
 
         _logger.LogTrace("Publishing event to RabbitMQ...");
         
-        await AdvancedBus.PublishAsync
+        await GetAdvancedBus().PublishAsync
         (
             exchange,
             routeKey, 
@@ -93,16 +149,16 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             new MessageProperties
             {
                 DeliveryMode = DeliveryMode.Persistent,
-                Headers = eventData.Headers,
+                Headers = eventContext.Headers,
             },
-            eventData.Data,
+            eventContext.Data,
             cancellationToken
         );
     }
 
     public void Dispose()
     {
-        AdvancedBus.Dispose();
+        _bus?.Dispose();
     }
 
     

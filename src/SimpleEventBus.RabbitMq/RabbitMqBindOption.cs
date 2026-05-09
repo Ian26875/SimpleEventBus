@@ -20,17 +20,32 @@ namespace SimpleEventBus.RabbitMq
         /// <summary>
         /// Gets or sets the global exchange name
         /// </summary>
-        public string GlobalExchange { get; set; }
+        public string GlobalExchange { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the global queue name
         /// </summary>
-        public string GlobalQueue { get; set; }
+        public string GlobalQueue { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Service name used to build default queue name when GlobalQueue is not set.
+        /// </summary>
+        public string ServiceName { get; set; } = "app";
+
+        /// <summary>
+        /// Environment name used to build default queue name when GlobalQueue is not set.
+        /// </summary>
+        public string EnvironmentName { get; set; } = "prod";
+
+        /// <summary>
+        /// Prefetch count for RabbitMQ consumers.
+        /// </summary>
+        public ushort PrefetchCount { get; set; } = 10;
         
         /// <summary>
         /// Gets or sets the value of the schema registry
         /// </summary>
-        public ISchemaRegistry SchemaRegistry { get; set; }
+        public IEventMapper EventMapper { get; set; } = null!;
     }
 
     /// <summary>
@@ -59,7 +74,7 @@ namespace SimpleEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareExchange(string exchangeName)
         {
-            var eventName = _options.SchemaRegistry.GetEventName(typeof(TEvent));
+            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
             _options.ExchangeBindings[eventName] = exchangeName;
             return this;
         }
@@ -71,7 +86,7 @@ namespace SimpleEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareQueue(string queueName)
         {
-            var eventName = _options.SchemaRegistry.GetEventName(typeof(TEvent));
+            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
             _options.QueueBindings[eventName] = queueName;
             return this;
         }

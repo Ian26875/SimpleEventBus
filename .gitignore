@@ -1,0 +1,14 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Rider / IntelliJ
+.idea/
+
+# Visual Studio
+*.user
+*.suo
+*.vs
+
+# Local tooling
+src/global.json

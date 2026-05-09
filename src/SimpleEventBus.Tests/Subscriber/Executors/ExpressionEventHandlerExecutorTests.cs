@@ -14,7 +14,11 @@ public class ExpressionEventHandlerExecutorTests
         Expression<Func<ExpressionTestEventHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.HandleAsync;
 
         // Act
+<<<<<<< HEAD
         var executor = new ExpressionEventHandlerExecutor<TestEvent, ExpressionTestEventHandler>(expression);
+=======
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
+>>>>>>> feature/BuildEventHandlerExecutor
 
         // Assert
         executor.HandlerType.Should().Be(typeof(ExpressionTestEventHandler));
@@ -26,8 +30,13 @@ public class ExpressionEventHandlerExecutorTests
     public async Task CreateHandlerDelegate_ShouldReturnValidHandlerDelegate()
     {
         // Arrange
+<<<<<<< HEAD
         Expression<Func<ExpressionTestEventHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.HandleAsync;
         var executor = new ExpressionEventHandlerExecutor<TestEvent, ExpressionTestEventHandler>(expression);
+=======
+        Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
+>>>>>>> feature/BuildEventHandlerExecutor
 
         var testHandler = new ExpressionTestEventHandler();
         var testEvent = new TestEvent(Guid.NewGuid(), "Test");
@@ -48,8 +57,13 @@ public class ExpressionEventHandlerExecutorTests
     public async Task CreateHandlerDelegate_WhenHandlerTypeMismatch_ShouldThrowArgumentException()
     {
         // Arrange
+<<<<<<< HEAD
         Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.HandleAsync;
         var executor = new ExpressionEventHandlerExecutor<TestEvent, TestHandler>(expression);
+=======
+        Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
+>>>>>>> feature/BuildEventHandlerExecutor
 
         var invalidHandler = new object();
         var testEvent = new TestEvent(Guid.NewGuid(), "Test");
@@ -70,8 +84,13 @@ public class ExpressionEventHandlerExecutorTests
     public async Task CreateHandlerDelegate_WhenEventTypeMismatch_ShouldThrowArgumentException()
     {
         // Arrange
+<<<<<<< HEAD
         Expression<Func<ExpressionTestEventHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.HandleAsync;
         var executor = new ExpressionEventHandlerExecutor<TestEvent, ExpressionTestEventHandler>(expression);
+=======
+        Expression<Func<TestHandler, Func<TestEvent, Headers, CancellationToken, Task>>> expression = h => h.Handle;
+        var executor = new LambdaEventHandlerExecutor<TestEvent, TestHandler>(expression);
+>>>>>>> feature/BuildEventHandlerExecutor
 
         var testHandler = new ExpressionTestEventHandler();
         var invalidEvent = new object();
