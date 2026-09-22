@@ -136,6 +136,45 @@ bind.ForEvent<OrderPlaced>()
     .DeclareQueue("orders.queue");
 ```
 
+## Delivery Semantics, Retry and Dead Letter
+
+Failed handlers propagate their exception to the transport (unless an
+`IEventExceptionHandler` registered via `CatchExceptionToDo<T>()` sets
+`context.Handled = true`, which acks and drops the message). The transport then retries:
+
+- **RabbitMQ**: the message is republished with an incremented `x-retry-count` header,
+  up to `MaxRetryCount` (default `3`). After that it is nacked without requeue —
+  dead-lettered when a dead letter exchange is configured, dropped otherwise.
+- **In-Memory**: the event is re-enqueued with the same counter, up to `MaxRetryCount`
+  (default `3`). After that `OnPoisonMessage` is invoked (if set) and the event is dropped.
+
+This makes delivery **at-least-once**: handlers must be idempotent.
+
+Configure a dead letter exchange/queue for RabbitMQ:
+
+```csharp
+bind.DeclareGlobalDeadLetter("eventbus.dlx", "simpleeventbus.orders.dlq");
+bind.MaxRetryCount = 3;
+
+// or per event
+bind.ForEvent<OrderPlaced>()
+    .DeclareExchange("orders.exchange")
+    .DeclareQueue("orders.queue")
+    .WithDeadLetter("orders.dlx", "orders.dlq");
+```
+
+Configure the in-memory poison message hook:
+
+```csharp
+builder.UseInMemoryTransport(
+    maxRetryCount: 3,
+    onPoisonMessage: (context, exception) =>
+    {
+        Console.WriteLine($"Poison event {context.EventName}: {exception.Message}");
+        return Task.CompletedTask;
+    });
+```
+
 ## Event Naming
 
 - Default key format: `{domain}.{entity}.{event}.v{version}`
