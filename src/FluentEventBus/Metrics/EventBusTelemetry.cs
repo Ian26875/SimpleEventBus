@@ -12,6 +12,11 @@ public static class EventBusTelemetry
     public const string MeterName = "FluentEventBus";
 
     /// <summary>
+    /// The activity source name for all EventBus-related traces.
+    /// </summary>
+    public const string ActivitySourceName = "FluentEventBus";
+
+    /// <summary>
     /// Counter name: total number of events published.
     /// </summary>
     public const string EventPublishedCounter = "eventbus_events_published_total";

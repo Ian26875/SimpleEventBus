@@ -26,6 +26,7 @@ graph TD
 | `FluentEventBus` | `FluentEventBus` | 核心抽象與 Profile 系統 |
 | `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-Process（同進程）傳輸 |
 | `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ 傳輸 |
+| `FluentEventBus.OpenTelemetry` | `FluentEventBus.OpenTelemetry` | OpenTelemetry 接線（net8.0+） |
 
 ## 目標框架
 
@@ -212,6 +213,27 @@ public Task HandleAsync(OrderPlaced @event, Headers headers, CancellationToken c
 訊息 body 的合約 = JSON payload + 邏輯事件名稱——**CLR type name、namespace、
 assembly name 一律不上 wire**。Consumer 用邏輯名稱對回自己本地的型別，因此
 producer 端 refactor 與非 .NET consumer 都不會被影響。
+
+## OpenTelemetry
+
+Bus 會發出 publish/consume span（`ActivitySource`："FluentEventBus"）與計數器
+（`Meter`："FluentEventBus"）。Trace context 以 W3C `traceparent` 放在訊息 header
+中傳遞，因此 publisher 與 consumer 服務會串成同一條分散式 trace。
+
+使用 `FluentEventBus.OpenTelemetry` 套件（net8.0+）：
+
+```csharp
+services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddFluentEventBusInstrumentation())
+    .WithMetrics(metrics => metrics.AddFluentEventBusInstrumentation());
+```
+
+不裝套件（如 net6/net7）也能直接註冊名稱：
+
+```csharp
+tracing.AddSource("FluentEventBus");
+metrics.AddMeter("FluentEventBus", "FluentEventBus.InMemory");
+```
 
 ## 事件命名
 
