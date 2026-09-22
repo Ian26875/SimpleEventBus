@@ -148,7 +148,8 @@ Failed handlers propagate their exception to the transport (unless an
 - **In-Memory**: the event is re-enqueued with the same counter, up to `MaxRetryCount`
   (default `3`). After that `OnPoisonMessage` is invoked (if set) and the event is dropped.
 
-This makes delivery **at-least-once**: handlers must be idempotent.
+This makes delivery **at-least-once**: handlers must be idempotent — use
+`Headers.MessageId` as the deduplication key.
 
 Configure a dead letter exchange/queue for RabbitMQ:
 
@@ -174,6 +175,34 @@ builder.UseInMemoryTransport(
         return Task.CompletedTask;
     });
 ```
+
+## Message Headers
+
+Every message carries a `Headers` dictionary. Well-known headers:
+
+| Header | Set by | Purpose |
+|---|---|---|
+| `MessageId` | Publisher, automatically (GUID) when absent | Unique message id — the deduplication key for at-least-once delivery |
+| `OccurredAt` | Publisher, automatically (UTC, ISO-8601) when absent | When the event was published |
+| `CorrelationId` | Caller (optional) | End-to-end tracing across services |
+| `x-retry-count` | Transport | Redelivery counter for the retry/dead-letter flow |
+
+```csharp
+await publisher.PublishAsync(orderPlaced, new Headers { CorrelationId = requestId });
+
+// consumer side
+public Task HandleAsync(OrderPlaced @event, Headers headers, CancellationToken ct)
+{
+    var messageId = headers.MessageId;   // dedup key
+    var occurredAt = headers.OccurredAt; // DateTimeOffset?
+    ...
+}
+```
+
+The message body contract is the JSON payload plus the logical event name — CLR
+type names, namespaces and assembly names never appear on the wire. Consumers map
+the logical name back to their own local type, so producer-side refactors and
+non-.NET consumers are both safe.
 
 ## Event Naming
 

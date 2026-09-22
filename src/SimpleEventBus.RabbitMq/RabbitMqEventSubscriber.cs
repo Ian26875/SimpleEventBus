@@ -104,7 +104,11 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
                 {
                     foreach (var pair in properties.Headers)
                     {
-                        headers[pair.Key] = pair.Value;
+                        // AMQP delivers string headers as byte[]; convert back so
+                        // MessageId / CorrelationId round-trip as strings.
+                        headers[pair.Key] = pair.Value is byte[] bytes
+                            ? System.Text.Encoding.UTF8.GetString(bytes)
+                            : pair.Value!;
                     }
                 }
 

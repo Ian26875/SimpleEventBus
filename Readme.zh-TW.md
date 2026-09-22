@@ -148,7 +148,8 @@ Transport 接著進行重試：
 - **In-Memory**：事件帶著同樣的計數重新入列，最多 `MaxRetryCount` 次（預設 `3`）。
   超過後呼叫 `OnPoisonMessage`（若有設定）並丟棄。
 
-因此投遞語意為 **at-least-once**：handler 必須具備冪等性。
+因此投遞語意為 **at-least-once**：handler 必須具備冪等性——請用
+`Headers.MessageId` 作為去重（deduplication）依據。
 
 RabbitMQ 設定 dead letter exchange / queue：
 
@@ -174,6 +175,33 @@ builder.UseInMemoryTransport(
         return Task.CompletedTask;
     });
 ```
+
+## Message Headers
+
+每則訊息都帶一個 `Headers` 字典。標準 header：
+
+| Header | 由誰設定 | 用途 |
+|---|---|---|
+| `MessageId` | Publisher 自動填（GUID，未設定時） | 訊息唯一識別——at-least-once 去重的依據 |
+| `OccurredAt` | Publisher 自動填（UTC，ISO-8601，未設定時） | 事件發佈時間 |
+| `CorrelationId` | 呼叫端（選填） | 跨服務端到端追蹤 |
+| `x-retry-count` | Transport | 重試/dead letter 流程的重投計數 |
+
+```csharp
+await publisher.PublishAsync(orderPlaced, new Headers { CorrelationId = requestId });
+
+// consumer 端
+public Task HandleAsync(OrderPlaced @event, Headers headers, CancellationToken ct)
+{
+    var messageId = headers.MessageId;   // 去重 key
+    var occurredAt = headers.OccurredAt; // DateTimeOffset?
+    ...
+}
+```
+
+訊息 body 的合約 = JSON payload + 邏輯事件名稱——**CLR type name、namespace、
+assembly name 一律不上 wire**。Consumer 用邏輯名稱對回自己本地的型別，因此
+producer 端 refactor 與非 .NET consumer 都不會被影響。
 
 ## 事件命名
 
