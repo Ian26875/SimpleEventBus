@@ -1,5 +1,10 @@
 # SimpleEventBus
 
+[![CI](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml)
+[![Release](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml/badge.svg)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml)
+[![NuGet](https://img.shields.io/nuget/vpre/FluentEventBus?label=NuGet)](https://www.nuget.org/packages/FluentEventBus)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 [English](Readme.md) | [繁體中文](Readme.zh-TW.md)
 
 Simple event bus library for .NET with fluent subscription profiles.
