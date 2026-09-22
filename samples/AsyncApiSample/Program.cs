@@ -27,12 +27,11 @@ builder.Services.AddEventBus(eventBus =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.Description = "Sample service demonstrating FluentEventBus with AsyncAPI generation.";
-        options.WithServer("production", "rabbitmq.internal:5672", "amqp",
-            description: "Production RabbitMQ broker", protocolVersion: "0.9.1");
-        options.WithServer("local", "localhost:5672", "amqp",
-            description: "Local development broker");
+        // Servers are discovered from the configured transport (IEventBusServerDescriptor);
+        // WithServer(...) can still add or override entries explicitly.
+        options.WithXmlComments<OrderPlaced>();
         options.WithExample(
-            new OrderPlaced(Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e"), DateTimeOffset.Parse("2026-09-22T10:00:00+08:00")),
+            new OrderPlaced { OrderId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e"), PlacedAt = DateTimeOffset.Parse("2026-09-22T10:00:00+08:00") },
             name: "typical-order",
             summary: "A typical order placed during business hours.");
     });
@@ -43,7 +42,7 @@ var app = builder.Build();
 // Publish an event: curl -X POST http://localhost:5000/orders
 app.MapPost("/orders", async (IEventPublisher publisher) =>
 {
-    var @event = new OrderPlaced(Guid.NewGuid(), DateTimeOffset.UtcNow);
+    var @event = new OrderPlaced { OrderId = Guid.NewGuid(), PlacedAt = DateTimeOffset.UtcNow };
     await publisher.PublishAsync(@event);
     return Results.Accepted(value: @event);
 });
@@ -67,8 +66,18 @@ app.MapRazorPages();
 
 app.Run();
 
+/// <summary>
+/// Raised when a customer places an order and payment has been authorized.
+/// </summary>
 [Event("order.order.placed", 1)]
-public sealed record OrderPlaced(Guid OrderId, DateTimeOffset PlacedAt);
+public sealed record OrderPlaced
+{
+    /// <summary>Unique identifier of the placed order.</summary>
+    public required Guid OrderId { get; init; }
+
+    /// <summary>When the order was placed (UTC).</summary>
+    public required DateTimeOffset PlacedAt { get; init; }
+}
 
 public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 {

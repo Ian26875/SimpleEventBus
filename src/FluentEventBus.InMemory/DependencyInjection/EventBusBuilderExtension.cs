@@ -36,6 +36,14 @@ public static class EventBusBuilderExtension
             OnPoisonMessage = onPoisonMessage
         });
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>();
+
+        // Transport-neutral server description consumed by documentation tooling (e.g. AsyncAPI).
+        eventBusBuilder.Services.AddSingleton<FluentEventBus.IEventBusServerDescriptor>(
+            new FluentEventBus.EventBusServerDescriptor(
+                Name: "in-memory",
+                Host: "in-process",
+                Protocol: "inmemory",
+                Description: "In-process transport (bounded background queue)."));
         
         eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();
         

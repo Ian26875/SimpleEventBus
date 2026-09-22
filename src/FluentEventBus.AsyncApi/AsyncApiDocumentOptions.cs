@@ -1,3 +1,5 @@
+using Json.Schema.Generation;
+
 namespace FluentEventBus.AsyncApi;
 
 /// <summary>
@@ -19,6 +21,29 @@ public class AsyncApiDocumentOptions
 
     /// <summary>Message examples registered per event type.</summary>
     internal Dictionary<Type, List<MessageExample>> Examples { get; } = new();
+
+    /// <summary>Extra schema generator configuration (e.g. registered XML comment files).</summary>
+    internal List<Action<SchemaGeneratorConfiguration>> SchemaConfigurators { get; } = new();
+
+    /// <summary>
+    /// Reads XML documentation comments from the assembly containing
+    /// <typeparamref name="TAssemblyMarker"/>: type <c>&lt;summary&gt;</c> becomes the
+    /// message/channel description and property summaries become schema descriptions.
+    /// Requires <c>&lt;GenerateDocumentationFile&gt;true&lt;/GenerateDocumentationFile&gt;</c>
+    /// in the project holding the event types.
+    /// </summary>
+    /// <typeparam name="TAssemblyMarker">Any type in the assembly whose XML docs to read.</typeparam>
+    /// <param name="xmlPath">Optional explicit path to the XML file; defaults to the file next to the assembly.</param>
+    public AsyncApiDocumentOptions WithXmlComments<TAssemblyMarker>(string? xmlPath = null)
+    {
+        var path = xmlPath ?? Path.ChangeExtension(typeof(TAssemblyMarker).Assembly.Location, ".xml");
+        SchemaConfigurators.Add(configuration => configuration.RegisterXmlCommentFile<TAssemblyMarker>(path));
+        XmlCommentFiles.Add(path);
+        return this;
+    }
+
+    /// <summary>XML documentation files registered via <see cref="WithXmlComments{T}"/>.</summary>
+    internal List<string> XmlCommentFiles { get; } = new();
 
     /// <summary>
     /// Declares a server (broker) in the generated document, e.g.
