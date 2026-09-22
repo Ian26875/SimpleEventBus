@@ -1,3 +1,4 @@
+using FluentEventBus.Event;
 using FluentEventBus.Profile;
 using FluentEventBus.Schema;
 using Json.Schema;
@@ -67,6 +68,16 @@ public sealed class AsyncApiDocumentGenerator
             Operations = []
         };
 
+        // The standard envelope headers every message carries, published once under
+        // components/schemas and referenced by every message.
+        document.Components = new()
+        {
+            Schemas = new()
+            {
+                [EventBusHeadersSchemaName] = new V3SchemaDefinition { Schema = BuildHeadersSchema() }
+            }
+        };
+
         var serverReferences = new Neuroglia.EquatableList<V3ReferenceDefinition>();
         if (_options.Servers.Count > 0)
         {
@@ -96,7 +107,13 @@ public sealed class AsyncApiDocumentGenerator
                 Name = messageName,
                 Title = messageName,
                 ContentType = "application/json",
-                Payload = new V3SchemaDefinition { Schema = payloadSchema }
+                Payload = new V3SchemaDefinition { Schema = payloadSchema },
+                Headers = new V3SchemaDefinition
+                {
+                    Schema = new JsonSchemaBuilder()
+                        .Ref($"#/components/schemas/{EventBusHeadersSchemaName}")
+                        .Build()
+                }
             };
 
             if (_options.Examples.TryGetValue(eventType, out var examples))
@@ -143,6 +160,37 @@ public sealed class AsyncApiDocumentGenerator
         using var stream = new MemoryStream();
         await _documentWriter.WriteAsync(document, stream, format, cancellationToken);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    /// <summary>Name of the shared headers schema under components/schemas.</summary>
+    internal const string EventBusHeadersSchemaName = "eventBusHeaders";
+
+    /// <summary>
+    /// Schema of the standard FluentEventBus envelope headers
+    /// (see Headers: MessageId / OccurredAt auto-filled at publish, CorrelationId caller-set,
+    /// x-retry-count added by the transport during redelivery).
+    /// </summary>
+    private static JsonSchema BuildHeadersSchema()
+    {
+        return new JsonSchemaBuilder()
+            .Type(SchemaValueType.Object)
+            .Properties(
+                (Headers.MessageIdKey, new JsonSchemaBuilder()
+                    .Type(SchemaValueType.String)
+                    .Format(Formats.Uuid)
+                    .Description("Unique message id, auto-assigned at publish. Deduplication key for at-least-once delivery.")),
+                (Headers.OccurredAtKey, new JsonSchemaBuilder()
+                    .Type(SchemaValueType.String)
+                    .Format(Formats.DateTime)
+                    .Description("UTC time the event was published (ISO-8601), auto-assigned at publish.")),
+                (Headers.CorrelationIdKey, new JsonSchemaBuilder()
+                    .Type(SchemaValueType.String)
+                    .Description("Caller-set id for end-to-end tracing across services.")),
+                ("x-retry-count", new JsonSchemaBuilder()
+                    .Type(SchemaValueType.Integer)
+                    .Description("Redelivery counter added by the transport during the retry/dead-letter flow.")))
+            .Required(Headers.MessageIdKey, Headers.OccurredAtKey)
+            .Build();
     }
 
     /// <summary>
