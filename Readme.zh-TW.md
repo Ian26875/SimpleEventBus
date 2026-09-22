@@ -26,6 +26,7 @@ graph TD
 | `FluentEventBus` | `FluentEventBus` | 核心抽象與 Profile 系統 |
 | `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-Process（同進程）傳輸 |
 | `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ 傳輸 |
+| `FluentEventBus.AsyncApi` | `FluentEventBus.AsyncApi` | AsyncAPI 3.0 文件產生（net8.0+） |
 
 ## 目標框架
 
@@ -269,6 +270,35 @@ wire contract，就不該出現在 routing key 上。
 **Contract 穩定性**：跨服務共用的事件一律加明文 `[Event("name", n)]`。沒加時
 名稱由型別名與 namespace 推導，refactor 會無聲改掉 routing key——這是編譯器
 抓不到的 breaking change。
+
+## AsyncAPI 文件
+
+`FluentEventBus.AsyncApi` 套件（net8.0+，基於 AsyncAPI 官方 .NET SDK）直接從
+subscription profiles 產出 AsyncAPI 3.0 文件——事件名稱變 channels、handler 變
+receive operations、事件型別變 payload JSON Schema，不需要任何額外標註。
+
+```csharp
+services.AddEventBus(builder =>
+{
+    builder.WithProfile<OrderProfile>();
+    builder.UseInMemoryTransport();
+    builder.AddAsyncApiDocument(options =>
+    {
+        options.Title = "Orders Service";
+        options.Version = "1.0.0";
+        options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
+    });
+});
+```
+
+輸出方式自由選擇，例如 minimal API endpoint：
+
+```csharp
+app.MapGet("/asyncapi.json", async (AsyncApiDocumentGenerator generator, CancellationToken ct) =>
+    Results.Content(await generator.SerializeAsync(AsyncApiDocumentFormat.Json, ct), "application/json"));
+```
+
+可執行範例（含 Dockerfile）見 `samples/AsyncApiSample`。
 
 ## 路由預設值
 

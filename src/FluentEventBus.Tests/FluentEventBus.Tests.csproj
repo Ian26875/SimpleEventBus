@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FluentEventBus\FluentEventBus.csproj" />
+    <ProjectReference Include="..\FluentEventBus.AsyncApi\FluentEventBus.AsyncApi.csproj" Condition="'$(TargetFramework)' != 'net6.0' And '$(TargetFramework)' != 'net7.0'" />
   </ItemGroup>
 
 </Project>

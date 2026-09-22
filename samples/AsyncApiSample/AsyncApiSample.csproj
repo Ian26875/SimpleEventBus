@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\FluentEventBus\FluentEventBus.csproj" />
+        <ProjectReference Include="..\..\src\FluentEventBus.InMemory\FluentEventBus.InMemory.csproj" />
+        <ProjectReference Include="..\..\src\FluentEventBus.AsyncApi\FluentEventBus.AsyncApi.csproj" />
+    </ItemGroup>
+
+</Project>
