@@ -41,6 +41,33 @@ namespace SimpleEventBus.RabbitMq
         /// Prefetch count for RabbitMQ consumers.
         /// </summary>
         public ushort PrefetchCount { get; set; } = 10;
+
+        /// <summary>
+        /// Gets or sets the per-event dead letter exchange bindings (event name -> exchange name).
+        /// </summary>
+        public Dictionary<string, string> DeadLetterExchangeBindings { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Gets or sets the per-event dead letter queue bindings (event name -> queue name).
+        /// </summary>
+        public Dictionary<string, string> DeadLetterQueueBindings { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Global dead letter exchange used when an event has no per-event dead letter binding.
+        /// Empty means dead lettering is disabled.
+        /// </summary>
+        public string GlobalDeadLetterExchange { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Global dead letter queue used when an event has no per-event dead letter binding.
+        /// </summary>
+        public string GlobalDeadLetterQueue { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Maximum number of redeliveries for a failed message before it is
+        /// nacked without requeue (dead-lettered when a dead letter exchange is configured).
+        /// </summary>
+        public int MaxRetryCount { get; set; } = 3;
         
         /// <summary>
         /// Gets or sets the value of the schema registry
@@ -90,6 +117,21 @@ namespace SimpleEventBus.RabbitMq
             _options.QueueBindings[eventName] = queueName;
             return this;
         }
+
+        /// <summary>
+        /// Declares a dead letter exchange and queue for this event.
+        /// Failed messages exceeding <see cref="RabbitMqBindingOption.MaxRetryCount"/> are routed there.
+        /// </summary>
+        /// <param name="exchangeName">The dead letter exchange name</param>
+        /// <param name="queueName">The dead letter queue name</param>
+        /// <returns>An event binder of t event</returns>
+        public EventBinder<TEvent> WithDeadLetter(string exchangeName, string queueName)
+        {
+            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
+            _options.DeadLetterExchangeBindings[eventName] = exchangeName;
+            _options.DeadLetterQueueBindings[eventName] = queueName;
+            return this;
+        }
     }
 
     /// <summary>
@@ -129,6 +171,21 @@ namespace SimpleEventBus.RabbitMq
         public static RabbitMqBindingOption DeclareGlobalQueue(this RabbitMqBindingOption options, string queueName)
         {
             options.GlobalQueue = queueName;
+            return options;
+        }
+
+        /// <summary>
+        /// Declares the global dead letter exchange and queue used by all events
+        /// without a per-event dead letter binding.
+        /// </summary>
+        /// <param name="options">The options</param>
+        /// <param name="exchangeName">The dead letter exchange name</param>
+        /// <param name="queueName">The dead letter queue name</param>
+        /// <returns>The options</returns>
+        public static RabbitMqBindingOption DeclareGlobalDeadLetter(this RabbitMqBindingOption options, string exchangeName, string queueName)
+        {
+            options.GlobalDeadLetterExchange = exchangeName;
+            options.GlobalDeadLetterQueue = queueName;
             return options;
         }
     }

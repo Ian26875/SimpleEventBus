@@ -17,17 +17,23 @@ public static class EventBusBuilderExtension
     /// <param name="capacity">The capacity</param>
     /// <param name="alertThreshold">The alert threshold</param>
     /// <param name="onAlert">The on alert</param>
+    /// <param name="maxRetryCount">Redelivery limit for failed events before they are treated as poison messages</param>
+    /// <param name="onPoisonMessage">Invoked when a failed event exceeds the retry limit; the event is dropped afterwards</param>
     /// <returns>The event bus builder</returns>
     public static IEventBusBuilder UseInMemoryTransport(this IEventBusBuilder eventBusBuilder,
         int capacity = 100,
         int alertThreshold = 80,
-        Func<Task>? onAlert = default)
+        Func<Task>? onAlert = default,
+        int maxRetryCount = 3,
+        Func<Event.EventContext, Exception, Task>? onPoisonMessage = default)
     {
         eventBusBuilder.Services.AddSingleton(new BackgroundQueueOptions
         {
             Capacity = capacity,
             AlertThreshold = alertThreshold,
-            OnAlert = onAlert
+            OnAlert = onAlert,
+            MaxRetryCount = maxRetryCount,
+            OnPoisonMessage = onPoisonMessage
         });
         eventBusBuilder.Services.AddSingleton<BackgroundQueue>();
         

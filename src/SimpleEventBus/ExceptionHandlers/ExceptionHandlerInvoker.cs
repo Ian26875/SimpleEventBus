@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SimpleEventBus.Profile;
 
 namespace SimpleEventBus.ExceptionHandlers;
@@ -20,15 +21,23 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
 
     /// <summary>
+    ///     The logger
+    /// </summary>
+    private readonly ILogger<ExceptionHandlerInvoker> _logger;
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="ExceptionHandlerInvoker" /> class
     /// </summary>
     /// <param name="subscriptionProfileManager">The subscription profile manager</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
+    /// <param name="logger">The logger</param>
     public ExceptionHandlerInvoker(ISubscriptionProfileManager subscriptionProfileManager,
-        IServiceScopeFactory serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger<ExceptionHandlerInvoker> logger)
     {
         _subscriptionProfileManager = subscriptionProfileManager;
         _serviceScopeFactory = serviceScopeFactory;
+        _logger = logger;
     }
 
     /// <summary>
@@ -41,6 +50,9 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
         var errorHandlerTypes = _subscriptionProfileManager.GetErrorHandlersForEvent(context.Event.GetType());
         if (errorHandlerTypes.Count == 0)
         {
+            _logger.LogError(context.Exception,
+                "Unhandled exception while processing event {EventType} and no error handler is registered. " +
+                "The exception will propagate to the transport.", context.Event.GetType().Name);
             return;
         }
 

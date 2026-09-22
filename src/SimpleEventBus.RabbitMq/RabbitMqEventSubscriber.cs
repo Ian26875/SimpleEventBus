@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EasyNetQ;
+using EasyNetQ.Consumer;
 using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -70,8 +71,35 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
                 throw new InvalidOperationException($"Queue is not configured for event '{eventName}'.");
             }
 
+            var deadLetterExchangeName = _rabbitMqBindingOption.DeadLetterExchangeBindings.TryGetValue(eventName, out var bindingDeadLetterExchange)
+                ? bindingDeadLetterExchange
+                : _rabbitMqBindingOption.GlobalDeadLetterExchange;
+
+            var deadLetterQueueName = _rabbitMqBindingOption.DeadLetterQueueBindings.TryGetValue(eventName, out var bindingDeadLetterQueue)
+                ? bindingDeadLetterQueue
+                : _rabbitMqBindingOption.GlobalDeadLetterQueue;
+
+            var hasDeadLetter = !string.IsNullOrWhiteSpace(deadLetterExchangeName) &&
+                                !string.IsNullOrWhiteSpace(deadLetterQueueName);
+
             var exchange = await advancedBus.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic);
-            var queue = await advancedBus.QueueDeclareAsync(queueName);
+
+            Queue queue;
+            if (hasDeadLetter)
+            {
+                var deadLetterExchange = await advancedBus.ExchangeDeclareAsync(deadLetterExchangeName, ExchangeType.Topic);
+                var deadLetterQueue = await advancedBus.QueueDeclareAsync(deadLetterQueueName);
+                // Dead-lettered messages keep their original routing key; "#" captures them all.
+                await advancedBus.BindAsync(deadLetterExchange, deadLetterQueue, "#");
+
+                queue = await advancedBus.QueueDeclareAsync(queueName,
+                    configuration => configuration.WithArgument("x-dead-letter-exchange", deadLetterExchangeName));
+            }
+            else
+            {
+                queue = await advancedBus.QueueDeclareAsync(queueName);
+            }
+
             await advancedBus.BindAsync(exchange, queue, eventName);
 
             var consumer = advancedBus.Consume(queue, async (body, properties, info) =>
@@ -90,15 +118,85 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
                 if (ConsumerReceived is null)
                 {
                     _logger.LogWarning("ConsumerReceived handler not set. Skipping event: {EventName}", context.EventName);
-                    return;
+                    return AckStrategies.NackWithRequeue;
                 }
 
-                await ConsumerReceived(context);
+                try
+                {
+                    await ConsumerReceived(context);
+                    return AckStrategies.Ack;
+                }
+                catch (Exception exception)
+                {
+                    return await HandleConsumeFailureAsync(advancedBus, queue, body, properties ?? new MessageProperties(), context, exception);
+                }
             });
 
             _consumers.Add(consumer);
             _logger.LogInformation("Subscribed to RabbitMQ event: {EventName}", eventName);
         }
+    }
+
+    /// <summary>
+    /// Header carrying the number of redeliveries already attempted for a failed message.
+    /// </summary>
+    internal const string RetryCountHeader = "x-retry-count";
+
+    /// <summary>
+    /// Decides what happens to a message whose handler threw: republish with an incremented
+    /// retry counter while below <see cref="RabbitMqBindingOption.MaxRetryCount"/>, otherwise
+    /// nack without requeue so the broker dead-letters it (or drops it when no DLX is configured).
+    /// </summary>
+    private async Task<AckStrategy> HandleConsumeFailureAsync(IAdvancedBus advancedBus,
+                                                              Queue queue,
+                                                              ReadOnlyMemory<byte> body,
+                                                              MessageProperties properties,
+                                                              EventContext context,
+                                                              Exception exception)
+    {
+        var retryCount = GetRetryCount(properties);
+
+        if (retryCount < _rabbitMqBindingOption.MaxRetryCount)
+        {
+            properties.Headers ??= new Dictionary<string, object?>();
+            properties.Headers[RetryCountHeader] = retryCount + 1;
+
+            // Republish to the same queue via the default exchange, then ack the original delivery.
+            await advancedBus.PublishAsync(Exchange.Default, queue.Name, false, properties, body);
+
+            _logger.LogWarning(exception,
+                "Handler failed for event {EventName}. Retry {Retry}/{MaxRetry} scheduled.",
+                context.EventName, retryCount + 1, _rabbitMqBindingOption.MaxRetryCount);
+
+            return AckStrategies.Ack;
+        }
+
+        _logger.LogError(exception,
+            "Handler failed for event {EventName} after {MaxRetry} retries. Message is nacked without requeue " +
+            "(dead-lettered when a dead letter exchange is configured).",
+            context.EventName, _rabbitMqBindingOption.MaxRetryCount);
+
+        return AckStrategies.NackWithoutRequeue;
+    }
+
+    /// <summary>
+    /// Reads the retry counter header, tolerating the numeric types AMQP clients may deliver.
+    /// </summary>
+    private static int GetRetryCount(MessageProperties properties)
+    {
+        if (properties?.Headers is null || !properties.Headers.TryGetValue(RetryCountHeader, out var value))
+        {
+            return 0;
+        }
+
+        return value switch
+        {
+            int intValue => intValue,
+            long longValue => (int)longValue,
+            byte[] bytes when int.TryParse(System.Text.Encoding.UTF8.GetString(bytes), out var parsed) => parsed,
+            string text when int.TryParse(text, out var parsed) => parsed,
+            _ => 0
+        };
     }
 
     private void InitializeBus()

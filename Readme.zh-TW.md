@@ -136,6 +136,45 @@ bind.ForEvent<OrderPlaced>()
     .DeclareQueue("orders.queue");
 ```
 
+## 投遞語意、重試與 Dead Letter
+
+Handler 失敗時例外會傳遞到 transport（除非透過 `CatchExceptionToDo<T>()` 註冊的
+`IEventExceptionHandler` 將 `context.Handled = true`，此時訊息會被 ack 並丟棄）。
+Transport 接著進行重試：
+
+- **RabbitMQ**：訊息帶著遞增的 `x-retry-count` header 重新發佈，最多 `MaxRetryCount`
+  次（預設 `3`）。超過後 nack 不 requeue —— 有設定 dead letter exchange 時進 DLQ，
+  否則丟棄。
+- **In-Memory**：事件帶著同樣的計數重新入列，最多 `MaxRetryCount` 次（預設 `3`）。
+  超過後呼叫 `OnPoisonMessage`（若有設定）並丟棄。
+
+因此投遞語意為 **at-least-once**：handler 必須具備冪等性。
+
+RabbitMQ 設定 dead letter exchange / queue：
+
+```csharp
+bind.DeclareGlobalDeadLetter("eventbus.dlx", "simpleeventbus.orders.dlq");
+bind.MaxRetryCount = 3;
+
+// 或針對單一事件
+bind.ForEvent<OrderPlaced>()
+    .DeclareExchange("orders.exchange")
+    .DeclareQueue("orders.queue")
+    .WithDeadLetter("orders.dlx", "orders.dlq");
+```
+
+In-Memory 設定 poison message 處理：
+
+```csharp
+builder.UseInMemoryTransport(
+    maxRetryCount: 3,
+    onPoisonMessage: (context, exception) =>
+    {
+        Console.WriteLine($"Poison event {context.EventName}: {exception.Message}");
+        return Task.CompletedTask;
+    });
+```
+
 ## 事件命名
 
 - 預設 key 格式：`{domain}.{entity}.{event}.v{version}`

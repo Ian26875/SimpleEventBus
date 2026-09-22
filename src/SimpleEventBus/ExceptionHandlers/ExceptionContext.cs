@@ -42,4 +42,12 @@ public class ExceptionContext
     /// Gets the headers associated with the event.
     /// </summary>
     public Headers Headers { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the exception has been handled.
+    /// When left false, the exception is rethrown after error handlers run so the
+    /// transport can nack / retry / dead-letter the message. Set to true inside an
+    /// <see cref="IEventExceptionHandler"/> to swallow the failure (message is acked and dropped).
+    /// </summary>
+    public bool Handled { get; set; }
 }

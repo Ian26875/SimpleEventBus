@@ -113,6 +113,12 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
                 var exceptionContext = new ExceptionContext(@event, headers, exception);
                 var exceptionHandlerInvoker = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
                 await exceptionHandlerInvoker.ExecuteAsync(exceptionContext, cancellationToken);
+
+                // Unhandled failures must reach the transport so it can nack / retry / dead-letter.
+                if (exceptionContext.Handled is false)
+                {
+                    exceptionContext.ExceptionDispatch.Throw();
+                }
             }
         });
 
