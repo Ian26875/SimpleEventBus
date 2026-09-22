@@ -27,6 +27,10 @@ builder.Services.AddEventBus(eventBus =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.Description = "Sample service demonstrating FluentEventBus with AsyncAPI generation.";
+        options.WithServer("production", "rabbitmq.internal:5672", "amqp",
+            description: "Production RabbitMQ broker", protocolVersion: "0.9.1");
+        options.WithServer("local", "localhost:5672", "amqp",
+            description: "Local development broker");
         options.WithExample(
             new OrderPlaced(Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e"), DateTimeOffset.Parse("2026-09-22T10:00:00+08:00")),
             name: "typical-order",

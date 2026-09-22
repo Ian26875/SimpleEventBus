@@ -14,8 +14,32 @@ public class AsyncApiDocumentOptions
     /// <summary>Optional application description.</summary>
     public string? Description { get; set; }
 
+    /// <summary>Servers to declare in the document, keyed by server name.</summary>
+    internal Dictionary<string, ServerInfo> Servers { get; } = new();
+
     /// <summary>Message examples registered per event type.</summary>
     internal Dictionary<Type, List<MessageExample>> Examples { get; } = new();
+
+    /// <summary>
+    /// Declares a server (broker) in the generated document, e.g.
+    /// <c>WithServer("production", "rabbitmq.internal:5672", "amqp")</c>.
+    /// </summary>
+    /// <param name="name">Server key in the document (e.g. "production", "sit").</param>
+    /// <param name="host">Host and optional port, without protocol prefix (e.g. "rabbitmq.internal:5672").</param>
+    /// <param name="protocol">Protocol name (e.g. "amqp", "kafka", "inmemory").</param>
+    /// <param name="description">Optional human-readable description.</param>
+    /// <param name="protocolVersion">Optional protocol version (e.g. "0.9.1").</param>
+    public AsyncApiDocumentOptions WithServer(string name,
+                                              string host,
+                                              string protocol,
+                                              string? description = null,
+                                              string? protocolVersion = null)
+    {
+        Servers[name] = new ServerInfo(host, protocol, description, protocolVersion);
+        return this;
+    }
+
+    internal sealed record ServerInfo(string Host, string Protocol, string? Description, string? ProtocolVersion);
 
     /// <summary>
     /// Registers a sample payload shown as a message example in the generated document.

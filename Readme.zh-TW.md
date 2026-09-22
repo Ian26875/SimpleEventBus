@@ -309,6 +309,7 @@ services.AddEventBus(builder =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
+        options.WithServer("production", "rabbitmq.internal:5672", "amqp", protocolVersion: "0.9.1");
     });
 });
 ```

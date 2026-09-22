@@ -25,7 +25,8 @@ public sealed class AsyncApiDocumentGenerator
     /// </summary>
     private static readonly SchemaGeneratorConfiguration SchemaConfiguration = new()
     {
-        Generators = { new StringFormatSchemaGenerator() }
+        Generators = { new StringFormatSchemaGenerator() },
+        Refiners = { new RequiredPropertiesRefiner() }
     };
 
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
@@ -66,6 +67,23 @@ public sealed class AsyncApiDocumentGenerator
             Operations = []
         };
 
+        var serverReferences = new Neuroglia.EquatableList<V3ReferenceDefinition>();
+        if (_options.Servers.Count > 0)
+        {
+            document.Servers = [];
+            foreach (var (name, server) in _options.Servers)
+            {
+                document.Servers[name] = new V3ServerDefinition
+                {
+                    Host = server.Host,
+                    Protocol = server.Protocol,
+                    ProtocolVersion = server.ProtocolVersion,
+                    Description = server.Description
+                };
+                serverReferences.Add(new V3ReferenceDefinition { Reference = $"#/servers/{name}" });
+            }
+        }
+
         foreach (var (eventType, executors) in _subscriptionProfileManager.GetAllSubscriptions())
         {
             var eventName = _eventMapper.GetEventName(eventType);
@@ -94,7 +112,9 @@ public sealed class AsyncApiDocumentGenerator
             document.Channels[eventName] = new V3ChannelDefinition
             {
                 Address = eventName,
-                Messages = new() { [messageName] = message }
+                Messages = new() { [messageName] = message },
+                // Reference every declared server explicitly (the Neuroglia UI expects a non-null list).
+                Servers = serverReferences
             };
 
             var handlerNames = executors.Select(executor => executor.HandlerType.Name).Distinct();
@@ -139,6 +159,36 @@ public sealed class AsyncApiDocumentGenerator
         }
 
         return dictionary;
+    }
+
+    /// <summary>
+    /// Marks non-nullable properties (value types and non-nullable reference types)
+    /// as required, matching what the serializer actually guarantees on the wire.
+    /// </summary>
+    private sealed class RequiredPropertiesRefiner : ISchemaRefiner
+    {
+        public bool ShouldRun(SchemaGenerationContextBase context)
+        {
+            return context.Type is { IsClass: true } or { IsValueType: true, IsPrimitive: false }
+                   && context.Type != typeof(string)
+                   && context.Intents.Any(intent => intent is PropertiesIntent);
+        }
+
+        public void Run(SchemaGenerationContextBase context)
+        {
+            var nullability = new System.Reflection.NullabilityInfoContext();
+            var required = context.Type
+                .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(property => property.CanRead && property.GetIndexParameters().Length == 0)
+                .Where(property => nullability.Create(property).ReadState == System.Reflection.NullabilityState.NotNull)
+                .Select(property => property.Name)
+                .ToList();
+
+            if (required.Count > 0)
+            {
+                context.Intents.Add(new RequiredIntent(required));
+            }
+        }
     }
 
     private sealed class StringFormatSchemaGenerator : ISchemaGenerator
