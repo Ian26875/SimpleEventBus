@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>FluentEventBus.OpenTelemetry</PackageId>
+        <Description>OpenTelemetry instrumentation for FluentEventBus: one-line registration of the FluentEventBus activity source (publish/consume spans with W3C trace propagation) and meters.</Description>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="OpenTelemetry.Api" Version="1.19.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\FluentEventBus\FluentEventBus.csproj" />
+    </ItemGroup>
+
+</Project>

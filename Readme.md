@@ -26,6 +26,7 @@ Published on NuGet as the **FluentEventBus** family:
 | `FluentEventBus` | `FluentEventBus` | Core abstractions and profile system |
 | `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-process transport |
 | `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ transport |
+| `FluentEventBus.OpenTelemetry` | `FluentEventBus.OpenTelemetry` | OpenTelemetry wiring (net8.0+) |
 
 ## Target Frameworks
 
@@ -213,6 +214,27 @@ The message body contract is the JSON payload plus the logical event name — CL
 type names, namespaces and assembly names never appear on the wire. Consumers map
 the logical name back to their own local type, so producer-side refactors and
 non-.NET consumers are both safe.
+
+## OpenTelemetry
+
+The bus emits publish/consume spans (`ActivitySource` "FluentEventBus") and counters
+(`Meter` "FluentEventBus"). Trace context travels in the message headers as W3C
+`traceparent`, so publisher and consumer services share one distributed trace.
+
+With the `FluentEventBus.OpenTelemetry` package (net8.0+):
+
+```csharp
+services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddFluentEventBusInstrumentation())
+    .WithMetrics(metrics => metrics.AddFluentEventBusInstrumentation());
+```
+
+Without it (e.g. on net6/net7), register the names directly:
+
+```csharp
+tracing.AddSource("FluentEventBus");
+metrics.AddMeter("FluentEventBus", "FluentEventBus.InMemory");
+```
 
 ## Event Naming
 

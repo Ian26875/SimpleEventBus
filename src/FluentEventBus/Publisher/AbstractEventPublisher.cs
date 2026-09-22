@@ -32,22 +32,25 @@ public abstract class AbstractEventPublisher : IEventBus
         var serializedData = _serializer.Serialize(@event);
 
         var eventName = EventMapper.GetEventName(typeof(TEvent));
-        
+
+        using var activity = EventBusActivitySource.StartPublish(eventName, headers);
+
         var eventData = new EventContext
         (
             serializedData,
             headers,
             eventName
         );
-        
+
         try
         {
             await this.PublishEventAsync(eventData, cancellationToken);
             EventBusMetrics.AddPublished(eventName);
         }
-        catch
+        catch (Exception exception)
         {
             EventBusMetrics.AddFailure(eventName);
+            EventBusActivitySource.RecordFailure(activity, exception);
             throw;
         }
     }

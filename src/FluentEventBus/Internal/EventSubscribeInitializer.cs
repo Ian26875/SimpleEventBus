@@ -87,8 +87,18 @@ public class EventSubscribeInitializer : IInitializer
     private async Task ConsumerReceived(EventContext eventContext)
     {
         EventBusMetrics.AddReceived(eventContext.EventName);
-        
-        await ProcessEventAsync(eventContext.EventName, eventContext.Data, eventContext.Headers);
+
+        using var activity = EventBusActivitySource.StartConsume(eventContext.EventName, eventContext.Headers);
+
+        try
+        {
+            await ProcessEventAsync(eventContext.EventName, eventContext.Data, eventContext.Headers);
+        }
+        catch (Exception exception)
+        {
+            EventBusActivitySource.RecordFailure(activity, exception);
+            throw;
+        }
     }
 
     /// <summary>
