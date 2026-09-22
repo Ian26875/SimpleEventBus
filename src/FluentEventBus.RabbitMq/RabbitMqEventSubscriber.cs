@@ -139,7 +139,7 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
     /// <summary>
     /// Header carrying the number of redeliveries already attempted for a failed message.
     /// </summary>
-    internal const string RetryCountHeader = "x-retry-count";
+    internal const string RetryCountHeader = Headers.RetryCountKey;
 
     /// <summary>
     /// Decides what happens to a message whose handler threw: republish with an incremented

@@ -10,13 +10,16 @@ namespace FluentEventBus.Event;
 public class Headers : Dictionary<string, object>
 {
     /// <summary>Well-known header key for <see cref="CorrelationId"/>.</summary>
-    public const string CorrelationIdKey = "CorrelationId";
+    public const string CorrelationIdKey = "correlation-id";
 
     /// <summary>Well-known header key for <see cref="MessageId"/>.</summary>
-    public const string MessageIdKey = "MessageId";
+    public const string MessageIdKey = "message-id";
 
     /// <summary>Well-known header key for <see cref="OccurredAt"/>.</summary>
-    public const string OccurredAtKey = "OccurredAt";
+    public const string OccurredAtKey = "occurred-at";
+
+    /// <summary>Well-known header key for the transport redelivery counter.</summary>
+    public const string RetryCountKey = "retry-count";
 
     /// <summary>
     /// Gets or sets the Correlation ID associated with this event.

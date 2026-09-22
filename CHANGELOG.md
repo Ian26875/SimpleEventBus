@@ -25,6 +25,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
   RabbitMQ ~16k msg/s end-to-end measured, zero message loss.
 
 ### Changed
+- **BREAKING — header wire keys unified to lowercase kebab-case**: `message-id`,
+  `occurred-at`, `correlation-id`, `retry-count` (were `MessageId`, `OccurredAt`,
+  `CorrelationId`, `x-retry-count`). The C# `Headers` properties are unchanged.
 - **BREAKING — renamed from SimpleEventBus to FluentEventBus**: packages, repository,
   assemblies and all namespaces.
 - **BREAKING — failure semantics**: unhandled handler exceptions now propagate to the

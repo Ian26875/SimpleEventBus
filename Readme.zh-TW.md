@@ -154,7 +154,7 @@ Handler 失敗時例外會傳遞到 transport（除非透過 `CatchExceptionToDo
 `IEventExceptionHandler` 將 `context.Handled = true`，此時訊息會被 ack 並丟棄）。
 Transport 接著進行重試：
 
-- **RabbitMQ**：訊息帶著遞增的 `x-retry-count` header 重新發佈，最多 `MaxRetryCount`
+- **RabbitMQ**：訊息帶著遞增的 `retry-count` header 重新發佈，最多 `MaxRetryCount`
   次（預設 `3`）。超過後 nack 不 requeue —— 有設定 dead letter exchange 時進 DLQ，
   否則丟棄。
 - **In-Memory**：事件帶著同樣的計數重新入列，最多 `MaxRetryCount` 次（預設 `3`）。
@@ -190,14 +190,15 @@ builder.UseInMemoryTransport(
 
 ## Message Headers
 
-每則訊息都帶一個 `Headers` 字典。標準 header：
+每則訊息都帶一個 `Headers` 字典。wire 上的 key 一律小寫 kebab-case（與 W3C/AMQP
+慣例一致）；C# 的 `Headers` 屬性維持 PascalCase。標準 header：
 
 | Header | 由誰設定 | 用途 |
 |---|---|---|
-| `MessageId` | Publisher 自動填（GUID，未設定時） | 訊息唯一識別——at-least-once 去重的依據 |
-| `OccurredAt` | Publisher 自動填（UTC，ISO-8601，未設定時） | 事件發佈時間 |
-| `CorrelationId` | 呼叫端（選填） | 跨服務端到端追蹤 |
-| `x-retry-count` | Transport | 重試/dead letter 流程的重投計數 |
+| `message-id` | Publisher 自動填（GUID，未設定時） | 訊息唯一識別——at-least-once 去重的依據 |
+| `occurred-at` | Publisher 自動填（UTC，ISO-8601，未設定時） | 事件發佈時間 |
+| `correlation-id` | 呼叫端（選填） | 跨服務端到端追蹤 |
+| `retry-count` | Transport | 重試/dead letter 流程的重投計數 |
 
 ```csharp
 await publisher.PublishAsync(orderPlaced, new Headers { CorrelationId = requestId });

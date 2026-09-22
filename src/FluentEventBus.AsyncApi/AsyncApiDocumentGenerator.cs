@@ -87,13 +87,16 @@ public sealed class AsyncApiDocumentGenerator
 
     /// <summary>
     /// Builds the payload schema and injects property descriptions from the XML
-    /// documentation comments (property &lt;summary&gt;) into the serialized schema.
+    /// documentation comments (property &lt;summary&gt;). The result is materialized
+    /// back into a <see cref="JsonSchema"/> so consumers that render schemas
+    /// (e.g. the Neuroglia AsyncAPI UI) can process it.
     /// </summary>
-    private System.Text.Json.Nodes.JsonNode BuildPayloadSchema(Type eventType)
+    private JsonSchema BuildPayloadSchema(Type eventType)
     {
         var schema = new JsonSchemaBuilder().FromType(eventType, _schemaConfiguration).Build();
         var node = System.Text.Json.JsonSerializer.SerializeToNode(schema)!;
 
+        var injected = false;
         if (node["properties"] is System.Text.Json.Nodes.JsonObject properties)
         {
             var typeDocId = eventType.FullName?.Replace('+', '.');
@@ -104,11 +107,12 @@ public sealed class AsyncApiDocumentGenerator
                     && _typeSummaries.Value.TryGetValue($"P:{typeDocId}.{propertyName}", out var summary))
                 {
                     propertyObject["description"] = summary;
+                    injected = true;
                 }
             }
         }
 
-        return node;
+        return injected ? JsonSchema.FromText(node.ToJsonString()) : schema;
     }
 
     /// <summary>
@@ -248,7 +252,7 @@ public sealed class AsyncApiDocumentGenerator
     /// <summary>
     /// Schema of the standard FluentEventBus envelope headers
     /// (see Headers: MessageId / OccurredAt auto-filled at publish, CorrelationId caller-set,
-    /// x-retry-count added by the transport during redelivery).
+    /// retry-count added by the transport during redelivery).
     /// </summary>
     private static JsonSchema BuildHeadersSchema()
     {
@@ -266,7 +270,7 @@ public sealed class AsyncApiDocumentGenerator
                 (Headers.CorrelationIdKey, new JsonSchemaBuilder()
                     .Type(SchemaValueType.String)
                     .Description("Caller-set id for end-to-end tracing across services.")),
-                ("x-retry-count", new JsonSchemaBuilder()
+                (Headers.RetryCountKey, new JsonSchemaBuilder()
                     .Type(SchemaValueType.Integer)
                     .Description("Redelivery counter added by the transport during the retry/dead-letter flow.")))
             .Required(Headers.MessageIdKey, Headers.OccurredAtKey)
