@@ -204,6 +204,33 @@ public sealed record OrderPaymentCreated(Guid PaymentId);
 
 事件若未個別設定 binding，RabbitMQ 傳輸會回退使用全域/預設值。
 
+## 效能
+
+使用內附的壓測工具（`src/SimpleEventBus.StressTests`）在開發機上量測——
+單一發佈程序、8 個平行 producer、一個計數 handler，所有回合零訊息遺失：
+
+| 情境 | 事件數 | 發佈吞吐 | 端到端處理吞吐 |
+|---|---|---|---|
+| In-Memory | 100,000 | ~1,150,000 msg/s | ~245,000 msg/s |
+| RabbitMQ（Docker，prefetch 200） | 10,000 | ~48,000 msg/s | ~10,500 msg/s |
+| RabbitMQ（Docker，prefetch 200） | 100,000 | ~83,000 msg/s | ~16,000 msg/s |
+
+數字僅供參考，非正式 benchmark——可自行重跑：
+
+```bash
+# In-Memory
+dotnet run -c Release --project src/SimpleEventBus.StressTests -- inmemory 100000
+
+# RabbitMQ（Docker 沙盒）
+docker run -d --name eventbus-stress -p 5673:5672 rabbitmq:4-alpine
+dotnet run -c Release --project src/SimpleEventBus.StressTests -- rabbitmq localhost:5673 100000
+docker rm -f eventbus-stress
+```
+
+相關設計決策：handler delegate 與 lambda expression 只編譯一次並快取；
+RabbitMQ publisher 快取 exchange declare（每個 exchange 每個 process 只打一次
+broker）；所有 RabbitMQ 元件共享單一連線；每個 handler 在自己的 DI scope 中執行。
+
 ## 文件
 
 - 路由設計：`docs/eventbus-routing.md`

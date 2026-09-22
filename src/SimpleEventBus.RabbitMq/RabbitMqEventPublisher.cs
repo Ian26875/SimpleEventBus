@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using EasyNetQ;
@@ -15,97 +16,46 @@ namespace SimpleEventBus.RabbitMq;
 /// The rabbit mq event publisher class
 /// </summary>
 /// <seealso cref="AbstractEventPublisher"/>
-/// <seealso cref="IDisposable"/>
-public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
+public class RabbitMqEventPublisher : AbstractEventPublisher
 {
-    /// <summary>
-    /// The rabbit mq option
-    /// </summary>
-    private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
-    
     /// <summary>
     /// The rabbit mq binding option
     /// </summary>
     private readonly RabbitMqBindingOption _rabbitMqBindingOption;
 
     /// <summary>
+    /// The shared connection provider
+    /// </summary>
+    private readonly RabbitMqConnectionProvider _connectionProvider;
+
+    /// <summary>
     /// The logger
     /// </summary>
     private readonly ILogger<RabbitMqEventPublisher> _logger;
-    
+
     /// <summary>
-    /// Gets or sets the value of the advanced bus
+    /// Exchanges already declared on the broker, keyed by name. Exchanges are durable,
+    /// so one declaration per process lifetime is enough; this avoids a broker
+    /// round-trip on every publish.
     /// </summary>
-    private IAdvancedBus? _advancedBus;
-    private IBus? _bus;
-    private readonly object _initLock = new();
-    
-    
-    public RabbitMqEventPublisher(ISerializer serializer, 
+    private readonly ConcurrentDictionary<string, Exchange> _declaredExchanges = new();
+
+    public RabbitMqEventPublisher(ISerializer serializer,
                                   IEventMapper eventMapper,
-                                  IOptions<RabbitMqConnectionOption> rabbitMqOptions,
+                                  RabbitMqConnectionProvider connectionProvider,
                                   IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
-                                  ILogger<RabbitMqEventPublisher> logger) 
+                                  ILogger<RabbitMqEventPublisher> logger)
         : base(serializer, eventMapper)
     {
-        _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
         _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        ValidateOptions(_rabbitMqConnectionOption);
-    }
-    
-    /// <summary>
-    /// Initializes the bus
-    /// </summary>
-    private void InitializeBus()
-    {
-        if (_advancedBus is not null)
-        {
-            return;
-        }
-
-        lock (_initLock)
-        {
-            if (_advancedBus is not null)
-            {
-                return;
-            }
-
-            var connectionString = $"amqp://{_rabbitMqConnectionOption.UserName}:{_rabbitMqConnectionOption.Password}@{_rabbitMqConnectionOption.Host}/";
-            _bus = RabbitHutch.CreateBus(connectionString);
-            _advancedBus = _bus.Advanced;
-        }
     }
 
-    private IAdvancedBus GetAdvancedBus()
-    {
-        InitializeBus();
-        return _advancedBus!;
-    }
-
-    private static void ValidateOptions(RabbitMqConnectionOption connectionOption)
-    {
-        if (string.IsNullOrWhiteSpace(connectionOption.UserName))
-        {
-            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(connectionOption));
-        }
-
-        if (string.IsNullOrWhiteSpace(connectionOption.Password))
-        {
-            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(connectionOption));
-        }
-
-        if (string.IsNullOrWhiteSpace(connectionOption.Host))
-        {
-            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(connectionOption));
-        }
-    }
-    
     private async Task<Exchange> GetOrDeclareExchangeAsync(EventContext eventContext, CancellationToken cancellationToken)
     {
         var exchangeName = _rabbitMqBindingOption.ExchangeBindings.TryGetValue(eventContext.EventName, out var bindingExchangeName)
-                               ? bindingExchangeName 
+                               ? bindingExchangeName
                                : _rabbitMqBindingOption.GlobalExchange;
 
         if (string.IsNullOrWhiteSpace(exchangeName))
@@ -113,15 +63,22 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             throw new InvalidOperationException($"Exchange is not configured for event '{eventContext.EventName}'.");
         }
 
-        var exchange = await GetAdvancedBus().ExchangeDeclareAsync
+        if (_declaredExchanges.TryGetValue(exchangeName, out var cachedExchange))
+        {
+            return cachedExchange;
+        }
+
+        // A concurrent duplicate declaration is harmless: exchange declaration is idempotent.
+        var exchange = await _connectionProvider.GetAdvancedBus().ExchangeDeclareAsync
                        (
-                           exchangeName, 
+                           exchangeName,
                            configure: configuration =>
                            {
                                configuration.WithType(ExchangeType.Topic);
-                           }, 
+                           },
                            cancellationToken
                        );
+        _declaredExchanges.TryAdd(exchangeName, exchange);
         return exchange;
     }
     
@@ -141,7 +98,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
 
         _logger.LogTrace("Publishing event to RabbitMQ...");
         
-        await GetAdvancedBus().PublishAsync
+        await _connectionProvider.GetAdvancedBus().PublishAsync
         (
             exchange,
             routeKey, 
@@ -155,11 +112,4 @@ public class RabbitMqEventPublisher : AbstractEventPublisher, IDisposable
             cancellationToken
         );
     }
-
-    public void Dispose()
-    {
-        _bus?.Dispose();
-    }
-
-    
 }

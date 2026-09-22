@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using SimpleEventBus;
-using SimpleEventBus.Internal;
 using SimpleEventBus.RabbitMq;
 using SimpleEventBus.Schema;
 using SimpleEventBus.Subscriber;
@@ -23,13 +22,14 @@ public static class EventBusBuilderExtensions
                                                Action<RabbitMqConnectionOption> setUpOption,
                                                Action<RabbitMqBindingOption> setUpBindOption)
     {
+        eventBusBuilder.Services.AddSingleton<RabbitMqConnectionProvider>();
+
         eventBusBuilder.Services.AddSingleton<RabbitMqEventPublisher>();
         eventBusBuilder.Services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
         eventBusBuilder.Services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
 
         eventBusBuilder.Services.AddSingleton<RabbitMqEventSubscriber>();
         eventBusBuilder.Services.AddSingleton<IEventSubscriber>(sp => sp.GetRequiredService<RabbitMqEventSubscriber>());
-        eventBusBuilder.Services.AddSingleton<IInitializer, RabbitMqConnectionInitializer>();
 
         eventBusBuilder.Services.Configure(setUpOption);
 

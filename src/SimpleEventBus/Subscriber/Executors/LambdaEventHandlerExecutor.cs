@@ -34,11 +34,8 @@ public class LambdaEventHandlerExecutor<TEvent, THandler> : IEventHandlerExecuto
         HandlerType = typeof(THandler);
         EventType = typeof(TEvent);
         MethodInfo = GetMethodInfo(handlerExpression);
-        _compiledInvoker = (handler, @event, _, token) =>
-        {
-            var compiled = handlerExpression.Compile();
-            return compiled((THandler)handler)((TEvent)@event, token);
-        };
+        var compiled = handlerExpression.Compile();
+        _compiledInvoker = (handler, @event, _, token) => compiled((THandler)handler)((TEvent)@event, token);
     }
 
     public Type HandlerType { get; }
