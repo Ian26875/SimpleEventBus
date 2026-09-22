@@ -3,7 +3,7 @@
 All notable changes to the FluentEventBus packages are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0-alpha] - 2026-09-22
 
 ### Added
 - **Dead letter support**: RabbitMQ DLX/DLQ via `WithDeadLetter(exchange, queue)` /
@@ -20,6 +20,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
   `required` fields, message examples (`WithExample`), servers (`WithServer`), shared
   envelope headers schema under `components/schemas`, JSON/YAML output, and a document
   provider that feeds the Neuroglia AsyncAPI UI. Sample with Docker in `samples/AsyncApiSample`.
+- **Transport server discovery**: core defines `IEventBusServerDescriptor`; the InMemory
+  and RabbitMQ transports register one when configured, and the AsyncAPI generator
+  declares servers from them automatically (dependency-inverted — no transport
+  dependency in the AsyncApi package). Explicit `WithServer()` overrides by name.
+- **XML doc comments in AsyncAPI**: `WithXmlComments<T>()` turns the event type's
+  `<summary>` into channel/message descriptions and property summaries into schema
+  property descriptions (requires `GenerateDocumentationFile`).
 - **net7.0 target** added across all packages.
 - Stress test harness (`src/FluentEventBus.StressTests`): InMemory ~245k msg/s and
   RabbitMQ ~16k msg/s end-to-end measured, zero message loss.
