@@ -192,6 +192,50 @@ public sealed record OrderPaymentCreated(Guid PaymentId);
 
 Resulting event name: `order.payment.created.v2`
 
+## Event Versioning
+
+The version is part of the routing key (`...created.v1` / `...created.v2`), so each
+version is its own channel and old and new versions coexist during migration.
+
+**When to stay on the same version** — additive, non-breaking changes only:
+adding a new optional field. Payloads are JSON; old consumers ignore fields
+they don't know.
+
+**When to bump the version** — any breaking change: renaming or removing a
+field, changing a field's type, or changing the meaning of the event.
+
+**How to bump** — define a *new* CLR type; never mutate the existing one
+(`EventMapper` maps type ↔ name one-to-one, one type cannot carry two versions):
+
+```csharp
+[Event("order.payment.created", 1)]
+public sealed record OrderPaymentCreated(Guid PaymentId);
+
+[Event("order.payment.created", 2)]
+public sealed record OrderPaymentCreatedV2(Guid PaymentId, string Currency);
+```
+
+**Migration path**:
+
+1. Consumers subscribe to both versions side by side:
+
+   ```csharp
+   this.WhenOccurs<OrderPaymentCreated>().ToDo<PaymentHandler>();
+   this.WhenOccurs<OrderPaymentCreatedV2>().ToDo<PaymentHandlerV2>();
+   ```
+
+2. Producers switch to publishing v2.
+3. Watch the v1 queue drain to zero, then remove the v1 subscription and type.
+
+**Why major-only**: `EventAttribute` deliberately carries only a major version.
+Minor/patch changes don't alter the wire contract, so they have no business in
+the routing key.
+
+**Contract stability**: events shared across services should always use an
+explicit `[Event("name", n)]` attribute. Without it the name is derived from
+the type name and namespace, and a refactor silently changes the routing key —
+a breaking change the compiler will not catch.
+
 ## Routing Defaults
 
 Based on `docs/eventbus-routing.md`:

@@ -192,6 +192,46 @@ public sealed record OrderPaymentCreated(Guid PaymentId);
 
 產生的事件名稱：`order.payment.created.v2`
 
+## 事件版本演進（Event Versioning）
+
+版本是 routing key 的一部分（`...created.v1` / `...created.v2`），因此每個版本
+就是獨立的 channel，遷移期間新舊版本可並存。
+
+**不需升版**——僅限 additive、非破壞性變更：新增 optional 欄位。Payload 是
+JSON，舊 consumer 會忽略不認識的欄位。
+
+**必須升版**——任何破壞性變更：欄位改名、刪除、改型別，或事件語意改變。
+
+**升版做法**——定義*新的* CLR type，絕不修改舊 type（`EventMapper` 的 type ↔
+name 是一對一，同一個 type 不能承載兩個版本）：
+
+```csharp
+[Event("order.payment.created", 1)]
+public sealed record OrderPaymentCreated(Guid PaymentId);
+
+[Event("order.payment.created", 2)]
+public sealed record OrderPaymentCreatedV2(Guid PaymentId, string Currency);
+```
+
+**遷移步驟**：
+
+1. Consumer 先雙訂閱新舊版本：
+
+   ```csharp
+   this.WhenOccurs<OrderPaymentCreated>().ToDo<PaymentHandler>();
+   this.WhenOccurs<OrderPaymentCreatedV2>().ToDo<PaymentHandlerV2>();
+   ```
+
+2. Producer 切換到發佈 v2。
+3. 監控 v1 queue 流量歸零後，移除 v1 訂閱與型別。
+
+**為什麼只有 major**：`EventAttribute` 刻意只帶 major 版號。minor/patch 不改
+wire contract，就不該出現在 routing key 上。
+
+**Contract 穩定性**：跨服務共用的事件一律加明文 `[Event("name", n)]`。沒加時
+名稱由型別名與 namespace 推導，refactor 會無聲改掉 routing key——這是編譯器
+抓不到的 breaking change。
+
 ## 路由預設值
 
 依 `docs/eventbus-routing.md`：
