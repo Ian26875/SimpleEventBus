@@ -2,7 +2,7 @@
 
 [English](Readme.md) | [繁體中文](Readme.zh-TW.md)
 
-Simple event bus library for .NET with fluent subscription profiles.
+輕量的 .NET Event Bus 函式庫，以 Fluent Subscription Profile 描述事件訂閱。
 
 ```mermaid
 graph TD
@@ -12,22 +12,22 @@ graph TD
     B --> S3[Event Handler 3]
 ```
 
-## Packages
+## 套件
 
-- `SimpleEventBus`: core abstractions and profile system
-- `SimpleEventBus.InMemory`: in-process transport
-- `SimpleEventBus.RabbitMq`: RabbitMQ transport
+- `SimpleEventBus`：核心抽象與 Profile 系統
+- `SimpleEventBus.InMemory`：In-Process（同進程）傳輸
+- `SimpleEventBus.RabbitMq`：RabbitMQ 傳輸
 
-## Target Frameworks
+## 目標框架
 
 - `net6.0`
 - `net8.0`
 - `net9.0`
 - `net10.0`
 
-## Quick Start (In-Memory)
+## 快速開始（In-Memory）
 
-### 1. Define event and handler
+### 1. 定義事件與 Handler
 
 ```csharp
 using SimpleEventBus.Event;
@@ -45,7 +45,7 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 }
 ```
 
-### 2. Define a subscription profile
+### 2. 定義 Subscription Profile
 
 ```csharp
 using SimpleEventBus.Profile;
@@ -60,7 +60,7 @@ public sealed class OrderProfile : SubscriptionProfile
 }
 ```
 
-A profile can also bind a method on any registered service instead of an `IEventHandler<TEvent>` (signature: `(TEvent, Headers, CancellationToken) => Task` or `(TEvent, CancellationToken) => Task`), and attach an exception handler:
+Profile 也可以直接綁定任何已註冊 service 上的方法（簽名為 `(TEvent, Headers, CancellationToken) => Task` 或 `(TEvent, CancellationToken) => Task`），不必實作 `IEventHandler<TEvent>`，並可掛上例外處理器：
 
 ```csharp
 this.WhenOccurs<OrderPlaced>()
@@ -68,7 +68,7 @@ this.WhenOccurs<OrderPlaced>()
     .CatchExceptionToDo<OrderPlacedExceptionHandler>();
 ```
 
-### 3. Register EventBus
+### 3. 註冊 EventBus
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -90,13 +90,13 @@ var host = Host.CreateDefaultBuilder(args)
 await host.StartAsync();
 ```
 
-Shorthand for a single profile:
+單一 Profile 的簡寫：
 
 ```csharp
 services.AddEventBusWithProfile<OrderProfile, Program>();
 ```
 
-### 4. Publish event
+### 4. 發佈事件
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -105,7 +105,7 @@ var publisher = host.Services.GetRequiredService<IEventPublisher>();
 await publisher.PublishAsync(new OrderPlaced(Guid.NewGuid()));
 ```
 
-## RabbitMQ Transport
+## RabbitMQ 傳輸
 
 ```csharp
 services.AddEventBus(builder =>
@@ -128,7 +128,7 @@ services.AddEventBus(builder =>
 });
 ```
 
-You can also bind specific events:
+也可以針對特定事件個別綁定：
 
 ```csharp
 bind.ForEvent<OrderPlaced>()
@@ -136,13 +136,13 @@ bind.ForEvent<OrderPlaced>()
     .DeclareQueue("orders.queue");
 ```
 
-## Event Naming
+## 事件命名
 
-- Default key format: `{domain}.{entity}.{event}.v{version}`
-- Use `EventAttribute` to customize name/version.
-- Routing details: `docs/eventbus-routing.md`
+- 預設 key 格式：`{domain}.{entity}.{event}.v{version}`
+- 用 `EventAttribute` 自訂名稱與版本
+- 路由細節見 `docs/eventbus-routing.md`
 
-Example:
+範例：
 
 ```csharp
 using SimpleEventBus.Mapper;
@@ -151,25 +151,25 @@ using SimpleEventBus.Mapper;
 public sealed record OrderPaymentCreated(Guid PaymentId);
 ```
 
-Resulting event name: `order.payment.created.v2`
+產生的事件名稱：`order.payment.created.v2`
 
-## Routing Defaults
+## 路由預設值
 
-Based on `docs/eventbus-routing.md`:
+依 `docs/eventbus-routing.md`：
 
-- Default exchange: `eventbus.topic`
-- Default queue format: `{service}.{environment}`
-- `RabbitMqBindingOption.ServiceName` default: `app`
-- `RabbitMqBindingOption.EnvironmentName` default: `prod`
-- Default prefetch: `10`
+- 預設 exchange：`eventbus.topic`
+- 預設 queue 格式：`{service}.{environment}`
+- `RabbitMqBindingOption.ServiceName` 預設：`app`
+- `RabbitMqBindingOption.EnvironmentName` 預設：`prod`
+- 預設 prefetch：`10`
 
-If a per-event binding is not configured, RabbitMQ transport falls back to global/default values.
+事件若未個別設定 binding，RabbitMQ 傳輸會回退使用全域/預設值。
 
-## Docs
+## 文件
 
-- Routing design: `docs/eventbus-routing.md`
+- 路由設計：`docs/eventbus-routing.md`
 
-## Build and Test
+## 建置與測試
 
 ```bash
 dotnet build src/SimpleEventBus.sln -c Release
