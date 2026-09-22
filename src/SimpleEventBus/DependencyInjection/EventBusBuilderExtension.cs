@@ -52,14 +52,14 @@ public static class EventBusBuilderExtension
 
             foreach (var interfaceType in interfaces.Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == eventHandlerInterface))
             {
-                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(interfaceType, type, ServiceLifetime.Singleton));
-                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Singleton));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(interfaceType, type, ServiceLifetime.Scoped));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Scoped));
             }
             
             if (exceptionHandlerInterface.IsAssignableFrom(type))
             {
-                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(typeof(IEventExceptionHandler), type, ServiceLifetime.Singleton));
-                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Singleton));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(typeof(IEventExceptionHandler), type, ServiceLifetime.Scoped));
+                eventBusBuilder.Services.TryAdd(new ServiceDescriptor(type, type, ServiceLifetime.Scoped));
             }
         }
         

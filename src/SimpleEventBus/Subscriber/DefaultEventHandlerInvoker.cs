@@ -5,6 +5,7 @@ using SimpleEventBus.Errors;
 using SimpleEventBus.Event;
 using SimpleEventBus.ExceptionHandlers;
 using SimpleEventBus.Profile;
+using SimpleEventBus.Subscriber.Executors;
 
 namespace SimpleEventBus.Subscriber;
 
@@ -87,41 +88,56 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 
 
         var executors = _subscriptionProfileManager.GetEventHandlerExecutorsForEvent(eventType);
-        await using var serviceScope = this._serviceScopeFactory.CreateAsyncScope();
-        var serviceProvider = serviceScope.ServiceProvider;
-        
-        await Parallel.ForEachAsync(executors, cancellationToken, async (executor, token) =>
-        {
-            try
-            {
-                var handler = serviceProvider.GetService(executor.HandlerType);
-                if (handler is null)
-                {
-                    throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
-                }
-                
-                var key = (executor.EventType, executor.HandlerType);
-                if (CachedHandlers.TryGetValue(key, out var handlerDelegate).Equals(false))
-                {
-                    throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
-                }
-                
-                await handlerDelegate!(handler, @event, headers, token);
-            }
-            catch (Exception exception)
-            {
-                var exceptionContext = new ExceptionContext(@event, headers, exception);
-                var exceptionHandlerInvoker = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
-                await exceptionHandlerInvoker.ExecuteAsync(exceptionContext, cancellationToken);
 
-                // Unhandled failures must reach the transport so it can nack / retry / dead-letter.
-                if (exceptionContext.Handled is false)
-                {
-                    exceptionContext.ExceptionDispatch.Throw();
-                }
-            }
-        });
+        if (executors.Count == 1)
+        {
+            await ExecuteHandlerAsync(executors[0], @event, headers, cancellationToken);
+        }
+        else
+        {
+            await Parallel.ForEachAsync(executors, cancellationToken, async (executor, token) =>
+                await ExecuteHandlerAsync(executor, @event, headers, token));
+        }
 
         _logger.LogTrace("Processed event {EventType}", eventType.Name);
+    }
+
+    /// <summary>
+    ///     Executes a single handler inside its own service scope, so scoped dependencies
+    ///     (e.g. DbContext) are never shared across concurrently running handlers.
+    /// </summary>
+    private async Task ExecuteHandlerAsync(IEventHandlerExecutor executor, object @event, Headers headers, CancellationToken cancellationToken)
+    {
+        await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
+        var serviceProvider = serviceScope.ServiceProvider;
+
+        try
+        {
+            var handler = serviceProvider.GetService(executor.HandlerType);
+            if (handler is null)
+            {
+                throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
+            }
+
+            var key = (executor.EventType, executor.HandlerType);
+            if (CachedHandlers.TryGetValue(key, out var handlerDelegate).Equals(false))
+            {
+                throw new HandlerNotRegisteredException(executor.EventType, executor.HandlerType);
+            }
+
+            await handlerDelegate!(handler, @event, headers, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            var exceptionContext = new ExceptionContext(@event, headers, exception);
+            var exceptionHandlerInvoker = serviceProvider.GetRequiredService<IExceptionHandlerInvoker>();
+            await exceptionHandlerInvoker.ExecuteAsync(exceptionContext, cancellationToken);
+
+            // Unhandled failures must reach the transport so it can nack / retry / dead-letter.
+            if (exceptionContext.Handled is false)
+            {
+                exceptionContext.ExceptionDispatch.Throw();
+            }
+        }
     }
 }
