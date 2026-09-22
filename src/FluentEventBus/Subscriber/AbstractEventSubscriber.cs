@@ -1,0 +1,20 @@
+using FluentEventBus.Event;
+
+namespace FluentEventBus.Subscriber;
+
+/// <summary>
+/// The abstract event subscriber class
+/// </summary>
+/// <seealso cref="IEventSubscriber"/>
+public abstract class AbstractEventSubscriber : IEventSubscriber
+{
+    
+    protected abstract Task SubscribeEventsAsync(List<string> eventNames);
+    
+    public Task SubscribeAsync(List<string> eventNames)
+    {
+        return SubscribeEventsAsync(eventNames);
+    }
+
+    public Func<EventContext, Task>? ConsumerReceived { get; set; }
+}

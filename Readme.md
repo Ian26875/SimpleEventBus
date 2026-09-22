@@ -1,7 +1,7 @@
-# SimpleEventBus
+# FluentEventBus
 
-[![CI](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml)
-[![Release](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml/badge.svg)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml)
+[![CI](https://github.com/Ian26875/FluentEventBus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ian26875/FluentEventBus/actions/workflows/ci.yml)
+[![Release](https://github.com/Ian26875/FluentEventBus/actions/workflows/release.yml/badge.svg)](https://github.com/Ian26875/FluentEventBus/actions/workflows/release.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/FluentEventBus?label=NuGet)](https://www.nuget.org/packages/FluentEventBus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -23,9 +23,9 @@ Published on NuGet as the **FluentEventBus** family:
 
 | NuGet package | Project | Purpose |
 |---|---|---|
-| `FluentEventBus` | `SimpleEventBus` | Core abstractions and profile system |
-| `FluentEventBus.InMemory` | `SimpleEventBus.InMemory` | In-process transport |
-| `FluentEventBus.RabbitMq` | `SimpleEventBus.RabbitMq` | RabbitMQ transport |
+| `FluentEventBus` | `FluentEventBus` | Core abstractions and profile system |
+| `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-process transport |
+| `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ transport |
 
 ## Target Frameworks
 
@@ -40,8 +40,8 @@ Published on NuGet as the **FluentEventBus** family:
 ### 1. Define event and handler
 
 ```csharp
-using SimpleEventBus.Event;
-using SimpleEventBus.Subscriber;
+using FluentEventBus.Event;
+using FluentEventBus.Subscriber;
 
 public sealed record OrderPlaced(Guid OrderId);
 
@@ -58,7 +58,7 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 ### 2. Define a subscription profile
 
 ```csharp
-using SimpleEventBus.Profile;
+using FluentEventBus.Profile;
 
 public sealed class OrderProfile : SubscriptionProfile
 {
@@ -83,7 +83,7 @@ this.WhenOccurs<OrderPlaced>()
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SimpleEventBus.DependencyInjection;
+using FluentEventBus.DependencyInjection;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
@@ -132,7 +132,7 @@ services.AddEventBus(builder =>
         bind =>
         {
             bind.GlobalExchange = "eventbus.topic";
-            bind.GlobalQueue = "simpleeventbus.orders";
+            bind.GlobalQueue = "fluenteventbus.orders";
             bind.PrefetchCount = 10;
         });
 });
@@ -164,7 +164,7 @@ This makes delivery **at-least-once**: handlers must be idempotent — use
 Configure a dead letter exchange/queue for RabbitMQ:
 
 ```csharp
-bind.DeclareGlobalDeadLetter("eventbus.dlx", "simpleeventbus.orders.dlq");
+bind.DeclareGlobalDeadLetter("eventbus.dlx", "fluenteventbus.orders.dlq");
 bind.MaxRetryCount = 3;
 
 // or per event
@@ -223,7 +223,7 @@ non-.NET consumers are both safe.
 Example:
 
 ```csharp
-using SimpleEventBus.Mapper;
+using FluentEventBus.Mapper;
 
 [Event("order.payment.created", 2)]
 public sealed record OrderPaymentCreated(Guid PaymentId);
@@ -289,7 +289,7 @@ If a per-event binding is not configured, RabbitMQ transport falls back to globa
 
 ## Performance
 
-Measured with the bundled stress harness (`src/SimpleEventBus.StressTests`) on a
+Measured with the bundled stress harness (`src/FluentEventBus.StressTests`) on a
 developer machine — one publisher process with 8 parallel producers, one
 counting handler, zero message loss across all runs:
 
@@ -303,11 +303,11 @@ Numbers are indicative, not a formal benchmark — run it yourself:
 
 ```bash
 # In-Memory
-dotnet run -c Release --project src/SimpleEventBus.StressTests -- inmemory 100000
+dotnet run -c Release --project src/FluentEventBus.StressTests -- inmemory 100000
 
 # RabbitMQ against a Docker sandbox
 docker run -d --name eventbus-stress -p 5673:5672 rabbitmq:4-alpine
-dotnet run -c Release --project src/SimpleEventBus.StressTests -- rabbitmq localhost:5673 100000
+dotnet run -c Release --project src/FluentEventBus.StressTests -- rabbitmq localhost:5673 100000
 docker rm -f eventbus-stress
 ```
 
@@ -323,6 +323,6 @@ connection; each handler executes in its own DI scope.
 ## Build and Test
 
 ```bash
-dotnet build src/SimpleEventBus.sln -c Release
-dotnet test src/SimpleEventBus.sln -c Release
+dotnet build src/FluentEventBus.sln -c Release
+dotnet test src/FluentEventBus.sln -c Release
 ```

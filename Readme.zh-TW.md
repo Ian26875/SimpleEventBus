@@ -1,7 +1,7 @@
-# SimpleEventBus
+# FluentEventBus
 
-[![CI](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/ci.yml)
-[![Release](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml/badge.svg)](https://github.com/Ian26875/SimpleEventBus/actions/workflows/release.yml)
+[![CI](https://github.com/Ian26875/FluentEventBus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ian26875/FluentEventBus/actions/workflows/ci.yml)
+[![Release](https://github.com/Ian26875/FluentEventBus/actions/workflows/release.yml/badge.svg)](https://github.com/Ian26875/FluentEventBus/actions/workflows/release.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/FluentEventBus?label=NuGet)](https://www.nuget.org/packages/FluentEventBus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -23,9 +23,9 @@ graph TD
 
 | NuGet 套件 | 專案 | 用途 |
 |---|---|---|
-| `FluentEventBus` | `SimpleEventBus` | 核心抽象與 Profile 系統 |
-| `FluentEventBus.InMemory` | `SimpleEventBus.InMemory` | In-Process（同進程）傳輸 |
-| `FluentEventBus.RabbitMq` | `SimpleEventBus.RabbitMq` | RabbitMQ 傳輸 |
+| `FluentEventBus` | `FluentEventBus` | 核心抽象與 Profile 系統 |
+| `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-Process（同進程）傳輸 |
+| `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ 傳輸 |
 
 ## 目標框架
 
@@ -40,8 +40,8 @@ graph TD
 ### 1. 定義事件與 Handler
 
 ```csharp
-using SimpleEventBus.Event;
-using SimpleEventBus.Subscriber;
+using FluentEventBus.Event;
+using FluentEventBus.Subscriber;
 
 public sealed record OrderPlaced(Guid OrderId);
 
@@ -58,7 +58,7 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 ### 2. 定義 Subscription Profile
 
 ```csharp
-using SimpleEventBus.Profile;
+using FluentEventBus.Profile;
 
 public sealed class OrderProfile : SubscriptionProfile
 {
@@ -83,7 +83,7 @@ this.WhenOccurs<OrderPlaced>()
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SimpleEventBus.DependencyInjection;
+using FluentEventBus.DependencyInjection;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
@@ -132,7 +132,7 @@ services.AddEventBus(builder =>
         bind =>
         {
             bind.GlobalExchange = "eventbus.topic";
-            bind.GlobalQueue = "simpleeventbus.orders";
+            bind.GlobalQueue = "fluenteventbus.orders";
             bind.PrefetchCount = 10;
         });
 });
@@ -164,7 +164,7 @@ Transport 接著進行重試：
 RabbitMQ 設定 dead letter exchange / queue：
 
 ```csharp
-bind.DeclareGlobalDeadLetter("eventbus.dlx", "simpleeventbus.orders.dlq");
+bind.DeclareGlobalDeadLetter("eventbus.dlx", "fluenteventbus.orders.dlq");
 bind.MaxRetryCount = 3;
 
 // 或針對單一事件
@@ -222,7 +222,7 @@ producer 端 refactor 與非 .NET consumer 都不會被影響。
 範例：
 
 ```csharp
-using SimpleEventBus.Mapper;
+using FluentEventBus.Mapper;
 
 [Event("order.payment.created", 2)]
 public sealed record OrderPaymentCreated(Guid PaymentId);
@@ -284,7 +284,7 @@ wire contract，就不該出現在 routing key 上。
 
 ## 效能
 
-使用內附的壓測工具（`src/SimpleEventBus.StressTests`）在開發機上量測——
+使用內附的壓測工具（`src/FluentEventBus.StressTests`）在開發機上量測——
 單一發佈程序、8 個平行 producer、一個計數 handler，所有回合零訊息遺失：
 
 | 情境 | 事件數 | 發佈吞吐 | 端到端處理吞吐 |
@@ -297,11 +297,11 @@ wire contract，就不該出現在 routing key 上。
 
 ```bash
 # In-Memory
-dotnet run -c Release --project src/SimpleEventBus.StressTests -- inmemory 100000
+dotnet run -c Release --project src/FluentEventBus.StressTests -- inmemory 100000
 
 # RabbitMQ（Docker 沙盒）
 docker run -d --name eventbus-stress -p 5673:5672 rabbitmq:4-alpine
-dotnet run -c Release --project src/SimpleEventBus.StressTests -- rabbitmq localhost:5673 100000
+dotnet run -c Release --project src/FluentEventBus.StressTests -- rabbitmq localhost:5673 100000
 docker rm -f eventbus-stress
 ```
 
@@ -316,6 +316,6 @@ broker）；所有 RabbitMQ 元件共享單一連線；每個 handler 在自己�
 ## 建置與測試
 
 ```bash
-dotnet build src/SimpleEventBus.sln -c Release
-dotnet test src/SimpleEventBus.sln -c Release
+dotnet build src/FluentEventBus.sln -c Release
+dotnet test src/FluentEventBus.sln -c Release
 ```
