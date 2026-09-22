@@ -16,6 +16,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentEventBus.StressTests", "FluentEventBus.StressTests\FluentEventBus.StressTests.csproj", "{5E8C4740-DB49-4FA0-BCCA-4CD50FFE5F22}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentEventBus.OpenTelemetry", "FluentEventBus.OpenTelemetry\FluentEventBus.OpenTelemetry.csproj", "{004E6E61-BE81-49F6-A937-53EAD8C6B806}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentEventBus.AsyncApi", "FluentEventBus.AsyncApi\FluentEventBus.AsyncApi.csproj", "{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +112,18 @@ Global
 		{004E6E61-BE81-49F6-A937-53EAD8C6B806}.Release|x64.Build.0 = Release|Any CPU
 		{004E6E61-BE81-49F6-A937-53EAD8C6B806}.Release|x86.ActiveCfg = Release|Any CPU
 		{004E6E61-BE81-49F6-A937-53EAD8C6B806}.Release|x86.Build.0 = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|x64.Build.0 = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Debug|x86.Build.0 = Debug|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|x64.ActiveCfg = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|x64.Build.0 = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{5D515600-7D0F-49B0-B0F7-4AEEEEF945A9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

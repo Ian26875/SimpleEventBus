@@ -27,6 +27,7 @@ Published on NuGet as the **FluentEventBus** family:
 | `FluentEventBus.InMemory` | `FluentEventBus.InMemory` | In-process transport |
 | `FluentEventBus.RabbitMq` | `FluentEventBus.RabbitMq` | RabbitMQ transport |
 | `FluentEventBus.OpenTelemetry` | `FluentEventBus.OpenTelemetry` | OpenTelemetry wiring (net8.0+) |
+| `FluentEventBus.AsyncApi` | `FluentEventBus.AsyncApi` | AsyncAPI 3.0 document generation (net8.0+) |
 
 ## Target Frameworks
 
@@ -296,6 +297,36 @@ the routing key.
 explicit `[Event("name", n)]` attribute. Without it the name is derived from
 the type name and namespace, and a refactor silently changes the routing key —
 a breaking change the compiler will not catch.
+
+## AsyncAPI Document
+
+The `FluentEventBus.AsyncApi` package (net8.0+, built on the official AsyncAPI .NET SDK)
+generates an AsyncAPI 3.0 document straight from your subscription profiles — channels
+from event names, receive operations from handlers, payload JSON Schemas from the event
+types. No extra annotations needed.
+
+```csharp
+services.AddEventBus(builder =>
+{
+    builder.WithProfile<OrderProfile>();
+    builder.UseInMemoryTransport();
+    builder.AddAsyncApiDocument(options =>
+    {
+        options.Title = "Orders Service";
+        options.Version = "1.0.0";
+        options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
+    });
+});
+```
+
+Expose it however you like, e.g. a minimal API endpoint:
+
+```csharp
+app.MapGet("/asyncapi.json", async (AsyncApiDocumentGenerator generator, CancellationToken ct) =>
+    Results.Content(await generator.SerializeAsync(AsyncApiDocumentFormat.Json, ct), "application/json"));
+```
+
+See `samples/AsyncApiSample` for a runnable example (with Dockerfile).
 
 ## Routing Defaults
 
