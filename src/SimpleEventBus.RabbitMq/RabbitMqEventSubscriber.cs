@@ -14,30 +14,25 @@ namespace SimpleEventBus.RabbitMq;
 
 public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
 {
-    private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
     private readonly RabbitMqBindingOption _rabbitMqBindingOption;
+    private readonly RabbitMqConnectionProvider _connectionProvider;
     private readonly ILogger<RabbitMqEventSubscriber> _logger;
-    private readonly object _initLock = new();
-    private IBus? _bus;
-    private IAdvancedBus? _advancedBus;
     private readonly List<IDisposable> _consumers = new();
 
-    public RabbitMqEventSubscriber(IOptions<RabbitMqConnectionOption> rabbitMqOptions,
+    public RabbitMqEventSubscriber(RabbitMqConnectionProvider connectionProvider,
                                    IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
                                    ILogger<RabbitMqEventSubscriber> logger)
     {
-        _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+        _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
         _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        ValidateOptions(_rabbitMqConnectionOption);
     }
 
     protected override async Task SubscribeEventsAsync(List<string> eventNames)
     {
         ArgumentNullException.ThrowIfNull(eventNames);
 
-        var advancedBus = GetAdvancedBus();
+        var advancedBus = _connectionProvider.GetAdvancedBus();
 
         TryConfigurePrefetch(advancedBus);
 
@@ -199,58 +194,12 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
         };
     }
 
-    private void InitializeBus()
-    {
-        if (_advancedBus is not null)
-        {
-            return;
-        }
-
-        lock (_initLock)
-        {
-            if (_advancedBus is not null)
-            {
-                return;
-            }
-
-            var connectionString = $"amqp://{_rabbitMqConnectionOption.UserName}:{_rabbitMqConnectionOption.Password}@{_rabbitMqConnectionOption.Host}/";
-            _bus = RabbitHutch.CreateBus(connectionString);
-            _advancedBus = _bus.Advanced;
-        }
-    }
-
-    private IAdvancedBus GetAdvancedBus()
-    {
-        InitializeBus();
-        return _advancedBus!;
-    }
-
-    private static void ValidateOptions(RabbitMqConnectionOption connectionOption)
-    {
-        if (string.IsNullOrWhiteSpace(connectionOption.UserName))
-        {
-            throw new ArgumentException("RabbitMqOption.UserName is required.", nameof(connectionOption));
-        }
-
-        if (string.IsNullOrWhiteSpace(connectionOption.Password))
-        {
-            throw new ArgumentException("RabbitMqOption.Password is required.", nameof(connectionOption));
-        }
-
-        if (string.IsNullOrWhiteSpace(connectionOption.Host))
-        {
-            throw new ArgumentException("RabbitMqOption.Host is required.", nameof(connectionOption));
-        }
-    }
-
     public void Dispose()
     {
         foreach (var consumer in _consumers)
         {
             consumer.Dispose();
         }
-
-        _bus?.Dispose();
     }
 
     private void TryConfigurePrefetch(IAdvancedBus advancedBus)
