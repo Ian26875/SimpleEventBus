@@ -23,7 +23,12 @@ public abstract class AbstractEventPublisher : IEventBus
         ArgumentNullException.ThrowIfNull(@event);
 
         headers ??= new Headers();
-        
+
+        // Standard envelope headers: consumers rely on MessageId for at-least-once
+        // deduplication, so every published message must carry one.
+        headers.MessageId ??= Guid.NewGuid().ToString();
+        headers.OccurredAt ??= DateTimeOffset.UtcNow;
+
         var serializedData = _serializer.Serialize(@event);
 
         var eventName = EventMapper.GetEventName(typeof(TEvent));
