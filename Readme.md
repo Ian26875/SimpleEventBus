@@ -204,6 +204,35 @@ Based on `docs/eventbus-routing.md`:
 
 If a per-event binding is not configured, RabbitMQ transport falls back to global/default values.
 
+## Performance
+
+Measured with the bundled stress harness (`src/SimpleEventBus.StressTests`) on a
+developer machine — one publisher process with 8 parallel producers, one
+counting handler, zero message loss across all runs:
+
+| Scenario | Events | Publish throughput | End-to-end throughput |
+|---|---|---|---|
+| In-Memory | 100,000 | ~1,150,000 msg/s | ~245,000 msg/s |
+| RabbitMQ (Docker, prefetch 200) | 10,000 | ~48,000 msg/s | ~10,500 msg/s |
+| RabbitMQ (Docker, prefetch 200) | 100,000 | ~83,000 msg/s | ~16,000 msg/s |
+
+Numbers are indicative, not a formal benchmark — run it yourself:
+
+```bash
+# In-Memory
+dotnet run -c Release --project src/SimpleEventBus.StressTests -- inmemory 100000
+
+# RabbitMQ against a Docker sandbox
+docker run -d --name eventbus-stress -p 5673:5672 rabbitmq:4-alpine
+dotnet run -c Release --project src/SimpleEventBus.StressTests -- rabbitmq localhost:5673 100000
+docker rm -f eventbus-stress
+```
+
+Relevant design choices: handler delegates and lambda expressions are compiled
+once and cached; the RabbitMQ publisher caches exchange declarations (one broker
+round-trip per exchange per process); all RabbitMQ components share a single
+connection; each handler executes in its own DI scope.
+
 ## Docs
 
 - Routing design: `docs/eventbus-routing.md`
