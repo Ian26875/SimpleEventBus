@@ -14,9 +14,13 @@ graph TD
 
 ## Packages
 
-- `SimpleEventBus`: core abstractions and profile system
-- `SimpleEventBus.InMemory`: in-process transport
-- `SimpleEventBus.RabbitMq`: RabbitMQ transport
+Published on NuGet as the **FluentEventBus** family:
+
+| NuGet package | Project | Purpose |
+|---|---|---|
+| `FluentEventBus` | `SimpleEventBus` | Core abstractions and profile system |
+| `FluentEventBus.InMemory` | `SimpleEventBus.InMemory` | In-process transport |
+| `FluentEventBus.RabbitMq` | `SimpleEventBus.RabbitMq` | RabbitMQ transport |
 
 ## Target Frameworks
 

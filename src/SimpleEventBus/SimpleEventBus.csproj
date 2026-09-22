@@ -4,7 +4,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>0.0.1-alpha</Version>
+        <PackageId>FluentEventBus</PackageId>
+        <Description>Simple event bus for .NET with fluent subscription profiles, versioned event naming, retry and dead letter support. Core abstractions and profile system.</Description>
         <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
     </PropertyGroup>
 

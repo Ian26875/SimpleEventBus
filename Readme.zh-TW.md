@@ -14,9 +14,13 @@ graph TD
 
 ## 套件
 
-- `SimpleEventBus`：核心抽象與 Profile 系統
-- `SimpleEventBus.InMemory`：In-Process（同進程）傳輸
-- `SimpleEventBus.RabbitMq`：RabbitMQ 傳輸
+以 **FluentEventBus** 系列發佈到 NuGet：
+
+| NuGet 套件 | 專案 | 用途 |
+|---|---|---|
+| `FluentEventBus` | `SimpleEventBus` | 核心抽象與 Profile 系統 |
+| `FluentEventBus.InMemory` | `SimpleEventBus.InMemory` | In-Process（同進程）傳輸 |
+| `FluentEventBus.RabbitMq` | `SimpleEventBus.RabbitMq` | RabbitMQ 傳輸 |
 
 ## 目標框架
 
