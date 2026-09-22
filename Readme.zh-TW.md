@@ -309,6 +309,9 @@ services.AddEventBus(builder =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
+        options.WithXmlComments<OrderPlaced>(); // 型別/屬性的 <summary> 會變成文件描述
+        // Servers 會自動從已設定的 transport 探索（IEventBusServerDescriptor）；
+        // WithServer(...) 可另外新增或覆蓋：
         options.WithServer("production", "rabbitmq.internal:5672", "amqp", protocolVersion: "0.9.1");
     });
 });

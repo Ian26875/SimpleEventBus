@@ -20,30 +20,95 @@ namespace FluentEventBus.AsyncApi;
 /// </summary>
 public sealed class AsyncApiDocumentGenerator
 {
-    /// <summary>
-    /// System.Text.Json serializes these types as strings, but the schema generator
-    /// would otherwise reflect them structurally (Day/Hour/Ticks...).
-    /// </summary>
-    private static readonly SchemaGeneratorConfiguration SchemaConfiguration = new()
-    {
-        Generators = { new StringFormatSchemaGenerator() },
-        Refiners = { new RequiredPropertiesRefiner() }
-    };
-
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
     private readonly IEventMapper _eventMapper;
     private readonly AsyncApiDocumentOptions _options;
+    private readonly IEnumerable<IEventBusServerDescriptor> _serverDescriptors;
     private readonly IAsyncApiDocumentWriter _documentWriter;
+    private readonly SchemaGeneratorConfiguration _schemaConfiguration;
+    private readonly Lazy<Dictionary<string, string>> _typeSummaries;
 
     public AsyncApiDocumentGenerator(ISubscriptionProfileManager subscriptionProfileManager,
                                      IEventMapper eventMapper,
                                      IOptions<AsyncApiDocumentOptions> options,
+                                     IEnumerable<IEventBusServerDescriptor> serverDescriptors,
                                      IAsyncApiDocumentWriter documentWriter)
     {
         _subscriptionProfileManager = subscriptionProfileManager;
         _eventMapper = eventMapper;
         _options = options.Value;
+        _serverDescriptors = serverDescriptors;
         _documentWriter = documentWriter;
+
+        // StringFormatSchemaGenerator: System.Text.Json serializes these types as strings,
+        // but the schema generator would otherwise reflect them structurally (Day/Hour/Ticks...).
+        _schemaConfiguration = new SchemaGeneratorConfiguration
+        {
+            Generators = { new StringFormatSchemaGenerator() },
+            Refiners = { new RequiredPropertiesRefiner() }
+        };
+        foreach (var configure in _options.SchemaConfigurators)
+        {
+            configure(_schemaConfiguration);
+        }
+
+        _typeSummaries = new Lazy<Dictionary<string, string>>(() => LoadTypeSummaries(_options.XmlCommentFiles));
+    }
+
+    /// <summary>
+    /// Loads &lt;summary&gt; texts from the registered XML documentation files,
+    /// keyed by doc id ("T:Full.Type.Name" for types, "P:Full.Type.Name.Property" for properties).
+    /// </summary>
+    private static Dictionary<string, string> LoadTypeSummaries(IEnumerable<string> xmlFiles)
+    {
+        var summaries = new Dictionary<string, string>();
+        foreach (var file in xmlFiles.Where(File.Exists))
+        {
+            var document = System.Xml.Linq.XDocument.Load(file);
+            foreach (var member in document.Descendants("member"))
+            {
+                var name = member.Attribute("name")?.Value;
+                var summary = member.Element("summary")?.Value.Trim();
+                if (name is not null && (name.StartsWith("T:") || name.StartsWith("P:")) && !string.IsNullOrWhiteSpace(summary))
+                {
+                    summaries[name] = summary;
+                }
+            }
+        }
+
+        return summaries;
+    }
+
+    private string? GetTypeSummary(Type type)
+    {
+        var docId = "T:" + type.FullName?.Replace('+', '.');
+        return _typeSummaries.Value.TryGetValue(docId, out var summary) ? summary : null;
+    }
+
+    /// <summary>
+    /// Builds the payload schema and injects property descriptions from the XML
+    /// documentation comments (property &lt;summary&gt;) into the serialized schema.
+    /// </summary>
+    private System.Text.Json.Nodes.JsonNode BuildPayloadSchema(Type eventType)
+    {
+        var schema = new JsonSchemaBuilder().FromType(eventType, _schemaConfiguration).Build();
+        var node = System.Text.Json.JsonSerializer.SerializeToNode(schema)!;
+
+        if (node["properties"] is System.Text.Json.Nodes.JsonObject properties)
+        {
+            var typeDocId = eventType.FullName?.Replace('+', '.');
+            foreach (var (propertyName, propertySchema) in properties)
+            {
+                if (propertySchema is System.Text.Json.Nodes.JsonObject propertyObject
+                    && propertyObject["description"] is null
+                    && _typeSummaries.Value.TryGetValue($"P:{typeDocId}.{propertyName}", out var summary))
+                {
+                    propertyObject["description"] = summary;
+                }
+            }
+        }
+
+        return node;
     }
 
     /// <summary>
@@ -78,11 +143,22 @@ public sealed class AsyncApiDocumentGenerator
             }
         };
 
+        // Servers: transport-registered descriptors first (dependency-inverted via
+        // IEventBusServerDescriptor), explicit WithServer() entries override by name.
+        var servers = _serverDescriptors.ToDictionary(
+            descriptor => descriptor.Name,
+            descriptor => new AsyncApiDocumentOptions.ServerInfo(
+                descriptor.Host, descriptor.Protocol, descriptor.Description, descriptor.ProtocolVersion));
+        foreach (var (name, server) in _options.Servers)
+        {
+            servers[name] = server;
+        }
+
         var serverReferences = new Neuroglia.EquatableList<V3ReferenceDefinition>();
-        if (_options.Servers.Count > 0)
+        if (servers.Count > 0)
         {
             document.Servers = [];
-            foreach (var (name, server) in _options.Servers)
+            foreach (var (name, server) in servers)
             {
                 document.Servers[name] = new V3ServerDefinition
                 {
@@ -100,12 +176,15 @@ public sealed class AsyncApiDocumentGenerator
             var eventName = _eventMapper.GetEventName(eventType);
             var messageName = eventType.Name;
 
-            var payloadSchema = new JsonSchemaBuilder().FromType(eventType, SchemaConfiguration).Build();
+            var payloadSchema = BuildPayloadSchema(eventType);
+
+            var typeSummary = GetTypeSummary(eventType);
 
             var message = new V3MessageDefinition
             {
                 Name = messageName,
                 Title = messageName,
+                Description = string.IsNullOrWhiteSpace(typeSummary) ? null : typeSummary,
                 ContentType = "application/json",
                 Payload = new V3SchemaDefinition { Schema = payloadSchema },
                 Headers = new V3SchemaDefinition
@@ -129,6 +208,7 @@ public sealed class AsyncApiDocumentGenerator
             document.Channels[eventName] = new V3ChannelDefinition
             {
                 Address = eventName,
+                Description = string.IsNullOrWhiteSpace(typeSummary) ? null : typeSummary,
                 Messages = new() { [messageName] = message },
                 // Reference every declared server explicitly (the Neuroglia UI expects a non-null list).
                 Servers = serverReferences

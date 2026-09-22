@@ -24,6 +24,18 @@ public static class EventBusBuilderExtensions
     {
         eventBusBuilder.Services.AddSingleton<RabbitMqConnectionProvider>();
 
+        // Transport-neutral server description consumed by documentation tooling (e.g. AsyncAPI).
+        eventBusBuilder.Services.AddSingleton<IEventBusServerDescriptor>(serviceProvider =>
+        {
+            var connectionOption = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<RabbitMqConnectionOption>>().Value;
+            return new EventBusServerDescriptor(
+                Name: "rabbitmq",
+                Host: connectionOption.Host,
+                Protocol: "amqp",
+                ProtocolVersion: "0.9.1",
+                Description: "RabbitMQ broker configured via RabbitMqConnectionOption.");
+        });
+
         eventBusBuilder.Services.AddSingleton<RabbitMqEventPublisher>();
         eventBusBuilder.Services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
         eventBusBuilder.Services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<RabbitMqEventPublisher>());
