@@ -1,9 +1,6 @@
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
-<<<<<<< HEAD
-=======
 using SimpleEventBus.Event;
->>>>>>> feature/BuildEventHandlerExecutor
 
 namespace SimpleEventBus.InMemory;
 
@@ -13,20 +10,6 @@ namespace SimpleEventBus.InMemory;
 /// </summary>
 internal class BackgroundQueue
 {
-<<<<<<< HEAD
-    public class MessageContent
-    {
-        public IDictionary<string, object> Headers { get; set; }
-
-        public ReadOnlyMemory<byte> Body { get; set; }
-
-        public string Route { get; set; }
-    }
-    
-    private Channel<MessageContent> _channel;
-    
-    public BackgroundQueue(int capacity)
-=======
     /// <summary>
     /// The threshold value that triggers an alert when the queue size exceeds this count.
     /// </summary>
@@ -59,47 +42,11 @@ internal class BackgroundQueue
     /// <param name="backgroundQueueOptions">The configuration options for the queue.</param>
     public BackgroundQueue(ILogger<BackgroundQueue> logger,
                            BackgroundQueueOptions backgroundQueueOptions)
->>>>>>> feature/BuildEventHandlerExecutor
     {
         var channelOptions = new BoundedChannelOptions(backgroundQueueOptions.Capacity)
         {
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = false, 
-            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait
         };
-<<<<<<< HEAD
-        _channel = Channel.CreateBounded<MessageContent>(options);
-    }
-    
-    public async ValueTask SendAsync(ReadOnlyMemory<byte> body,
-                                     IDictionary<string,object> headers,
-                                     string route,
-                                     CancellationToken cancellationToken = default(CancellationToken))
-    {
-        await this._channel.Writer.WriteAsync(new MessageContent
-        {
-            Body = body,
-            Headers = headers,
-            Route = route
-        }, cancellationToken);
-    }
-    
-    public async ValueTask ReceiveAsync(Func<ReadOnlyMemory<byte>, IDictionary<string, object>,string , CancellationToken, Task> consumerReceived,
-                                        CancellationToken cancellationToken = default(CancellationToken))
-    {
-        if (consumerReceived is null)
-        {
-            throw new ArgumentNullException(nameof(consumerReceived));
-        }
-
-        while (await _channel.Reader.WaitToReadAsync(cancellationToken))
-        {
-            if (_channel.Reader.TryRead(out var message))
-            {
-                await consumerReceived.Invoke(message.Body,message.Headers,message.Route,cancellationToken);
-            }
-        }
-=======
 
         _channel = Channel.CreateBounded<EventContext>(channelOptions);
         _alertThreshold = backgroundQueueOptions.AlertThreshold;
@@ -156,6 +103,5 @@ internal class BackgroundQueue
         _logger.LogTrace("Event dequeued. PendingCount = {Count}", newCount);
 
         return result;
->>>>>>> feature/BuildEventHandlerExecutor
     }
 }

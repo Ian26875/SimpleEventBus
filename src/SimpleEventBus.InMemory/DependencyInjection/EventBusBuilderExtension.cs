@@ -23,10 +23,6 @@ public static class EventBusBuilderExtension
         int alertThreshold = 80,
         Func<Task>? onAlert = default)
     {
-<<<<<<< HEAD
-        eventBusBuilder.Services.AddSingleton<BackgroundQueue>(sp=>new BackgroundQueue(capacity));
-        eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();  // Register the implementation as a singleton
-=======
         eventBusBuilder.Services.AddSingleton(new BackgroundQueueOptions
         {
             Capacity = capacity,
@@ -37,7 +33,6 @@ public static class EventBusBuilderExtension
         
         eventBusBuilder.Services.AddSingleton<InMemoryEventPublisher>();
         
->>>>>>> feature/BuildEventHandlerExecutor
         eventBusBuilder.Services.AddSingleton<IEventBus, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
         eventBusBuilder.Services.AddSingleton<IEventPublisher, InMemoryEventPublisher>(provider => provider.GetRequiredService<InMemoryEventPublisher>());
         

@@ -75,7 +75,7 @@ public class EventSubscribeInitializer : IInitializer
 
         var eventNames = eventTypes.Select(eventType => _eventMapper.GetEventName(eventType)).ToList();
 
-        await _eventSubscriber.SubscribeAsync(eventNames, cancellationToken);
+        await _eventSubscriber.SubscribeAsync(eventNames);
 
         _eventSubscriber.ConsumerReceived += ConsumerReceived;
     }

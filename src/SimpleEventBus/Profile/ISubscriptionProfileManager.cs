@@ -7,16 +7,6 @@ namespace SimpleEventBus.Profile;
 /// </summary>
 public interface ISubscriptionProfileManager
 {
-<<<<<<< HEAD
-    public bool HasSubscriptionsForEvent(Type eventType);
-
-    public List<Type> GetAllEventTypes();
-    
-    public List<IEventHandlerExecutor> GetEventHandlerExecutorForEvent(Type eventType);
-
-    public List<Type> GetErrorHandlersForEvent(Type eventType);
-}
-=======
     /// <summary>
     /// Initializes the manager by loading all subscription profiles and their handler mappings.
     /// </summary>
@@ -55,4 +45,3 @@ public interface ISubscriptionProfileManager
     /// <returns>A dictionary of event type to its list of executors.</returns>
     Dictionary<Type, List<IEventHandlerExecutor>> GetAllSubscriptions();
 }
->>>>>>> feature/BuildEventHandlerExecutor

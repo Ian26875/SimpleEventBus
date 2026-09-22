@@ -16,13 +16,8 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// Initializes a new instance of the <see cref="FluentSubscriptionBuilder{TEvent}"/> class
     /// using the provided <see cref="SubscriptionProfile"/>.
     /// </summary>
-<<<<<<< HEAD
-    /// <param name="subscriptionProfile">The subscription profile</param>
-    public FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
-=======
     /// <param name="subscriptionProfile">The subscription profile that holds subscription configurations.</param>
     internal FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
->>>>>>> feature/BuildEventHandlerExecutor
     {
         this.Profile = subscriptionProfile;
     }
@@ -39,23 +34,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// <returns>The fluent subscription builder instance for chaining.</returns>
     public IFluentSubscriptionBuilder<TEvent> ToDo<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
     {
-<<<<<<< HEAD
-        Profile.AddSubscription(typeof(TEvent),new InterfaceEventHandlerExecutor<TEvent,TEventHandler>());
-        return this;
-    }
-
-    /// <summary>
-    /// Returns the do using the specified expression
-    /// </summary>
-    /// <typeparam name="THandler">The handler</typeparam>
-    /// <param name="expression">The expression</param>
-    /// <returns>A fluent subscription builder of t event</returns>
-    public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(Expression<Func<THandler, Func<TEvent, Headers, CancellationToken, Task>>> expression) where THandler : class
-    {
-        Profile.AddSubscription(typeof(TEvent),new ExpressionEventHandlerExecutor<TEvent,THandler>(expression));
-=======
         Profile.AddSubscription(typeof(TEvent), new InterfaceEventHandlerExecutor<TEvent, TEventHandler>());
->>>>>>> feature/BuildEventHandlerExecutor
         return this;
     }
 

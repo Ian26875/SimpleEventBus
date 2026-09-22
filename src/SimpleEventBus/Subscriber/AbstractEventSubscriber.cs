@@ -9,18 +9,12 @@ namespace SimpleEventBus.Subscriber;
 public abstract class AbstractEventSubscriber : IEventSubscriber
 {
     
-    protected abstract Task SubscribeEventsAsync(List<string> eventNames,CancellationToken cancellationToken);
-
-    public Task SubscribeAsync(List<string> eventNames, CancellationToken cancellationToken = default(CancellationToken))
+    protected abstract Task SubscribeEventsAsync(List<string> eventNames);
+    
+    public Task SubscribeAsync(List<string> eventNames)
     {
-        return SubscribeEventsAsync(eventNames,cancellationToken);
+        return SubscribeEventsAsync(eventNames);
     }
 
-<<<<<<< HEAD
-    public Func<EventData, Task> ConsumerReceived { get; set; }
-    public abstract Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken));
-}
-=======
     public Func<EventContext, Task>? ConsumerReceived { get; set; }
 }
->>>>>>> feature/BuildEventHandlerExecutor

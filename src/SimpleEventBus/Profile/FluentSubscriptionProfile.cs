@@ -8,7 +8,7 @@ namespace SimpleEventBus;
 public static class FluentSubscriptionProfile
 {
     /// <summary>
-    /// When the subscription profile
+    /// Whens the subscription profile
     /// </summary>
     /// <typeparam name="TEvent">The event</typeparam>
     /// <param name="subscriptionProfile">The subscription profile</param>

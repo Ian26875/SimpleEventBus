@@ -13,15 +13,6 @@ namespace SimpleEventBus.RabbitMq;
 
 public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
 {
-<<<<<<< HEAD
-
-    protected override Task SubscribeEventsAsync(List<string> eventNames, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken))
-=======
     private readonly RabbitMqConnectionOption _rabbitMqConnectionOption;
     private readonly RabbitMqBindingOption _rabbitMqBindingOption;
     private readonly ILogger<RabbitMqEventSubscriber> _logger;
@@ -33,7 +24,6 @@ public class RabbitMqEventSubscriber : AbstractEventSubscriber, IDisposable
     public RabbitMqEventSubscriber(IOptions<RabbitMqConnectionOption> rabbitMqOptions,
                                    IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
                                    ILogger<RabbitMqEventSubscriber> logger)
->>>>>>> feature/BuildEventHandlerExecutor
     {
         _rabbitMqConnectionOption = rabbitMqOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
         _rabbitMqBindingOption = rabbitMqBindingOptions?.Value ?? throw new ArgumentNullException(nameof(rabbitMqBindingOptions));

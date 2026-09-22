@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-﻿using Microsoft.Extensions.Logging;
-=======
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
->>>>>>> feature/BuildEventHandlerExecutor
 using SimpleEventBus.Event;
 using SimpleEventBus.Subscriber;
 
@@ -21,9 +17,6 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
         _backgroundQueue = backgroundQueue;
     }
 
-<<<<<<< HEAD
-    protected override Task SubscribeEventsAsync(List<string> eventNames, CancellationToken cancellationToken)
-=======
     /// <summary>
     /// The delegate to handle received events
     /// </summary>
@@ -33,7 +26,6 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
     /// Subscribe to the given list of event names
     /// </summary>
     public Task SubscribeAsync(List<string> eventNames)
->>>>>>> feature/BuildEventHandlerExecutor
     {
         _subscribedEventNames = eventNames;
 
@@ -45,19 +37,6 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
         return Task.CompletedTask;
     }
 
-<<<<<<< HEAD
-    public override async Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken))
-    {
-        async Task Func(ReadOnlyMemory<byte> body, IDictionary<string, object> header, string route, CancellationToken ct)
-        {
-            var eventData = new EventData(body, (Headers)header, route);
-            await ConsumerReceived(eventData);
-        }
-
-        await this._backgroundQueue.ReceiveAsync(Func, cancellationToken);
-    }
-}
-=======
     /// <summary>
     /// Background task execution loop
     /// </summary>
@@ -101,4 +80,3 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
         _logger.LogInformation("InMemoryEventSubscriber background processing stopped.");
     }
 }
->>>>>>> feature/BuildEventHandlerExecutor

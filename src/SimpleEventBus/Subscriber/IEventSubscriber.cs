@@ -11,21 +11,11 @@ public interface IEventSubscriber
     /// Subscribes the event names
     /// </summary>
     /// <param name="eventNames">The event names</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    Task SubscribeAsync(List<string> eventNames,CancellationToken cancellationToken = default(CancellationToken));
+    Task SubscribeAsync(List<string> eventNames);
 
     /// <summary>
-    /// consumer received
+    /// Sets the value of the consumer received
     /// </summary>
     Func<EventContext, Task>? ConsumerReceived { set; get; }
 
-<<<<<<< HEAD
-    /// <summary>
-    /// Receives the cancellation token
-    /// </summary>
-    /// <param name="cancellationToken">The cancellation token</param>
-    Task ReceiveAsync(CancellationToken cancellationToken = default(CancellationToken));
 }
-=======
-}
->>>>>>> feature/BuildEventHandlerExecutor
