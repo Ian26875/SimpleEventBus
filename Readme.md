@@ -154,7 +154,7 @@ Failed handlers propagate their exception to the transport (unless an
 `IEventExceptionHandler` registered via `CatchExceptionToDo<T>()` sets
 `context.Handled = true`, which acks and drops the message). The transport then retries:
 
-- **RabbitMQ**: the message is republished with an incremented `x-retry-count` header,
+- **RabbitMQ**: the message is republished with an incremented `retry-count` header,
   up to `MaxRetryCount` (default `3`). After that it is nacked without requeue —
   dead-lettered when a dead letter exchange is configured, dropped otherwise.
 - **In-Memory**: the event is re-enqueued with the same counter, up to `MaxRetryCount`
@@ -190,14 +190,16 @@ builder.UseInMemoryTransport(
 
 ## Message Headers
 
-Every message carries a `Headers` dictionary. Well-known headers:
+Every message carries a `Headers` dictionary. Wire keys are lowercase kebab-case
+(matching W3C/AMQP conventions); the C# `Headers` properties stay PascalCase.
+Well-known headers:
 
 | Header | Set by | Purpose |
 |---|---|---|
-| `MessageId` | Publisher, automatically (GUID) when absent | Unique message id — the deduplication key for at-least-once delivery |
-| `OccurredAt` | Publisher, automatically (UTC, ISO-8601) when absent | When the event was published |
-| `CorrelationId` | Caller (optional) | End-to-end tracing across services |
-| `x-retry-count` | Transport | Redelivery counter for the retry/dead-letter flow |
+| `message-id` | Publisher, automatically (GUID) when absent | Unique message id — the deduplication key for at-least-once delivery |
+| `occurred-at` | Publisher, automatically (UTC, ISO-8601) when absent | When the event was published |
+| `correlation-id` | Caller (optional) | End-to-end tracing across services |
+| `retry-count` | Transport | Redelivery counter for the retry/dead-letter flow |
 
 ```csharp
 await publisher.PublishAsync(orderPlaced, new Headers { CorrelationId = requestId });

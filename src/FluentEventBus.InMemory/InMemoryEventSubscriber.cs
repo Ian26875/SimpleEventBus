@@ -10,7 +10,7 @@ internal class InMemoryEventSubscriber : BackgroundService, IEventSubscriber
     /// <summary>
     /// Header carrying the number of redeliveries already attempted for a failed event.
     /// </summary>
-    internal const string RetryCountHeader = "x-retry-count";
+    internal const string RetryCountHeader = Headers.RetryCountKey;
 
     private readonly ILogger<InMemoryEventSubscriber> _logger;
     private readonly BackgroundQueue _backgroundQueue;
