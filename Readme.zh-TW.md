@@ -320,6 +320,10 @@ app.MapGet("/asyncapi.json", async (AsyncApiDocumentGenerator generator, Cancell
     Results.Content(await generator.SerializeAsync(AsyncApiDocumentFormat.Json, ct), "application/json"));
 ```
 
+註冊的 document provider 也會直接餵給 Neuroglia AsyncAPI UI——加上
+`Neuroglia.AsyncApi.AspNetCore.UI` 套件、`AddAsyncApi()` + `AddAsyncApiUI()` 與
+Razor Pages，`/asyncapi` 就有互動式文件頁面。
+
 可執行範例（含 Dockerfile）見 `samples/AsyncApiSample`。
 
 ## 路由預設值

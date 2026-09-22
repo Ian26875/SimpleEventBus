@@ -8,6 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Neuroglia.AsyncApi.DependencyInjectionExtensions" Version="3.0.6" />
+        <PackageReference Include="Neuroglia.AsyncApi.AspNetCore.UI" Version="3.0.6" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\src\FluentEventBus\FluentEventBus.csproj" />
         <ProjectReference Include="..\..\src\FluentEventBus.InMemory\FluentEventBus.InMemory.csproj" />
         <ProjectReference Include="..\..\src\FluentEventBus.AsyncApi\FluentEventBus.AsyncApi.csproj" />

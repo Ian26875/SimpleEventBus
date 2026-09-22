@@ -326,6 +326,10 @@ app.MapGet("/asyncapi.json", async (AsyncApiDocumentGenerator generator, Cancell
     Results.Content(await generator.SerializeAsync(AsyncApiDocumentFormat.Json, ct), "application/json"));
 ```
 
+The registered document provider also feeds the Neuroglia AsyncAPI UI — add the
+`Neuroglia.AsyncApi.AspNetCore.UI` package, `AddAsyncApi()` + `AddAsyncApiUI()` +
+Razor Pages, and an interactive document page appears at `/asyncapi`.
+
 See `samples/AsyncApiSample` for a runnable example (with Dockerfile).
 
 ## Routing Defaults

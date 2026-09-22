@@ -1,5 +1,7 @@
 using FluentEventBus.AsyncApi;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Neuroglia.AsyncApi.Generation;
 using Neuroglia.AsyncApi.IO;
 
 namespace FluentEventBus.DependencyInjection;
@@ -22,7 +24,13 @@ public static class AsyncApiEventBusBuilderExtensions
         }
 
         eventBusBuilder.Services.AddAsyncApiIO();
-        eventBusBuilder.Services.AddSingleton<AsyncApiDocumentGenerator>();
+        eventBusBuilder.Services.AddSingleton<FluentEventBus.AsyncApi.AsyncApiDocumentGenerator>();
+
+        // Consumers of IAsyncApiDocumentProvider (Neuroglia UI, serving middleware)
+        // get the profile-generated document without any extra wiring.
+        eventBusBuilder.Services.TryAddSingleton<IAsyncApiDocumentProvider, FluentEventBusDocumentProvider>();
+        // Required by the Neuroglia AsyncAPI UI to render payload examples.
+        eventBusBuilder.Services.TryAddSingleton<IJsonSchemaExampleGenerator, JsonSchemaExampleGenerator>();
 
         return eventBusBuilder;
     }

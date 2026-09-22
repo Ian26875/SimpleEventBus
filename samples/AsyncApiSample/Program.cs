@@ -9,6 +9,12 @@ using Neuroglia.AsyncApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Neuroglia AsyncAPI UI (interactive document page at /asyncapi).
+// The document itself comes from AddAsyncApiDocument() below — no extra wiring.
+builder.Services.AddRazorPages();
+builder.Services.AddAsyncApi();
+builder.Services.AddAsyncApiUI();
+
 builder.Services.AddEventBus(eventBus =>
 {
     eventBus.WithProfile<OrderProfile>();
@@ -51,6 +57,9 @@ app.MapGet("/asyncapi.yaml", async (AsyncApiDocumentGenerator generator, Cancell
     var yaml = await generator.SerializeAsync(AsyncApiDocumentFormat.Yaml, cancellationToken);
     return Results.Content(yaml, "text/yaml");
 });
+
+// Interactive AsyncAPI UI: http://localhost:5000/asyncapi
+app.MapRazorPages();
 
 app.Run();
 
