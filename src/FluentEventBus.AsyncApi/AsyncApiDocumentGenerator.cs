@@ -180,7 +180,16 @@ public sealed class AsyncApiDocumentGenerator
             var eventName = _eventMapper.GetEventName(eventType);
             var messageName = eventType.Name;
 
-            var payloadSchema = BuildPayloadSchema(eventType);
+            // The event body schema lives under components/schemas (like the headers
+            // schema); the channel message references it, so the document carries one
+            // named, reusable definition per event.
+            document.Components.Schemas![messageName] = new V3SchemaDefinition
+            {
+                Schema = BuildPayloadSchema(eventType)
+            };
+            var payloadSchema = new JsonSchemaBuilder()
+                .Ref($"#/components/schemas/{messageName}")
+                .Build();
 
             var typeSummary = GetTypeSummary(eventType);
 
