@@ -8,10 +8,12 @@ namespace FluentEventBus.AsyncApi;
 public class AsyncApiDocumentOptions
 {
     /// <summary>Application title shown in the document info.</summary>
-    public string Title { get; set; } = "FluentEventBus Application";
+    /// <remarks>Defaults to the entry assembly name when not set.</remarks>
+    public string? Title { get; set; }
 
     /// <summary>Application version shown in the document info.</summary>
-    public string Version { get; set; } = "1.0.0";
+    /// <remarks>Defaults to the entry assembly version when not set.</remarks>
+    public string? Version { get; set; }
 
     /// <summary>Optional application description.</summary>
     public string? Description { get; set; }

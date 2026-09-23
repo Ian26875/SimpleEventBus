@@ -26,7 +26,9 @@ public sealed class AsyncApiDocumentGenerator
     private readonly IEnumerable<IEventBusServerDescriptor> _serverDescriptors;
     private readonly IAsyncApiDocumentWriter _documentWriter;
     private readonly SchemaGeneratorConfiguration _schemaConfiguration;
-    private readonly Lazy<Dictionary<string, string>> _typeSummaries;
+    private readonly HashSet<string> _xmlCommentFiles = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _typeSummaries = new();
+    private bool _xmlCommentsPrepared;
 
     public AsyncApiDocumentGenerator(ISubscriptionProfileManager subscriptionProfileManager,
                                      IEventNameRegistry eventMapper,
@@ -52,7 +54,59 @@ public sealed class AsyncApiDocumentGenerator
             configure(_schemaConfiguration);
         }
 
-        _typeSummaries = new Lazy<Dictionary<string, string>>(() => LoadTypeSummaries(_options.XmlCommentFiles));
+        foreach (var file in _options.XmlCommentFiles)
+        {
+            _xmlCommentFiles.Add(file);
+        }
+    }
+
+    /// <summary>
+    /// Discovers XML documentation files automatically: the entry assembly and every
+    /// registered event type's assembly are probed for an XML file next to the DLL,
+    /// so descriptions flow into the document without any WithXmlComments() call.
+    /// Explicitly registered files (WithXmlComments) are kept and never re-added.
+    /// </summary>
+    private void PrepareXmlComments()
+    {
+        if (_xmlCommentsPrepared)
+        {
+            return;
+        }
+
+        _xmlCommentsPrepared = true;
+
+        var assemblies = _subscriptionProfileManager.GetAllSubscriptions().Keys
+            .Select(eventType => eventType.Assembly)
+            .Distinct()
+            .ToList();
+        var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
+        if (entryAssembly is not null && !assemblies.Contains(entryAssembly))
+        {
+            assemblies.Add(entryAssembly);
+        }
+
+        var registerMethod = typeof(SchemaGeneratorConfiguration).GetMethod(nameof(SchemaGeneratorConfiguration.RegisterXmlCommentFile));
+        foreach (var assembly in assemblies)
+        {
+            if (string.IsNullOrEmpty(assembly.Location))
+            {
+                continue;
+            }
+
+            var xmlPath = Path.ChangeExtension(assembly.Location, ".xml");
+            if (!File.Exists(xmlPath) || !_xmlCommentFiles.Add(xmlPath))
+            {
+                continue;
+            }
+
+            var markerType = assembly.GetExportedTypes().FirstOrDefault() ?? assembly.GetTypes().FirstOrDefault();
+            if (markerType is not null && registerMethod is not null)
+            {
+                registerMethod.MakeGenericMethod(markerType).Invoke(_schemaConfiguration, new object[] { xmlPath });
+            }
+        }
+
+        _typeSummaries = LoadTypeSummaries(_xmlCommentFiles);
     }
 
     /// <summary>
@@ -82,7 +136,7 @@ public sealed class AsyncApiDocumentGenerator
     private string? GetTypeSummary(Type type)
     {
         var docId = "T:" + type.FullName?.Replace('+', '.');
-        return _typeSummaries.Value.TryGetValue(docId, out var summary) ? summary : null;
+        return _typeSummaries.TryGetValue(docId, out var summary) ? summary : null;
     }
 
     /// <summary>
@@ -104,7 +158,7 @@ public sealed class AsyncApiDocumentGenerator
             {
                 if (propertySchema is System.Text.Json.Nodes.JsonObject propertyObject
                     && propertyObject["description"] is null
-                    && _typeSummaries.Value.TryGetValue($"P:{typeDocId}.{propertyName}", out var summary))
+                    && _typeSummaries.TryGetValue($"P:{typeDocId}.{propertyName}", out var summary))
                 {
                     propertyObject["description"] = summary;
                     injected = true;
@@ -122,14 +176,17 @@ public sealed class AsyncApiDocumentGenerator
     public V3AsyncApiDocument Generate()
     {
         _subscriptionProfileManager.Initialize();
+        PrepareXmlComments();
+
+        var entryAssemblyName = System.Reflection.Assembly.GetEntryAssembly()?.GetName();
 
         var document = new V3AsyncApiDocument
         {
             AsyncApi = "3.0.0",
             Info = new V3ApiInfo
             {
-                Title = _options.Title,
-                Version = _options.Version,
+                Title = _options.Title ?? entryAssemblyName?.Name ?? "FluentEventBus Application",
+                Version = _options.Version ?? entryAssemblyName?.Version?.ToString(3) ?? "1.0.0",
                 Description = _options.Description
             },
             DefaultContentType = "application/json",
