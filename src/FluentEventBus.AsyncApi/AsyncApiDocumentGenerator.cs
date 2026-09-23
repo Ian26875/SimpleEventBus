@@ -1,6 +1,6 @@
 using FluentEventBus.Event;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using Json.Schema;
 using Json.Schema.Generation;
 using Json.Schema.Generation.Generators;
@@ -21,7 +21,7 @@ namespace FluentEventBus.AsyncApi;
 public sealed class AsyncApiDocumentGenerator
 {
     private readonly ISubscriptionProfileManager _subscriptionProfileManager;
-    private readonly IEventMapper _eventMapper;
+    private readonly IEventNameRegistry _eventMapper;
     private readonly AsyncApiDocumentOptions _options;
     private readonly IEnumerable<IEventBusServerDescriptor> _serverDescriptors;
     private readonly IAsyncApiDocumentWriter _documentWriter;
@@ -29,7 +29,7 @@ public sealed class AsyncApiDocumentGenerator
     private readonly Lazy<Dictionary<string, string>> _typeSummaries;
 
     public AsyncApiDocumentGenerator(ISubscriptionProfileManager subscriptionProfileManager,
-                                     IEventMapper eventMapper,
+                                     IEventNameRegistry eventMapper,
                                      IOptions<AsyncApiDocumentOptions> options,
                                      IEnumerable<IEventBusServerDescriptor> serverDescriptors,
                                      IAsyncApiDocumentWriter documentWriter)

@@ -1,6 +1,6 @@
 using FluentAssertions;
 using FluentEventBus.Event;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Serialization;
 
 namespace FluentEventBus.Tests.Event;
@@ -52,7 +52,7 @@ public class HeadersTests
     {
         public EventContext? Captured { get; private set; }
 
-        public CapturingPublisher() : base(new JsonSerializer(), new StubEventMapper())
+        public CapturingPublisher() : base(new JsonSerializer(), new StubEventNameRegistry())
         {
         }
 
@@ -63,7 +63,7 @@ public class HeadersTests
         }
     }
 
-    private sealed class StubEventMapper : IEventMapper
+    private sealed class StubEventNameRegistry : IEventNameRegistry
     {
         public void Register(Type eventType)
         {

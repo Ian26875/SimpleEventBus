@@ -248,7 +248,7 @@ metrics.AddMeter("FluentEventBus", "FluentEventBus.InMemory");
 Example:
 
 ```csharp
-using FluentEventBus.Mapper;
+using FluentEventBus.Naming;
 
 [Event("order.payment.created", 2)]
 public sealed record OrderPaymentCreated(Guid PaymentId);
@@ -269,7 +269,7 @@ they don't know.
 field, changing a field's type, or changing the meaning of the event.
 
 **How to bump** — define a *new* CLR type; never mutate the existing one
-(`EventMapper` maps type ↔ name one-to-one, one type cannot carry two versions):
+(`EventNameRegistry` maps type ↔ name one-to-one, one type cannot carry two versions):
 
 ```csharp
 [Event("order.payment.created", 1)]

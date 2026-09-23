@@ -4,7 +4,7 @@ using FluentEventBus.DependencyInjection;
 using FluentEventBus.Event;
 using FluentEventBus.ExceptionHandlers;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Subscriber;
 
 namespace FluentEventBus.Tests.Subscriber;
@@ -54,7 +54,7 @@ public class EventHandlerInvokerFailureTests
         services.AddSingleton<FailingHandler>();
         services.AddSingleton<HandlingErrorHandler>();
         services.AddSingleton<ObservingErrorHandler>();
-        services.AddSingleton<IEventMapper>(new StubEventMapper());
+        services.AddSingleton<IEventNameRegistry>(new StubEventNameRegistry());
 
         var provider = services.BuildServiceProvider();
         ((SubscriptionProfileManager)provider.GetRequiredService<ISubscriptionProfileManager>()).Initialize();
@@ -121,7 +121,7 @@ public class EventHandlerInvokerFailureTests
         }
     }
 
-    private sealed class StubEventMapper : IEventMapper
+    private sealed class StubEventNameRegistry : IEventNameRegistry
     {
         private readonly Dictionary<string, Type> _types = new();
 

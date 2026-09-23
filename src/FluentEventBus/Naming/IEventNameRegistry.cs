@@ -1,9 +1,9 @@
-namespace FluentEventBus.Schema;
+namespace FluentEventBus.Naming;
 
 /// <summary>
 /// The schema registry interface
 /// </summary>
-public interface IEventMapper
+public interface IEventNameRegistry
 {
     /// <summary>
     /// Registers the event type

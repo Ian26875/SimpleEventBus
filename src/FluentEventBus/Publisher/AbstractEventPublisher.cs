@@ -1,6 +1,6 @@
 using FluentEventBus.Event;
 using FluentEventBus.Metrics;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Serialization;
 
 namespace FluentEventBus;
@@ -9,12 +9,12 @@ public abstract class AbstractEventPublisher : IEventBus
 {
     protected readonly ISerializer _serializer;
 
-    protected readonly IEventMapper EventMapper;
+    protected readonly IEventNameRegistry EventNameRegistry;
     
-    protected AbstractEventPublisher(ISerializer serializer, IEventMapper eventMapper)
+    protected AbstractEventPublisher(ISerializer serializer, IEventNameRegistry eventMapper)
     {
         _serializer = serializer;
-        EventMapper = eventMapper;
+        EventNameRegistry = eventMapper;
     }
 
     public async Task PublishAsync<TEvent>(TEvent @event, Headers? headers = null,
@@ -31,7 +31,7 @@ public abstract class AbstractEventPublisher : IEventBus
 
         var serializedData = _serializer.Serialize(@event);
 
-        var eventName = EventMapper.GetEventName(typeof(TEvent));
+        var eventName = EventNameRegistry.GetEventName(typeof(TEvent));
 
         using var activity = EventBusActivitySource.StartPublish(eventName, headers);
 

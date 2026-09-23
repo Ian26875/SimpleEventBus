@@ -1,5 +1,5 @@
 using System;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Subscriber.Executors;
 
 namespace FluentEventBus.Profile;
@@ -17,7 +17,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     /// <summary>
     /// The event mapper
     /// </summary>
-    private readonly IEventMapper _eventMapper;
+    private readonly IEventNameRegistry _eventMapper;
     
     /// <summary>
     /// Gets or sets the value of the error handlers
@@ -39,7 +39,7 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
-                                      IEventMapper eventMapper)
+                                      IEventNameRegistry eventMapper)
     {
         this._profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
         this._eventMapper = eventMapper ?? throw new ArgumentNullException(nameof(eventMapper));

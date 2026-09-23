@@ -2,7 +2,7 @@ using FluentAssertions;
 using FluentEventBus;
 using FluentEventBus.Event;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Subscriber;
 
 namespace FluentEventBus.Tests;
@@ -18,7 +18,7 @@ public class SubscriptionProfileManagerTests
             new ProfileB()
         };
 
-        var mapper = new TestEventMapper();
+        var mapper = new TestEventNameRegistry();
         var manager = new SubscriptionProfileManager(profiles, mapper);
 
         manager.Invoking(x => x.Initialize()).Should().NotThrow();
@@ -54,7 +54,7 @@ public class SubscriptionProfileManagerTests
     private sealed record EventA(Guid Id);
     private sealed record EventB(Guid Id);
 
-    private sealed class TestEventMapper : IEventMapper
+    private sealed class TestEventNameRegistry : IEventNameRegistry
     {
         private readonly HashSet<Type> _types = new();
 

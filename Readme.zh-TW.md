@@ -246,7 +246,7 @@ metrics.AddMeter("FluentEventBus", "FluentEventBus.InMemory");
 範例：
 
 ```csharp
-using FluentEventBus.Mapper;
+using FluentEventBus.Naming;
 
 [Event("order.payment.created", 2)]
 public sealed record OrderPaymentCreated(Guid PaymentId);
@@ -264,7 +264,7 @@ JSON，舊 consumer 會忽略不認識的欄位。
 
 **必須升版**——任何破壞性變更：欄位改名、刪除、改型別，或事件語意改變。
 
-**升版做法**——定義*新的* CLR type，絕不修改舊 type（`EventMapper` 的 type ↔
+**升版做法**——定義*新的* CLR type，絕不修改舊 type（`EventNameRegistry` 的 type ↔
 name 是一對一，同一個 type 不能承載兩個版本）：
 
 ```csharp

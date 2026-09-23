@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using FluentEventBus.Event;
 using FluentEventBus.Metrics;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Serialization;
 using FluentEventBus.Subscriber;
 
@@ -30,7 +30,7 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     The schema registry
     /// </summary>
-    private readonly IEventMapper _eventMapper;
+    private readonly IEventNameRegistry _eventMapper;
     
     /// <summary>
     ///     The service provider
@@ -54,7 +54,7 @@ public class EventSubscribeInitializer : IInitializer
                                      ISubscriptionProfileManager subscriptionProfileManager,
                                      ILogger<EventSubscribeInitializer> logger,
                                      IServiceScopeFactory serviceScopeFactory,
-                                     IEventMapper eventMapper)
+                                     IEventNameRegistry eventMapper)
     {
         _eventSubscriber = eventSubscriber;
         _subscriptionProfileManager = subscriptionProfileManager;
@@ -115,7 +115,7 @@ public class EventSubscribeInitializer : IInitializer
         {
             var serviceProvider = serviceScope.ServiceProvider;
             
-            var eventType = serviceProvider.GetRequiredService<IEventMapper>().GetEventType(eventName);
+            var eventType = serviceProvider.GetRequiredService<IEventNameRegistry>().GetEventType(eventName);
             
             var serializer = serviceProvider.GetRequiredService<ISerializer>();
 

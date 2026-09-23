@@ -17,7 +17,7 @@ using FluentEventBus;
 using FluentEventBus.AsyncApi;
 using FluentEventBus.DependencyInjection;
 using FluentEventBus.Event;
-using FluentEventBus.Mapper;
+using FluentEventBus.Naming;
 using FluentEventBus.Profile;
 using FluentEventBus.Subscriber;
 using Neuroglia.AsyncApi;

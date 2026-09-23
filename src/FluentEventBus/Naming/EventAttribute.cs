@@ -1,4 +1,4 @@
-namespace FluentEventBus.Mapper;
+namespace FluentEventBus.Naming;
 
 /// <summary>
 /// The event version attribute class

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using FluentEventBus;
 using FluentEventBus.RabbitMq;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Subscriber;
 
 namespace FluentEventBus.DependencyInjection;
@@ -46,9 +46,9 @@ public static class EventBusBuilderExtensions
         eventBusBuilder.Services.Configure(setUpOption);
 
         eventBusBuilder.Services.AddOptions<RabbitMqBindingOption>()
-            .Configure<IEventMapper>((option, mapper) =>
+            .Configure<IEventNameRegistry>((option, mapper) =>
             {
-                option.EventMapper = mapper;
+                option.EventNameRegistry = mapper;
                 setUpBindOption(option);
             });
         
