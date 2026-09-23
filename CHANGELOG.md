@@ -6,6 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
 ## [Unreleased]
 
 ### Changed
+- **BREAKING — `EventNameRegistry.Instance` removed**: the registry is created per DI
+  container (no global static state), so multiple hosts in one process and parallel
+  tests are fully isolated. The handler delegate cache likewise moved from static to
+  invoker-instance state (the invoker is a singleton — cache lifetime and performance
+  are unchanged).
 - **BREAKING — `EventMapper` renamed to `EventNameRegistry`** (`IEventMapper` →
   `IEventNameRegistry`): the type is a name/type registry, not an EIP-style content
   mapper. Namespaces `FluentEventBus.Schema` and `FluentEventBus.Mapper` are unified

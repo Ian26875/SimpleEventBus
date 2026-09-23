@@ -6,22 +6,14 @@ using FluentEventBus.Naming;
 
 namespace FluentEventBus.Naming;
 /// <summary>
-/// The schema registry class
+/// Registry of event names: resolves a CLR event type to its versioned wire name and back.
+/// One instance per DI container — registries of different containers are fully isolated.
 /// </summary>
 public class EventNameRegistry : IEventNameRegistry
 {
-    private static readonly Lazy<EventNameRegistry> _instance = new(() => new EventNameRegistry());
-
     private readonly ConcurrentDictionary<Type, string> _schemas = new();
     private readonly ConcurrentDictionary<string, Type> _typesByName = new();
     private readonly object _sync = new();
-
-    private EventNameRegistry() { }
-
-    /// <summary>
-    /// Singleton instance
-    /// </summary>
-    public static EventNameRegistry Instance => _instance.Value;
 
     /// <summary>
     /// Registers an event type and its versioned schema name.

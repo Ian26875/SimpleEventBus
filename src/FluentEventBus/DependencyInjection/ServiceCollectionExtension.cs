@@ -45,7 +45,9 @@ public static class ServiceCollectionExtension
 
         services.AddSingleton<ISerializer, JsonSerializer>();
         
-        services.AddSingleton<IEventNameRegistry>(EventNameRegistry.Instance);
+        // One registry per container — no static singleton, so different
+        // ServiceProviders (multiple hosts, parallel tests) are fully isolated.
+        services.TryAddSingleton<IEventNameRegistry, EventNameRegistry>();
         
         // EventBus
        
