@@ -13,3 +13,4 @@
 # Local tooling
 src/global.json
 artifacts/
+BenchmarkDotNet.Artifacts/

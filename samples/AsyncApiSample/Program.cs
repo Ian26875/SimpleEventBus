@@ -43,22 +43,12 @@ builder.Services.AddEventBus(eventBus =>
     // In-Process transport；正式環境換成 UseRabbitMqTransport(...)
     eventBus.UseInMemoryTransport();
 
-    // AsyncAPI 文件：channels/operations/schemas 全部從上面的 profile 推導
+    // AsyncAPI 文件：零設定即可用 —— info 來自 entry assembly、servers 來自 transport、
+    // XML 註解自動掃描所有事件的 assembly（需 GenerateDocumentationFile）。
+    // options 全部是「覆蓋用」，不設定也能產出完整文件。
     eventBus.AddAsyncApiDocument(options =>
     {
-        // info 區塊（文件標題/版本/描述）
-        options.Title = "Orders Service";
-        options.Version = "1.0.0";
-        options.Description = "Sample service demonstrating FluentEventBus with AsyncAPI generation.";
-
-        // 讀取 XML 文件註解（需 csproj 開 GenerateDocumentationFile）：
-        // 事件型別的 <summary> → channel/message 描述；屬性 <summary> → schema 屬性描述
-        options.WithXmlComments<OrderPlaced>();
-
-        // servers 區塊會自動從已設定的 transport 探索（IEventBusServerDescriptor）；
-        // 也可以用 options.WithServer("production", "rabbitmq.internal:5672", "amqp") 明確宣告/覆蓋
-
-        // 訊息範例：顯示在文件的 message examples
+        options.Title = "Orders Service";   // 覆蓋預設（entry assembly 名稱）
         options.WithExample(
             new OrderPlaced { OrderId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e"), PlacedAt = DateTimeOffset.Parse("2026-09-22T10:00:00+08:00") },
             name: "typical-order",

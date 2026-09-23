@@ -298,7 +298,9 @@ wire contract，就不該出現在 routing key 上。
 
 `FluentEventBus.AsyncApi` 套件（net8.0+，基於 AsyncAPI 官方 .NET SDK）直接從
 subscription profiles 產出 AsyncAPI 3.0 文件——事件名稱變 channels、handler 變
-receive operations、事件型別變 payload JSON Schema，不需要任何額外標註。
+receive operations、事件型別變 payload JSON Schema。零設定即可用：`info` 預設取
+entry assembly 名稱/版本、servers 來自已設定的 transport、XML 註解自動掃描所有
+事件的 assembly（需開 `GenerateDocumentationFile`）。options 全部是覆蓋用：
 
 ```csharp
 services.AddEventBus(builder =>
@@ -310,9 +312,7 @@ services.AddEventBus(builder =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
-        options.WithXmlComments<OrderPlaced>(); // 型別/屬性的 <summary> 會變成文件描述
-        // Servers 會自動從已設定的 transport 探索（IEventBusServerDescriptor）；
-        // WithServer(...) 可另外新增或覆蓋：
+        // 選填覆蓋——servers / XML 註解 / info 都會自動探索：
         options.WithServer("production", "rabbitmq.internal:5672", "amqp", protocolVersion: "0.9.1");
     });
 });

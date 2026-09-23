@@ -305,7 +305,10 @@ a breaking change the compiler will not catch.
 The `FluentEventBus.AsyncApi` package (net8.0+, built on the official AsyncAPI .NET SDK)
 generates an AsyncAPI 3.0 document straight from your subscription profiles — channels
 from event names, receive operations from handlers, payload JSON Schemas from the event
-types. No extra annotations needed.
+types. Zero configuration required: `info` defaults to the entry assembly name/version,
+servers come from the configured transport, and XML doc comments are discovered
+automatically from every event's assembly (enable `GenerateDocumentationFile`).
+Everything in the options is an override:
 
 ```csharp
 services.AddEventBus(builder =>
@@ -317,9 +320,7 @@ services.AddEventBus(builder =>
         options.Title = "Orders Service";
         options.Version = "1.0.0";
         options.WithExample(new OrderPlaced(Guid.NewGuid()), name: "typical-order");
-        options.WithXmlComments<OrderPlaced>(); // type/property <summary> become descriptions
-        // Servers are discovered automatically from the configured transport
-        // (IEventBusServerDescriptor); WithServer(...) adds or overrides entries:
+        // Optional overrides — servers/XML comments/info are all auto-discovered:
         options.WithServer("production", "rabbitmq.internal:5672", "amqp", protocolVersion: "0.9.1");
     });
 });
