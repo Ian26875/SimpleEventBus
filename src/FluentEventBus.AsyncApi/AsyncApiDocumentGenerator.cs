@@ -180,16 +180,15 @@ public sealed class AsyncApiDocumentGenerator
             var eventName = _eventMapper.GetEventName(eventType);
             var messageName = eventType.Name;
 
-            // The event body schema lives under components/schemas (like the headers
-            // schema); the channel message references it, so the document carries one
-            // named, reusable definition per event.
+            // The event body schema is published as a named definition under
+            // components/schemas (like the headers schema) AND inlined into the channel
+            // message payload: renderers that don't dereference $refs (e.g. the Neuroglia
+            // UI) still show the fields, while the document keeps a reusable definition.
+            var payloadSchema = BuildPayloadSchema(eventType);
             document.Components.Schemas![messageName] = new V3SchemaDefinition
             {
-                Schema = BuildPayloadSchema(eventType)
+                Schema = payloadSchema
             };
-            var payloadSchema = new JsonSchemaBuilder()
-                .Ref($"#/components/schemas/{messageName}")
-                .Build();
 
             var typeSummary = GetTypeSummary(eventType);
 
