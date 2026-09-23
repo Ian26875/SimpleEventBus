@@ -97,13 +97,13 @@ app.MapRazorPages();
 app.Run();
 
 // --- 事件（wire contract）----------------------------------------------------
-// [Event] 決定 routing key（channel address）：order.order.placed.v1
+// [Event] 決定 routing key（channel address）：shop.order.placed.v1
 // 型別與屬性的 <summary> 會透過 WithXmlComments 進入 AsyncAPI 文件
 
 /// <summary>
 /// Raised when a customer places an order and payment has been authorized.
 /// </summary>
-[Event("order.order.placed", 1)]
+[Event("shop.order.placed", 1)]
 public sealed record OrderPlaced
 {
     /// <summary>Unique identifier of the placed order.</summary>

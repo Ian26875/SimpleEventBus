@@ -74,7 +74,7 @@ public class AsyncApiDocumentGeneratorTests
 
         var document = generator.Generate();
 
-        var examples = document.Channels["OrderShipped"].Messages![nameof(OrderShipped)].Examples;
+        var examples = document.Components!.Messages![nameof(OrderShipped)].Examples;
         examples.Should().NotBeNull().And.HaveCount(1);
         examples![0].Name.Should().Be("sample");
         examples[0].Payload.Should().ContainKey("Carrier");
