@@ -4,7 +4,7 @@ using FluentEventBus.AsyncApi;
 using FluentEventBus.DependencyInjection;
 using FluentEventBus.Event;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Subscriber;
 using Microsoft.Extensions.DependencyInjection;
 using Neuroglia.AsyncApi;
@@ -102,7 +102,7 @@ public class AsyncApiDocumentGeneratorTests
                 extraSetup?.Invoke(options);
             });
         });
-        services.AddSingleton<IEventMapper>(new StubEventMapper());
+        services.AddSingleton<IEventNameRegistry>(new StubEventNameRegistry());
     }
 
     private sealed record OrderShipped(Guid OrderId, string Carrier);
@@ -121,7 +121,7 @@ public class AsyncApiDocumentGeneratorTests
         }
     }
 
-    private sealed class StubEventMapper : IEventMapper
+    private sealed class StubEventNameRegistry : IEventNameRegistry
     {
         private readonly Dictionary<string, Type> _types = new();
 

@@ -1,4 +1,4 @@
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 
 namespace FluentEventBus.RabbitMq
 {
@@ -72,7 +72,7 @@ namespace FluentEventBus.RabbitMq
         /// <summary>
         /// Gets or sets the value of the schema registry
         /// </summary>
-        public IEventMapper EventMapper { get; set; } = null!;
+        public IEventNameRegistry EventNameRegistry { get; set; } = null!;
     }
 
     /// <summary>
@@ -101,7 +101,7 @@ namespace FluentEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareExchange(string exchangeName)
         {
-            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
+            var eventName = _options.EventNameRegistry.GetEventName(typeof(TEvent));
             _options.ExchangeBindings[eventName] = exchangeName;
             return this;
         }
@@ -113,7 +113,7 @@ namespace FluentEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> DeclareQueue(string queueName)
         {
-            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
+            var eventName = _options.EventNameRegistry.GetEventName(typeof(TEvent));
             _options.QueueBindings[eventName] = queueName;
             return this;
         }
@@ -127,7 +127,7 @@ namespace FluentEventBus.RabbitMq
         /// <returns>An event binder of t event</returns>
         public EventBinder<TEvent> WithDeadLetter(string exchangeName, string queueName)
         {
-            var eventName = _options.EventMapper.GetEventName(typeof(TEvent));
+            var eventName = _options.EventNameRegistry.GetEventName(typeof(TEvent));
             _options.DeadLetterExchangeBindings[eventName] = exchangeName;
             _options.DeadLetterQueueBindings[eventName] = queueName;
             return this;

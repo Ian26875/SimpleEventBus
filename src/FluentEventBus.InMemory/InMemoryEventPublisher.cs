@@ -1,5 +1,5 @@
 using FluentEventBus.Event;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using FluentEventBus.Serialization;
 
 namespace FluentEventBus.InMemory;
@@ -22,7 +22,7 @@ internal class InMemoryEventPublisher : AbstractEventPublisher
     /// <param name="eventMapper">The schema registry</param>
     /// <param name="backgroundQueue">The background queue</param>
     public InMemoryEventPublisher(ISerializer serializer,
-        IEventMapper eventMapper,
+        IEventNameRegistry eventMapper,
         BackgroundQueue backgroundQueue)
         : base(serializer, eventMapper)
     {

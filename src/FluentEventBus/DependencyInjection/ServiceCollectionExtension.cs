@@ -4,9 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using FluentEventBus.ExceptionHandlers;
 using FluentEventBus.Internal;
-using FluentEventBus.Mapper;
+using FluentEventBus.Naming;
 using FluentEventBus.Profile;
-using FluentEventBus.Schema;
 using FluentEventBus.Serialization;
 using FluentEventBus.Subscriber;
 
@@ -46,7 +45,7 @@ public static class ServiceCollectionExtension
 
         services.AddSingleton<ISerializer, JsonSerializer>();
         
-        services.AddSingleton<IEventMapper>(EventMapper.Instance);
+        services.AddSingleton<IEventNameRegistry>(EventNameRegistry.Instance);
         
         // EventBus
        

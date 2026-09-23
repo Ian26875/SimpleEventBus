@@ -2,26 +2,26 @@ using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Linq;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 
-namespace FluentEventBus.Mapper;
+namespace FluentEventBus.Naming;
 /// <summary>
 /// The schema registry class
 /// </summary>
-public class EventMapper : IEventMapper
+public class EventNameRegistry : IEventNameRegistry
 {
-    private static readonly Lazy<EventMapper> _instance = new(() => new EventMapper());
+    private static readonly Lazy<EventNameRegistry> _instance = new(() => new EventNameRegistry());
 
     private readonly ConcurrentDictionary<Type, string> _schemas = new();
     private readonly ConcurrentDictionary<string, Type> _typesByName = new();
     private readonly object _sync = new();
 
-    private EventMapper() { }
+    private EventNameRegistry() { }
 
     /// <summary>
     /// Singleton instance
     /// </summary>
-    public static EventMapper Instance => _instance.Value;
+    public static EventNameRegistry Instance => _instance.Value;
 
     /// <summary>
     /// Registers an event type and its versioned schema name.

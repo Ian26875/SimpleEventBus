@@ -3,6 +3,17 @@
 All notable changes to the FluentEventBus packages are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **BREAKING — `EventMapper` renamed to `EventNameRegistry`** (`IEventMapper` →
+  `IEventNameRegistry`): the type is a name/type registry, not an EIP-style content
+  mapper. Namespaces `FluentEventBus.Schema` and `FluentEventBus.Mapper` are unified
+  into `FluentEventBus.Naming`.
+- AsyncAPI document follows the canonical components layout: full message definitions
+  under `components/messages` (payload/headers as top-level `$refs` into
+  `components/schemas`), channel messages referencing `components/messages`.
+
 ## [0.1.0-alpha] - 2026-09-22
 
 ### Added

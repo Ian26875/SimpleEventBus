@@ -7,7 +7,7 @@ using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using FluentEventBus.Event;
-using FluentEventBus.Schema;
+using FluentEventBus.Naming;
 using ISerializer = FluentEventBus.Serialization.ISerializer;
 
 namespace FluentEventBus.RabbitMq;
@@ -41,7 +41,7 @@ public class RabbitMqEventPublisher : AbstractEventPublisher
     private readonly ConcurrentDictionary<string, Exchange> _declaredExchanges = new();
 
     public RabbitMqEventPublisher(ISerializer serializer,
-                                  IEventMapper eventMapper,
+                                  IEventNameRegistry eventMapper,
                                   RabbitMqConnectionProvider connectionProvider,
                                   IOptions<RabbitMqBindingOption> rabbitMqBindingOptions,
                                   ILogger<RabbitMqEventPublisher> logger)
