@@ -366,6 +366,19 @@ dotnet run -c Release --project src/FluentEventBus.StressTests -- rabbitmq local
 docker rm -f eventbus-stress
 ```
 
+### 微基準（Micro-benchmarks）
+
+熱路徑的單次操作成本（BenchmarkDotNet，.NET 10，ShortRun —
+`dotnet run -c Release --project src/FluentEventBus.Benchmarks`）：
+
+| 熱路徑 | 平均 | 配置 |
+|---|---:|---:|
+| Publish core 管線（序列化 + 信封 headers + tracing，transport 以 no-op 代替） | 308 ns | 616 B |
+| Dispatch——單一介面 handler（開 scope + 快取編譯 delegate） | 141 ns | 488 B |
+| Dispatch——單一 delegate 綁定 handler | 728 ns | 440 B |
+| Dispatch——三個 handler（平行、每 handler 一個 scope） | 2,247 ns | 1,938 B |
+| Registry 名稱查找 | 3.5 ns | 0 B |
+
 相關設計決策：handler delegate 與 lambda expression 只編譯一次並快取；
 RabbitMQ publisher 快取 exchange declare（每個 exchange 每個 process 只打一次
 broker）；所有 RabbitMQ 元件共享單一連線；每個 handler 在自己的 DI scope 中執行。

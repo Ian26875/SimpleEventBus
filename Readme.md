@@ -374,6 +374,19 @@ dotnet run -c Release --project src/FluentEventBus.StressTests -- rabbitmq local
 docker rm -f eventbus-stress
 ```
 
+### Micro-benchmarks
+
+Per-operation cost of the hot paths (BenchmarkDotNet, .NET 10, ShortRun —
+`dotnet run -c Release --project src/FluentEventBus.Benchmarks`):
+
+| Hot path | Mean | Allocated |
+|---|---:|---:|
+| Publish core pipeline (serialize + envelope headers + tracing, transport stubbed) | 308 ns | 616 B |
+| Dispatch — one interface handler (scope + cached compiled delegate) | 141 ns | 488 B |
+| Dispatch — one delegate-bound handler | 728 ns | 440 B |
+| Dispatch — three handlers (parallel, per-handler scopes) | 2,247 ns | 1,938 B |
+| Registry name lookup | 3.5 ns | 0 B |
+
 Relevant design choices: handler delegates and lambda expressions are compiled
 once and cached; the RabbitMQ publisher caches exchange declarations (one broker
 round-trip per exchange per process); all RabbitMQ components share a single
