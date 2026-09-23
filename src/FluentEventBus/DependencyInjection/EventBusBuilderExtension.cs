@@ -20,9 +20,9 @@ public static class EventBusBuilderExtension
     /// <param name="eventBusBuilder">The event bus builder instance.</param>
     /// <returns>The event bus builder instance for chaining.</returns>
     public static IEventBusBuilder WithProfile<TProfile>(this IEventBusBuilder eventBusBuilder)
-        where TProfile : SubscriptionProfile
+        where TProfile : EventProfile
     {
-        eventBusBuilder.Services.AddSingleton(typeof(SubscriptionProfile), typeof(TProfile));
+        eventBusBuilder.Services.AddSingleton(typeof(EventProfile), typeof(TProfile));
         
         return eventBusBuilder;
     }

@@ -7,12 +7,12 @@ namespace FluentEventBus.Profile;
 /// <summary>
 /// Aggregates multiple subscription profiles into a single cohesive unit.
 /// </summary>
-public class SubscriptionProfileManager : ISubscriptionProfileManager
+public class EventProfileManager : IEventProfileManager
 {
     /// <summary>
     /// The profiles
     /// </summary>
-    private readonly IEnumerable<SubscriptionProfile> _profiles;
+    private readonly IEnumerable<EventProfile> _profiles;
 
     /// <summary>
     /// The event mapper
@@ -32,13 +32,13 @@ public class SubscriptionProfileManager : ISubscriptionProfileManager
     
     
     /// <summary>
-    /// Initializes a new instance of the <see cref="SubscriptionProfileManager"/> class
+    /// Initializes a new instance of the <see cref="EventProfileManager"/> class
     /// </summary>
     /// <param name="profiles">The profiles</param>
     /// <param name="eventMapper">The event mapper</param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public SubscriptionProfileManager(IEnumerable<SubscriptionProfile> profiles, 
+    public EventProfileManager(IEnumerable<EventProfile> profiles, 
                                       IEventNameRegistry eventMapper)
     {
         this._profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));

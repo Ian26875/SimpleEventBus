@@ -43,7 +43,7 @@ public class EventHandlerInvokerFailureTests
         ObservingErrorHandler.Invoked.Should().BeTrue();
     }
 
-    private static IEventHandlerInvoker BuildInvoker<TProfile>() where TProfile : SubscriptionProfile
+    private static IEventHandlerInvoker BuildInvoker<TProfile>() where TProfile : EventProfile
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -57,7 +57,7 @@ public class EventHandlerInvokerFailureTests
         services.AddSingleton<IEventNameRegistry>(new StubEventNameRegistry());
 
         var provider = services.BuildServiceProvider();
-        ((SubscriptionProfileManager)provider.GetRequiredService<ISubscriptionProfileManager>()).Initialize();
+        ((EventProfileManager)provider.GetRequiredService<IEventProfileManager>()).Initialize();
 
         return provider.GetRequiredService<IEventHandlerInvoker>();
     }
@@ -95,29 +95,29 @@ public class EventHandlerInvokerFailureTests
         }
     }
 
-    private sealed class ProfileWithoutErrorHandler : SubscriptionProfile
+    private sealed class ProfileWithoutErrorHandler : EventProfile
     {
         public ProfileWithoutErrorHandler()
         {
-            this.WhenOccurs<FailingEvent>().ToDo<FailingHandler>();
+            this.On<FailingEvent>().HandledBy<FailingHandler>();
         }
     }
 
-    private sealed class ProfileWithHandlingErrorHandler : SubscriptionProfile
+    private sealed class ProfileWithHandlingErrorHandler : EventProfile
     {
         public ProfileWithHandlingErrorHandler()
         {
-            this.WhenOccurs<FailingEvent>().ToDo<FailingHandler>()
-                .CatchExceptionToDo<HandlingErrorHandler>();
+            this.On<FailingEvent>().HandledBy<FailingHandler>()
+                .OnError<HandlingErrorHandler>();
         }
     }
 
-    private sealed class ProfileWithObservingErrorHandler : SubscriptionProfile
+    private sealed class ProfileWithObservingErrorHandler : EventProfile
     {
         public ProfileWithObservingErrorHandler()
         {
-            this.WhenOccurs<FailingEvent>().ToDo<FailingHandler>()
-                .CatchExceptionToDo<ObservingErrorHandler>();
+            this.On<FailingEvent>().HandledBy<FailingHandler>()
+                .OnError<ObservingErrorHandler>();
         }
     }
 

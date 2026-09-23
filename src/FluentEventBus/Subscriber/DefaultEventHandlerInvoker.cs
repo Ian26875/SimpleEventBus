@@ -34,7 +34,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     /// <summary>
     ///     Manages all event subscriptions and provides handler executors.
     /// </summary>
-    private readonly ISubscriptionProfileManager _subscriptionProfileManager;
+    private readonly IEventProfileManager _eventProfileManager;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="DefaultEventHandlerInvoker" /> class.
@@ -42,11 +42,11 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     /// </summary>
     public DefaultEventHandlerInvoker(IServiceScopeFactory serviceScopeFactory,
                                       ILogger<DefaultEventHandlerInvoker> logger,
-                                      ISubscriptionProfileManager subscriptionProfileManager)
+                                      IEventProfileManager eventProfileManager)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
-        _subscriptionProfileManager = subscriptionProfileManager;
+        _eventProfileManager = eventProfileManager;
 
         InitializeHandlerCache();
     }
@@ -56,7 +56,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
     /// </summary>
     private void InitializeHandlerCache()
     {
-        foreach (var (eventType, executors) in _subscriptionProfileManager.GetAllSubscriptions())
+        foreach (var (eventType, executors) in _eventProfileManager.GetAllSubscriptions())
         {
             foreach (var executor in executors)
             {
@@ -79,7 +79,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 
         var eventType = @event.GetType();
         
-        if (_subscriptionProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
+        if (_eventProfileManager.HasSubscriptionsForEvent(eventType).Equals(false))
         {
             _logger.LogWarning("No subscription found for event type: {EventType}. Event full name: {EventTypeFullName}. " +
                                "Ensure it has been mapped and subscribed correctly.", eventType.Name, eventType.FullName);
@@ -87,7 +87,7 @@ internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
         }
 
 
-        var executors = _subscriptionProfileManager.GetEventHandlerExecutorsForEvent(eventType);
+        var executors = _eventProfileManager.GetEventHandlerExecutorsForEvent(eventType);
 
         if (executors.Count == 1)
         {

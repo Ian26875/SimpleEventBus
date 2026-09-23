@@ -62,12 +62,12 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 ```csharp
 using FluentEventBus.Profile;
 
-public sealed class OrderProfile : SubscriptionProfile
+public sealed class OrderProfile : EventProfile
 {
     public OrderProfile()
     {
-        this.WhenOccurs<OrderPlaced>()
-            .ToDo<OrderPlacedHandler>();
+        this.On<OrderPlaced>()
+            .HandledBy<OrderPlacedHandler>();
     }
 }
 ```
@@ -75,9 +75,9 @@ public sealed class OrderProfile : SubscriptionProfile
 A profile can also bind a method on any registered service instead of an `IEventHandler<TEvent>` (signature: `(TEvent, Headers, CancellationToken) => Task` or `(TEvent, CancellationToken) => Task`), and attach an exception handler:
 
 ```csharp
-this.WhenOccurs<OrderPlaced>()
-    .ToDo<INotificationService>(s => s.PushAsync)
-    .CatchExceptionToDo<OrderPlacedExceptionHandler>();
+this.On<OrderPlaced>()
+    .HandledBy<INotificationService>(s => s.PushAsync)
+    .OnError<OrderPlacedExceptionHandler>();
 ```
 
 ### 3. Register EventBus
@@ -151,7 +151,7 @@ bind.ForEvent<OrderPlaced>()
 ## Delivery Semantics, Retry and Dead Letter
 
 Failed handlers propagate their exception to the transport (unless an
-`IEventExceptionHandler` registered via `CatchExceptionToDo<T>()` sets
+`IEventExceptionHandler` registered via `OnError<T>()` sets
 `context.Handled = true`, which acks and drops the message). The transport then retries:
 
 - **RabbitMQ**: the message is republished with an incremented `retry-count` header,
@@ -284,8 +284,8 @@ public sealed record OrderPaymentCreatedV2(Guid PaymentId, string Currency);
 1. Consumers subscribe to both versions side by side:
 
    ```csharp
-   this.WhenOccurs<OrderPaymentCreated>().ToDo<PaymentHandler>();
-   this.WhenOccurs<OrderPaymentCreatedV2>().ToDo<PaymentHandlerV2>();
+   this.On<OrderPaymentCreated>().HandledBy<PaymentHandler>();
+   this.On<OrderPaymentCreatedV2>().HandledBy<PaymentHandlerV2>();
    ```
 
 2. Producers switch to publishing v2.

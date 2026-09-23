@@ -20,7 +20,7 @@ namespace FluentEventBus.AsyncApi;
 /// </summary>
 public sealed class AsyncApiDocumentGenerator
 {
-    private readonly ISubscriptionProfileManager _subscriptionProfileManager;
+    private readonly IEventProfileManager _eventProfileManager;
     private readonly IEventNameRegistry _eventMapper;
     private readonly AsyncApiDocumentOptions _options;
     private readonly IEnumerable<IEventBusServerDescriptor> _serverDescriptors;
@@ -28,13 +28,13 @@ public sealed class AsyncApiDocumentGenerator
     private readonly SchemaGeneratorConfiguration _schemaConfiguration;
     private readonly Lazy<Dictionary<string, string>> _typeSummaries;
 
-    public AsyncApiDocumentGenerator(ISubscriptionProfileManager subscriptionProfileManager,
+    public AsyncApiDocumentGenerator(IEventProfileManager eventProfileManager,
                                      IEventNameRegistry eventMapper,
                                      IOptions<AsyncApiDocumentOptions> options,
                                      IEnumerable<IEventBusServerDescriptor> serverDescriptors,
                                      IAsyncApiDocumentWriter documentWriter)
     {
-        _subscriptionProfileManager = subscriptionProfileManager;
+        _eventProfileManager = eventProfileManager;
         _eventMapper = eventMapper;
         _options = options.Value;
         _serverDescriptors = serverDescriptors;
@@ -121,7 +121,7 @@ public sealed class AsyncApiDocumentGenerator
     /// </summary>
     public V3AsyncApiDocument Generate()
     {
-        _subscriptionProfileManager.Initialize();
+        _eventProfileManager.Initialize();
 
         var document = new V3AsyncApiDocument
         {
@@ -177,7 +177,7 @@ public sealed class AsyncApiDocumentGenerator
             }
         }
 
-        foreach (var (eventType, executors) in _subscriptionProfileManager.GetAllSubscriptions())
+        foreach (var (eventType, executors) in _eventProfileManager.GetAllSubscriptions())
         {
             var eventName = _eventMapper.GetEventName(eventType);
             var messageName = eventType.Name;

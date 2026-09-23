@@ -113,11 +113,11 @@ public class AsyncApiDocumentGeneratorTests
             => Task.CompletedTask;
     }
 
-    private sealed class ShippingProfile : SubscriptionProfile
+    private sealed class ShippingProfile : EventProfile
     {
         public ShippingProfile()
         {
-            this.WhenOccurs<OrderShipped>().ToDo<OrderShippedHandler>();
+            this.On<OrderShipped>().HandledBy<OrderShippedHandler>();
         }
     }
 

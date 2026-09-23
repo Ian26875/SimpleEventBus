@@ -7,37 +7,37 @@ using FluentEventBus.Subscriber;
 
 namespace FluentEventBus.Tests;
 
-public class SubscriptionProfileManagerTests
+public class EventProfileManagerTests
 {
     [Fact(DisplayName = "Initialize_WithMultipleProfiles_ShouldRegisterEachEventOnce")]
     public void Initialize_WithMultipleProfiles_ShouldRegisterEachEventOnce()
     {
-        var profiles = new SubscriptionProfile[]
+        var profiles = new EventProfile[]
         {
             new ProfileA(),
             new ProfileB()
         };
 
         var mapper = new TestEventNameRegistry();
-        var manager = new SubscriptionProfileManager(profiles, mapper);
+        var manager = new EventProfileManager(profiles, mapper);
 
         manager.Invoking(x => x.Initialize()).Should().NotThrow();
         mapper.RegisteredTypes.Should().BeEquivalentTo(new[] { typeof(EventA), typeof(EventB) });
     }
 
-    private sealed class ProfileA : SubscriptionProfile
+    private sealed class ProfileA : EventProfile
     {
         public ProfileA()
         {
-            this.WhenOccurs<EventA>().ToDo<HandlerA>();
+            this.On<EventA>().HandledBy<HandlerA>();
         }
     }
 
-    private sealed class ProfileB : SubscriptionProfile
+    private sealed class ProfileB : EventProfile
     {
         public ProfileB()
         {
-            this.WhenOccurs<EventB>().ToDo<HandlerB>();
+            this.On<EventB>().HandledBy<HandlerB>();
         }
     }
 

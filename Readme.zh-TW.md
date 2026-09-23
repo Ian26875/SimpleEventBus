@@ -62,12 +62,12 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 ```csharp
 using FluentEventBus.Profile;
 
-public sealed class OrderProfile : SubscriptionProfile
+public sealed class OrderProfile : EventProfile
 {
     public OrderProfile()
     {
-        this.WhenOccurs<OrderPlaced>()
-            .ToDo<OrderPlacedHandler>();
+        this.On<OrderPlaced>()
+            .HandledBy<OrderPlacedHandler>();
     }
 }
 ```
@@ -75,9 +75,9 @@ public sealed class OrderProfile : SubscriptionProfile
 Profile 也可以直接綁定任何已註冊 service 上的方法（簽名為 `(TEvent, Headers, CancellationToken) => Task` 或 `(TEvent, CancellationToken) => Task`），不必實作 `IEventHandler<TEvent>`，並可掛上例外處理器：
 
 ```csharp
-this.WhenOccurs<OrderPlaced>()
-    .ToDo<INotificationService>(s => s.PushAsync)
-    .CatchExceptionToDo<OrderPlacedExceptionHandler>();
+this.On<OrderPlaced>()
+    .HandledBy<INotificationService>(s => s.PushAsync)
+    .OnError<OrderPlacedExceptionHandler>();
 ```
 
 ### 3. 註冊 EventBus
@@ -150,7 +150,7 @@ bind.ForEvent<OrderPlaced>()
 
 ## 投遞語意、重試與 Dead Letter
 
-Handler 失敗時例外會傳遞到 transport（除非透過 `CatchExceptionToDo<T>()` 註冊的
+Handler 失敗時例外會傳遞到 transport（除非透過 `OnError<T>()` 註冊的
 `IEventExceptionHandler` 將 `context.Handled = true`，此時訊息會被 ack 並丟棄）。
 Transport 接著進行重試：
 
@@ -280,8 +280,8 @@ public sealed record OrderPaymentCreatedV2(Guid PaymentId, string Currency);
 1. Consumer 先雙訂閱新舊版本：
 
    ```csharp
-   this.WhenOccurs<OrderPaymentCreated>().ToDo<PaymentHandler>();
-   this.WhenOccurs<OrderPaymentCreatedV2>().ToDo<PaymentHandlerV2>();
+   this.On<OrderPaymentCreated>().HandledBy<PaymentHandler>();
+   this.On<OrderPaymentCreatedV2>().HandledBy<PaymentHandlerV2>();
    ```
 
 2. Producer 切換到發佈 v2。

@@ -32,7 +32,7 @@ public static class ServiceCollectionExtension
         services.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
         
         // Profile
-        services.TryAddSingleton<ISubscriptionProfileManager,SubscriptionProfileManager>();
+        services.TryAddSingleton<IEventProfileManager,EventProfileManager>();
         
         // Internal
         services.AddSingleton<IInitializer, EventSubscribeInitializer>();
@@ -66,7 +66,7 @@ public static class ServiceCollectionExtension
     /// <returns>The services.</returns>
     public static IServiceCollection AddEventBusWithProfile<TProfile>(this IServiceCollection services,
                                                                       params Assembly[] assemblies)
-        where TProfile : SubscriptionProfile
+        where TProfile : EventProfile
     {
         ArgumentNullException.ThrowIfNull(services);
         assemblies ??= Array.Empty<Assembly>();
@@ -89,7 +89,7 @@ public static class ServiceCollectionExtension
     /// <param name="services">The services.</param>
     /// <returns>The services.</returns>
     public static IServiceCollection AddEventBusWithProfile<TProfile, TMarker>(this IServiceCollection services)
-        where TProfile : SubscriptionProfile
+        where TProfile : EventProfile
     {
         ArgumentNullException.ThrowIfNull(services);
         return services.AddEventBusWithProfile<TProfile>(typeof(TMarker).Assembly);

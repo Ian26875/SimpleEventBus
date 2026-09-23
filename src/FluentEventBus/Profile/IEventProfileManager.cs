@@ -5,7 +5,7 @@ namespace FluentEventBus.Profile;
 /// Represents a manager for subscription profiles used to handle event-to-handler mappings
 /// and associated error-handling logic.
 /// </summary>
-public interface ISubscriptionProfileManager
+public interface IEventProfileManager
 {
     /// <summary>
     /// Initializes the manager by loading all subscription profiles and their handler mappings.

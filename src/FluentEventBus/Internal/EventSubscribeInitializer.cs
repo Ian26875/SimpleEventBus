@@ -40,24 +40,24 @@ public class EventSubscribeInitializer : IInitializer
     /// <summary>
     ///     The subscription profile manager
     /// </summary>
-    private readonly ISubscriptionProfileManager _subscriptionProfileManager;
+    private readonly IEventProfileManager _eventProfileManager;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="EventSubscribeInitializer" /> class
     /// </summary>
     /// <param name="eventSubscriber">The event subscriber</param>
-    /// <param name="subscriptionProfileManager">The subscription profile manager</param>
+    /// <param name="eventProfileManager">The subscription profile manager</param>
     /// <param name="logger">The logger</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
     /// <param name="eventMapper">The schema registry</param>
     public EventSubscribeInitializer(IEventSubscriber eventSubscriber,
-                                     ISubscriptionProfileManager subscriptionProfileManager,
+                                     IEventProfileManager eventProfileManager,
                                      ILogger<EventSubscribeInitializer> logger,
                                      IServiceScopeFactory serviceScopeFactory,
                                      IEventNameRegistry eventMapper)
     {
         _eventSubscriber = eventSubscriber;
-        _subscriptionProfileManager = subscriptionProfileManager;
+        _eventProfileManager = eventProfileManager;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _eventMapper = eventMapper;
@@ -69,9 +69,9 @@ public class EventSubscribeInitializer : IInitializer
     /// <param name="cancellationToken">The cancellation token</param>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        _subscriptionProfileManager.Initialize();
+        _eventProfileManager.Initialize();
         
-        var eventTypes = _subscriptionProfileManager.GetAllEventTypes();
+        var eventTypes = _eventProfileManager.GetAllEventTypes();
 
         var eventNames = eventTypes.Select(eventType => _eventMapper.GetEventName(eventType)).ToList();
 

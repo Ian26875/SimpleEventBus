@@ -125,10 +125,10 @@ public sealed class StressHandler : IEventHandler<StressEvent>
     }
 }
 
-public sealed class StressProfile : SubscriptionProfile
+public sealed class StressProfile : EventProfile
 {
     public StressProfile()
     {
-        this.WhenOccurs<StressEvent>().ToDo<StressHandler>();
+        this.On<StressEvent>().HandledBy<StressHandler>();
     }
 }

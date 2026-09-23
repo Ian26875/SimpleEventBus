@@ -5,16 +5,17 @@ namespace FluentEventBus.Profile;
 /// <summary>
 ///     The base class for subscription profiles.
 /// </summary>
-public abstract class SubscriptionProfile
+public abstract class EventProfile
 {
     private readonly Dictionary<Type, List<IEventHandlerExecutor>> _eventHandlerExecutors = new();
     private readonly Dictionary<Type, List<Type>> _errorHandlers = new();
+    private readonly Dictionary<Type, EventPublication> _publications = new();
     
     
     /// <summary>
-    ///     Initializes a new instance of the <see cref="SubscriptionProfile" /> class.
+    ///     Initializes a new instance of the <see cref="EventProfile" /> class.
     /// </summary>
-    protected SubscriptionProfile()
+    protected EventProfile()
     {
         
     }
@@ -37,6 +38,25 @@ public abstract class SubscriptionProfile
             kvp => (IReadOnlyList<Type>)kvp.Value.AsReadOnly()
         );
     
+    /// <summary>
+    ///     Gets the publish-side event declarations.
+    /// </summary>
+    public IReadOnlyDictionary<Type, EventPublication> Publications => _publications;
+
+    /// <summary>
+    ///     Gets or creates the publication declaration for the specified event type.
+    /// </summary>
+    internal EventPublication GetOrAddPublication(Type eventType)
+    {
+        if (!_publications.TryGetValue(eventType, out var publication))
+        {
+            publication = new EventPublication();
+            _publications[eventType] = publication;
+        }
+
+        return publication;
+    }
+
     /// <summary>
     ///     Adds a subscription for the specified event type.
     /// </summary>

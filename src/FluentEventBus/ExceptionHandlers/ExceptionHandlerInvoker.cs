@@ -18,7 +18,7 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     /// <summary>
     ///     The subscription profile manager
     /// </summary>
-    private readonly ISubscriptionProfileManager _subscriptionProfileManager;
+    private readonly IEventProfileManager _eventProfileManager;
 
     /// <summary>
     ///     The logger
@@ -28,14 +28,14 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     /// <summary>
     ///     Initializes a new instance of the <see cref="ExceptionHandlerInvoker" /> class
     /// </summary>
-    /// <param name="subscriptionProfileManager">The subscription profile manager</param>
+    /// <param name="eventProfileManager">The subscription profile manager</param>
     /// <param name="serviceScopeFactory">The service scope factory</param>
     /// <param name="logger">The logger</param>
-    public ExceptionHandlerInvoker(ISubscriptionProfileManager subscriptionProfileManager,
+    public ExceptionHandlerInvoker(IEventProfileManager eventProfileManager,
         IServiceScopeFactory serviceScopeFactory,
         ILogger<ExceptionHandlerInvoker> logger)
     {
-        _subscriptionProfileManager = subscriptionProfileManager;
+        _eventProfileManager = eventProfileManager;
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
     }
@@ -47,7 +47,7 @@ public class ExceptionHandlerInvoker : IExceptionHandlerInvoker
     /// <param name="cancellationToken">The cancellation token</param>
     public async Task ExecuteAsync(ExceptionContext context, CancellationToken cancellationToken)
     {
-        var errorHandlerTypes = _subscriptionProfileManager.GetErrorHandlersForEvent(context.Event.GetType());
+        var errorHandlerTypes = _eventProfileManager.GetErrorHandlersForEvent(context.Event.GetType());
         if (errorHandlerTypes.Count == 0)
         {
             _logger.LogError(context.Exception,

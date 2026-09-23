@@ -3,7 +3,7 @@
 // =============================================================================
 // 這個範例示範三件事：
 //   1. 用 FluentEventBus 發佈/訂閱事件（In-Memory transport）
-//   2. 從 SubscriptionProfile 自動產生 AsyncAPI 3.0 文件（零額外標註）
+//   2. 從 EventProfile 自動產生 AsyncAPI 3.0 文件（零額外標註）
 //   3. 用 Neuroglia AsyncAPI UI 呈現互動式文件頁面
 //
 // 端點：
@@ -137,7 +137,7 @@ public sealed class OrderPlacedHandler : IEventHandler<OrderPlaced>
 // --- Delegate 綁定（Func<> 形式）----------------------------------------------
 // 不實作 IEventHandler<T> 也能訂閱：任何已註冊 service 上簽名相符的方法
 // （(TEvent, Headers, CancellationToken) => Task 或 (TEvent, CancellationToken) => Task）
-// 都可以用 ToDo<TService>(s => s.Method) 綁定。
+// 都可以用 HandledBy<TService>(s => s.Method) 綁定。
 public interface IOrderNotificationService
 {
     Task PushAsync(OrderPlaced @event, Headers headers, CancellationToken cancellationToken);
@@ -162,12 +162,12 @@ public sealed class OrderNotificationService : IOrderNotificationService
 
 // --- Subscription Profile ----------------------------------------------------
 // 事件 → handler 的對照表；AsyncAPI 的 receive operations 也是從這裡推導
-public sealed class OrderProfile : SubscriptionProfile
+public sealed class OrderProfile : EventProfile
 {
     public OrderProfile()
     {
-        this.WhenOccurs<OrderPlaced>()
-            .ToDo<OrderPlacedHandler>()                             // 介面實作
-            .ToDo<IOrderNotificationService>(s => s.PushAsync);     // Func<> delegate 綁定
+        this.On<OrderPlaced>()
+            .HandledBy<OrderPlacedHandler>()                             // 介面實作
+            .HandledBy<IOrderNotificationService>(s => s.PushAsync);     // Func<> delegate 綁定
     }
 }

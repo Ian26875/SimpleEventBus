@@ -14,25 +14,25 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="FluentSubscriptionBuilder{TEvent}"/> class
-    /// using the provided <see cref="SubscriptionProfile"/>.
+    /// using the provided <see cref="EventProfile"/>.
     /// </summary>
-    /// <param name="subscriptionProfile">The subscription profile that holds subscription configurations.</param>
-    internal FluentSubscriptionBuilder(SubscriptionProfile subscriptionProfile)
+    /// <param name="eventProfile">The subscription profile that holds subscription configurations.</param>
+    internal FluentSubscriptionBuilder(EventProfile eventProfile)
     {
-        this.Profile = subscriptionProfile;
+        this.Profile = eventProfile;
     }
 
     /// <summary>
     /// Gets the current subscription profile used for this builder.
     /// </summary>
-    public SubscriptionProfile Profile { get; }
+    public EventProfile Profile { get; }
 
     /// <summary>
     /// Registers a strongly-typed event handler for the current event type <typeparamref name="TEvent"/>.
     /// </summary>
     /// <typeparam name="TEventHandler">The type that implements <see cref="IEventHandler{TEvent}"/>.</typeparam>
     /// <returns>The fluent subscription builder instance for chaining.</returns>
-    public IFluentSubscriptionBuilder<TEvent> ToDo<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
+    public IFluentSubscriptionBuilder<TEvent> HandledBy<TEventHandler>() where TEventHandler : IEventHandler<TEvent>
     {
         Profile.AddSubscription(typeof(TEvent), new InterfaceEventHandlerExecutor<TEvent, TEventHandler>());
         return this;
@@ -44,7 +44,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// <typeparam name="THandler">The type containing the delegate method.</typeparam>
     /// <param name="expression">An expression that points to the handler method.</param>
     /// <returns>The fluent subscription builder instance for chaining.</returns>
-    public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(
+    public IFluentSubscriptionBuilder<TEvent> HandledBy<THandler>(
         Expression<Func<THandler, Func<TEvent, Headers, CancellationToken, Task>>> expression) where THandler : class
     {
         ArgumentNullException.ThrowIfNull(expression);
@@ -58,7 +58,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// <typeparam name="THandler">The type containing the delegate method.</typeparam>
     /// <param name="expression">An expression that points to the handler method.</param>
     /// <returns>The fluent subscription builder instance for chaining.</returns>
-    public IFluentSubscriptionBuilder<TEvent> ToDo<THandler>(
+    public IFluentSubscriptionBuilder<TEvent> HandledBy<THandler>(
         Expression<Func<THandler, Func<TEvent, CancellationToken, Task>>> expression) where THandler : class
     {
         ArgumentNullException.ThrowIfNull(expression);
@@ -71,7 +71,7 @@ public class FluentSubscriptionBuilder<TEvent> : IFluentSubscriptionBuilder<TEve
     /// </summary>
     /// <typeparam name="TErrorHandler">The type that implements <see cref="IEventExceptionHandler"/>.</typeparam>
     /// <returns>The fluent subscription builder instance for chaining.</returns>
-    public IFluentSubscriptionBuilder<TEvent> CatchExceptionToDo<TErrorHandler>() where TErrorHandler : IEventExceptionHandler
+    public IFluentSubscriptionBuilder<TEvent> OnError<TErrorHandler>() where TErrorHandler : IEventExceptionHandler
     {
         Profile.AddErrorFilter(typeof(TEvent), typeof(TErrorHandler));
         return this;

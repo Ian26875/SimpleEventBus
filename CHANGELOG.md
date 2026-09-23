@@ -73,6 +73,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
 
 ### Added
 - Initial release as `FluentEventBus`, `FluentEventBus.InMemory`, `FluentEventBus.RabbitMq`.
-- Fluent subscription profiles (`WhenOccurs<TEvent>().ToDo<THandler>()`), versioned event
+- Fluent subscription profiles (`On<TEvent>().HandledBy<THandler>()`), versioned event
   naming (`{domain}.{entity}.{event}.v{version}` via `EventAttribute`), in-memory and
   RabbitMQ (EasyNetQ) transports, multi-targeting net6.0–net10.0.

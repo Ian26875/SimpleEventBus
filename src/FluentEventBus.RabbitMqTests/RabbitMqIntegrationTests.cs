@@ -109,11 +109,11 @@ public class RabbitMqIntegrationTests
         }
     }
 
-    private sealed class TestProfile : SubscriptionProfile
+    private sealed class TestProfile : EventProfile
     {
         public TestProfile()
         {
-            this.WhenOccurs<TestEvent>().ToDo<TestHandler>();
+            this.On<TestEvent>().HandledBy<TestHandler>();
         }
     }
 }
