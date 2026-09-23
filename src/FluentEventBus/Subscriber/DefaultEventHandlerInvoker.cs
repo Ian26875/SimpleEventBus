@@ -17,9 +17,11 @@ namespace FluentEventBus.Subscriber;
 internal class DefaultEventHandlerInvoker : IEventHandlerInvoker
 {
     /// <summary>
-    ///     A cache of handler delegates to improve performance by avoiding repetitive delegate generation.
+    ///     A cache of handler delegates to improve performance by avoiding repetitive delegate
+    ///     generation. Instance state: the invoker is a singleton, so the cache still lives for
+    ///     the whole process but never leaks across DI containers.
     /// </summary>
-    private static readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> CachedHandlers = new();
+    private readonly ConcurrentDictionary<(Type EventType, Type HandlerType), Func<object, object, Headers, CancellationToken, Task>> CachedHandlers = new();
 
     /// <summary>
     ///     Logger instance.
