@@ -137,14 +137,16 @@ public sealed class AsyncApiDocumentGenerator
             Operations = []
         };
 
-        // The standard envelope headers every message carries, published once under
-        // components/schemas and referenced by every message.
+        // Canonical components layout: payload schemas under components/schemas,
+        // full message definitions under components/messages, channels referencing
+        // components/messages — the structure recommended by the AsyncAPI docs.
         document.Components = new()
         {
             Schemas = new()
             {
                 [EventBusHeadersSchemaName] = new V3SchemaDefinition { Schema = BuildHeadersSchema() }
-            }
+            },
+            Messages = new()
         };
 
         // Servers: transport-registered descriptors first (dependency-inverted via
@@ -180,31 +182,25 @@ public sealed class AsyncApiDocumentGenerator
             var eventName = _eventMapper.GetEventName(eventType);
             var messageName = eventType.Name;
 
-            // The event body schema is published as a named definition under
-            // components/schemas (like the headers schema) AND inlined into the channel
-            // message payload: renderers that don't dereference $refs (e.g. the Neuroglia
-            // UI) still show the fields, while the document keeps a reusable definition.
-            var payloadSchema = BuildPayloadSchema(eventType);
+            // Event body schema: one named definition under components/schemas.
             document.Components.Schemas![messageName] = new V3SchemaDefinition
             {
-                Schema = payloadSchema
+                Schema = BuildPayloadSchema(eventType)
             };
 
             var typeSummary = GetTypeSummary(eventType);
 
+            // Full message definition under components/messages; payload and headers
+            // reference their component schemas (top-level $ref — dereferenced by
+            // renderers such as the Neuroglia UI).
             var message = new V3MessageDefinition
             {
                 Name = messageName,
                 Title = messageName,
                 Description = string.IsNullOrWhiteSpace(typeSummary) ? null : typeSummary,
                 ContentType = "application/json",
-                Payload = new V3SchemaDefinition { Schema = payloadSchema },
-                Headers = new V3SchemaDefinition
-                {
-                    Schema = new JsonSchemaBuilder()
-                        .Ref($"#/components/schemas/{EventBusHeadersSchemaName}")
-                        .Build()
-                }
+                Payload = new V3SchemaDefinition { Reference = $"#/components/schemas/{messageName}" },
+                Headers = new V3SchemaDefinition { Reference = $"#/components/schemas/{EventBusHeadersSchemaName}" }
             };
 
             if (_options.Examples.TryGetValue(eventType, out var examples))
@@ -217,11 +213,17 @@ public sealed class AsyncApiDocumentGenerator
                 }));
             }
 
+            document.Components.Messages![messageName] = message;
+
             document.Channels[eventName] = new V3ChannelDefinition
             {
                 Address = eventName,
                 Description = string.IsNullOrWhiteSpace(typeSummary) ? null : typeSummary,
-                Messages = new() { [messageName] = message },
+                // The channel message is a $ref into components/messages.
+                Messages = new()
+                {
+                    [messageName] = new V3MessageDefinition { Reference = $"#/components/messages/{messageName}" }
+                },
                 // Reference every declared server explicitly (the Neuroglia UI expects a non-null list).
                 Servers = serverReferences
             };
